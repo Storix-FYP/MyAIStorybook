@@ -174,7 +174,7 @@ self.pipe = StableDiffusionPipeline.from_single_file(
 ```
 
 ## 🦙 Ollama Setup (Optional LLM Testing)
-1. Install Ollama → Download here
+1. Install Ollama → Download here https://ollama.com/
 2. Pull Dolphin 8B model:
 ```bash
 ollama pull dolphin:8b
