@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Storybook - Iteration 1 Preview</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    #container { display: flex; gap: 20px; }
+    #left { width: 50%; }
+    #right { width: 50%; }
+    img { max-width: 100%; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,.1); }
+    .controls { margin-top: 10px; }
+    textarea { width: 100%; height: 120px; }
+    button { padding: 8px 12px; margin-right: 8px; }
+    .meta { color: #666; margin-bottom: 10px; }
+    .flag { color: red; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <h1>Storybook — Iteration 1 Preview</h1>
+  <p>Enter a short idea and press Generate. Then use Next/Prev to flip pages.</p>
+
+  <textarea id="prompt" placeholder="A curious cat explores a magical garden..."></textarea>
+  <div class="controls">
+    <button id="generateBtn">Generate Story</button>
+    <button id="deviceBtn">Check Device</button>
+  </div>
+
+  <div id="status" style="margin-top:10px;color:green"></div>
+
+  <hr/>
+
+  <div id="container">
+    <div id="left">
+      <img id="pageImage" src="" alt="No image" />
+    </div>
+    <div id="right">
+      <div class="meta">
+        <div><strong id="title">Title</strong></div>
+        <div><span id="setting"></span></div>
+        <div><em id="characters"></em></div>
+      </div>
+      <div id="sceneText">No story yet.</div>
+
+      <div style="margin-top:20px;">
+        <button id="prevBtn">◀ Prev</button>
+        <button id="nextBtn">Next ▶</button>
+      </div>
+
+      <div id="accuracy" style="margin-top:20px;"></div>
+    </div>
+  </div>
+
+<script>
+let story = null;
+let currentIndex = 0;
+
+async function fetchDevice() {
+  const res = await fetch('/device');
+  const j = await res.json();
+  alert('Device: ' + JSON.stringify(j));
+}
+
+document.getElementById('deviceBtn').onclick = fetchDevice;
+
+document.getElementById('generateBtn').onclick = async () => {
+  const prompt = document.getElementById('prompt').value.trim();
+  if (!prompt) { alert('Enter a prompt.'); return; }
+
+  document.getElementById('status').innerText = "Generating ... this may take a minute (LLM + SD)";
+  try {
+    const res = await fetch('/api/generate', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({prompt})
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      document.getElementById('status').innerText = 'Error: ' + JSON.stringify(data);
+      return;
+    }
+    story = data.story;
+    document.getElementById('status').innerText = data.status || 'Done';
+    currentIndex = 0;
+    renderScene();
+    renderAccuracy(data.story);
+  } catch (err) {
+    document.getElementById('status').innerText = 'Request failed: ' + err;
+  }
+};
+
+function renderScene() {
+  if (!story || !story.scenes || story.scenes.length === 0) {
+    document.getElementById('sceneText').innerText = 'No scenes to display.';
+    document.getElementById('pageImage').src = '';
+    return;
+  }
+  const s = story.scenes[currentIndex];
+  document.getElementById('title').innerText = story.title || 'Untitled';
+  document.getElementById('setting').innerText = 'Setting: ' + (story.setting || '');
+  document.getElementById('characters').innerText = 'Characters: ' + (story.characters || []).join(', ');
+  document.getElementById('sceneText').innerText = s.text || '';
+  document.getElementById('pageImage').src = s.image_url || '';
+}
+
+document.getElementById('nextBtn').onclick = () => {
+  if (!story) return;
+  if (currentIndex < story.scenes.length - 1) currentIndex++;
+  renderScene();
+};
+
+document.getElementById('prevBtn').onclick = () => {
+  if (!story) return;
+  if (currentIndex > 0) currentIndex--;
+  renderScene();
+};
+
+function renderAccuracy(storyObj) {
+  // If the story has a 'consistency_report' or similar, show it; otherwise empty.
+  const report = storyObj.consistency_report || storyObj.consistencyReport || null;
+  const box = document.getElementById('accuracy');
+  if (!report) {
+    box.innerHTML = '<div>No accuracy data available (ReviewAgent minimal).</div>';
+    return;
+  }
+  let html = '<h3>Accuracy Report</h3>';
+  html += `<div>Overall: Text-Image avg: ${report.overall ? report.overall.text_image_avg : 'N/A'}</div>`;
+  box.innerHTML = html;
+}
+</script>
+</body>
+</html>
