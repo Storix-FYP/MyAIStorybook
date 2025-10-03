@@ -6,10 +6,13 @@ function App() {
   const [story, setStory] = useState(null);
 
   return (
-    <div>
-      <h1>Children's Storybook Generator</h1>
+    <div style={{ padding: "2rem", fontFamily: "Arial, sans-serif" }}>
+      <h1>📖 Storybook - Iteration 1</h1>
+      <p>Enter a short idea and click Generate:</p>
+
       <StoryInput onStory={setStory} />
-      <StoryDisplay story={story} />
+
+      {story && <StoryDisplay story={story} />}
     </div>
   );
 }
