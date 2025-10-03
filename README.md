@@ -49,8 +49,8 @@ This project is worked on by multiple contributors. To avoid conflicts, **follow
 
 ### 1️⃣ Clone the Repository (First Time Only)
 ```bash
-git clone https://github.com/<username>/storybook-fyp.git
-cd storybook-fyp
+git clone https://github.com/glassesart14-alt/FYP.git
+cd FYP
 ```
 
 ### 2️⃣ Always Create Your Own Branch
@@ -92,18 +92,6 @@ git push origin my-branch-name
 3. Ask teammates for review
 4. Once approved, merge into main
 
-### 7️⃣ Resolving Merge Conflicts
-If GitHub shows a merge conflict:
-1. Open the file with conflicts
-2. Look for markers:
-```bash
-<<<<<<< HEAD
-=======
->>>>>>> branch-name
-```
-3. Keep the correct code manually
-4. Save → Commit → Push again
-
 ✅ Golden Rule:
 * Never push directly to main
 * Always use branches + PRs
@@ -129,7 +117,8 @@ pip install -r requirements.txt
 
 Run FastAPI backend:
 ```bash
-uvicorn main:app --reload
+# Return to FYP main folder
+uvicorn backend.main:app --reload
 ```
 
 👉 Backend runs at: http://127.0.0.1:8000
@@ -174,15 +163,15 @@ self.pipe = StableDiffusionPipeline.from_single_file(
 ```
 
 ## 🦙 Ollama Setup (Optional LLM Testing)
-1. Install Ollama → Download here https://ollama.com/
-2. Pull Dolphin 8B model:
+1. Install Ollama → Download here
+2. Pull Dolphin 3 8B model:
 ```bash
-ollama pull dolphin:8b
+ollama pull dolphin3:8b
 ```
 
 Test on CMD:
 ```bash
-ollama run dolphin:8b "Tell me a short story about a robot and a dog"
+ollama run dolphin3:8b "Tell me a short story about a robot and a dog"
 ```
 
 ## ⚠️ Common Issues
@@ -195,8 +184,8 @@ ollama run dolphin:8b "Tell me a short story about a robot and a dog"
 ## 📌 Git Cheatsheet (Quick Reference)
 ```bash
 # Clone repo (first time only)
-git clone https://github.com/<username>/storybook-fyp.git
-cd storybook-fyp
+git clone https://github.com/glassesart14-alt/FYP.git
+cd FYP
 
 # Create new branch
 git checkout -b my-feature

@@ -54,11 +54,13 @@ async def device():
 async def api_generate(request: Request):
     """
     Trigger a pipeline run with a JSON body:
-    { "prompt": "User prompt text" }
+    { "prompt": "User prompt text", "generate_images": true/false }
     Returns final story JSON (with image paths).
     """
     body = await request.json()
     prompt = body.get("prompt")
+    generate_images = body.get("generate_images", True)  # default True if not provided
+
     if not prompt:
         raise HTTPException(status_code=400, detail="Missing 'prompt' in request body.")
 
@@ -69,31 +71,39 @@ async def api_generate(request: Request):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"StoryAgent failed: {e}")
 
-    # Step 2: ImageAgent
-    image_agent = ImageAgent()
-    try:
-        story_with_images, image_status = image_agent.generate_images(story_dict)  # unpack tuple
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"ImageAgent failed: {e}")
-    
+    story_with_images = story_dict
+    image_status = None
+
+    # Step 2: ImageAgent (only if generate_images = True)
+    if generate_images:
+        image_agent = ImageAgent()
+        try:
+            story_with_images, image_status = image_agent.generate_images(story_dict)  # unpack tuple
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"ImageAgent failed: {e}")
+
     # Step 3: ReviewAgent
     review_agent = ReviewAgent(max_retries=1)
     final_story, review_status = review_agent.review_story(story_with_images)
-    
+
     # Pick which status to return (prefer review, then image, then story)
     status = review_status or image_status or story_status
 
-
-    # Convert local image paths to URLs served by FastAPI
-    for scene in final_story.get("scenes", []):
-        path = scene.get("image_path")
-        if path:
-            fname = os.path.basename(path)
-            scene["image_url"] = f"/generated/images/{fname}"
-        else:
-            scene["image_url"] = None
+    # Convert local image paths to URLs (only if images were generated)
+    if generate_images:
+        for scene in final_story.get("scenes", []):
+            path = scene.get("image_path")
+            if path:
+                fname = os.path.basename(path)
+                scene["image_url"] = f"/generated/images/{fname}"
+            else:
+                scene["image_url"] = None
+    else:
+        for scene in final_story.get("scenes", []):
+            scene["image_url"] = None  # make sure no images are returned
 
     return JSONResponse({"status": status, "story": final_story})
+
 
 
 if __name__ == "__main__":
