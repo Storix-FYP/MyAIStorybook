@@ -92,18 +92,6 @@ git push origin my-branch-name
 3. Ask teammates for review
 4. Once approved, merge into main
 
-### 7️⃣ Resolving Merge Conflicts
-If GitHub shows a merge conflict:
-1. Open the file with conflicts
-2. Look for markers:
-```bash
-<<<<<<< HEAD
-=======
->>>>>>> branch-name
-```
-3. Keep the correct code manually
-4. Save → Commit → Push again
-
 ✅ Golden Rule:
 * Never push directly to main
 * Always use branches + PRs
