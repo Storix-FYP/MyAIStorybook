@@ -12,7 +12,7 @@ class StoryAgent:
     - Configurable scene limit for CPU/GPU mode.
     """
 
-    def __init__(self, model: str = "dolphin3", max_retries: int = 3, max_scenes: int = 3):
+    def __init__(self, model: str = "dolphin3:8b", max_retries: int = 3, max_scenes: int = 3):
         self.model = model
         self.max_retries = max_retries
         self.max_scenes = max_scenes  # ✅ configurable scene count

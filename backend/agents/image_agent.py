@@ -123,7 +123,7 @@ class ImageAgent:
 
     def __init__(
         self,
-        model_path: str = r"C:\Users\wahab\Downloads\FYP\stable-diffusion-webui\models\Stable-diffusion\realismByStableYogi_sd15V9.safetensors",
+        model_path: str = r"C:\Users\Ahmed Ali\Desktop\FYP\FYP\backend\pretrained\realismByStableYogi_sd15V9.safetensors",
         device: str = None,
     ):
         # allow explicit device override; else choose cuda if available
