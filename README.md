@@ -49,8 +49,8 @@ This project is worked on by multiple contributors. To avoid conflicts, **follow
 
 ### 1️⃣ Clone the Repository (First Time Only)
 ```bash
-git clone https://github.com/glassesart14-alt/FYP.git
-cd FYP
+git clone https://github.com/glassesart14-alt/MyAIStorybook.git
+cd MyAIStorybook
 ```
 
 ### 2️⃣ Always Create Your Own Branch
@@ -101,6 +101,7 @@ git push origin my-branch-name
 Create & activate virtual environment:
 ```bash
 cd backend
+# To create environment (once)
 python -m venv venv
 
 # Windows
@@ -146,17 +147,19 @@ npm install -g create-react-app
 
 ## 🤖 AI Model Setup
 
+Model Link: https://civitai.com/models/4384/dreamshaper
+
 Using a pre-downloaded **.safetensors** model:
 
 Place your model here:
 ```bash
-backend/models/pretrained/realismByStableYogi_sd15V9.safetensors
+backend/models/pretrained/dreamshaper_8.safetensors
 ```
 
 Update **image_agent.py**:
 ```bash
 self.pipe = StableDiffusionPipeline.from_single_file(
-    "backend/models/pretrained/realismByStableYogi_sd15V9.safetensors",
+    "backend/models/pretrained/dreamshaper_8.safetensors",
     torch_dtype=dtype,
     safety_checker=None
 )
@@ -164,14 +167,14 @@ self.pipe = StableDiffusionPipeline.from_single_file(
 
 ## 🦙 Ollama Setup (Optional LLM Testing)
 1. Install Ollama → Download here
-2. Pull Dolphin 3 8B model:
+2. Pull llama3.1:8b model:
 ```bash
-ollama pull dolphin3:8b
+ollama pull llama3.1:8b-instruct-q4_K_M 
 ```
 
 Test on CMD:
 ```bash
-ollama run dolphin3:8b "Tell me a short story about a robot and a dog"
+ollama run llama3.1:8b-instruct-q4_K_M  "Tell me a short story about a robot and a dog"
 ```
 
 ## ⚠️ Common Issues
@@ -184,8 +187,8 @@ ollama run dolphin3:8b "Tell me a short story about a robot and a dog"
 ## 📌 Git Cheatsheet (Quick Reference)
 ```bash
 # Clone repo (first time only)
-git clone https://github.com/glassesart14-alt/FYP.git
-cd FYP
+git clone https://github.com/glassesart14-alt/MyAIStorybook.git
+cd MyAIStorybook
 
 # Create new branch
 git checkout -b my-feature

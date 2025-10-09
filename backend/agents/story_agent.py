@@ -12,10 +12,10 @@ class StoryAgent:
     - Configurable scene limit for CPU/GPU mode.
     """
 
-    def __init__(self, model: str = "dolphin3:8b", max_retries: int = 3, max_scenes: int = 3):
+    def __init__(self, model: str = "llama3.1:8b-instruct-q4_K_M", max_retries: int = 3, max_scenes: int = 3):
         self.model = model
         self.max_retries = max_retries
-        self.max_scenes = max_scenes  # ✅ configurable scene count
+        self.max_scenes = max_scenes
 
     def _clean_json_output(self, raw_text: str) -> str:
         if not raw_text:
@@ -38,20 +38,22 @@ class StoryAgent:
         """
         Generate a structured story (JSON) validated by Story schema.
         """
+        # --- MODIFIED SYSTEM PROMPT ---
+        # Added a rule to generate a concise `image_description` for each scene.
         system_prompt = (
                 "You are a skilled children's story writer and JSON generator. "
                 "You must create imaginative, emotionally engaging, and structured stories for children aged 7–10. "
                 "Output only valid JSON matching this schema:\n\n"
                 "Story(title: str, setting: str, characters: [str], "
-                "scenes: List[Scene(scene_number: int, text: str, image_description: Optional[str])]).\n\n"
+                "scenes: List[Scene(scene_number: int, text: str, image_description: str)]).\n\n"
                 "Rules:\n"
-                f"1. Limit the story to about {self.max_scenes} scenes total.\n"
-                 "2. Each scene must be at least 7–8 sentences long and describe meaningful story progress.\n"
-                 "3. Maintain smooth flow — each scene should build naturally from the previous one.\n"
-                 "4. Include emotional depth and vivid sensory details (what characters see, hear, feel).\n"
-                 "5. Use simple but expressive language that evokes imagination and emotion.\n"
-                 "6. Ensure the story ends with a moral, message, or emotional resolution.\n"
-                 "7. Output JSON only — no markdown, no explanations, no comments."
+                f"1. Create a story with exactly {self.max_scenes} scenes.\n"
+                "2. For each scene, write a `text` that is at least 7–8 sentences long and describes meaningful story progress.\n"
+                "3. For each scene, ALSO write a short, visually-focused `image_description`. This description should be a concise prompt (under 50 words) for an image generation AI, focusing on keywords, the subject, and the setting. Do not use the full scene text.\n"
+                "4. Maintain a smooth flow — each scene should build naturally from the previous one.\n"
+                "5. Include emotional depth and vivid sensory details (what characters see, hear, feel).\n"
+                "6. Ensure the story ends with a moral, message, or emotional resolution.\n"
+                "7. Output JSON only — no markdown, no explanations, no comments."
         )
 
         raw_text = ""
@@ -64,9 +66,9 @@ class StoryAgent:
                         {"role": "user", "content": prompt},
                     ],
                     options={
-                         "temperature": 0.9,     # higher = more creative writing
-                         "num_predict": 800      # increases story size (token limit)
-    }
+                         "temperature": 0.9,
+                         "num_predict": 1024  # Increased token limit for better descriptions
+                    }
                 )
 
                 raw_text = getattr(response.message, "content", None) if hasattr(response, "message") else None
@@ -78,7 +80,6 @@ class StoryAgent:
                 cleaned = self._clean_json_output(raw_text)
                 story_dict = json.loads(cleaned)
 
-                # Validate JSON using Story schema
                 story = Story(**story_dict)
                 return story.model_dump(), f"Story generated ✅ ({len(story.scenes)} scenes)"
 
