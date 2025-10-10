@@ -148,7 +148,7 @@ self.pipe = StableDiffusionPipeline.from_single_file(
 )
 ```
 
-## 🦙 Ollama Setup (Optional LLM Testing)
+## 🦙 Ollama Setup 
 1. Install Ollama → Download here
 2. Pull llama3.1:8b model:
 ```bash
