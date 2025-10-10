@@ -25,6 +25,8 @@ storybook-fyp/
 
 │ ├── images/ # Generated images
 
+│ ├── stories/ # Generated stories
+
 |
 
 │── frontend/ # React frontend
@@ -96,54 +98,35 @@ git push origin my-branch-name
 * Never push directly to main
 * Always use branches + PRs
 
-## 🚀 Backend Setup (FastAPI)
+## To run the Whole project:
 
-Create & activate virtual environment:
+Open terminal as Administrator and run:
+```bash
+.\start_all.bat
+```
+This automaticaly installs all necessary packages.
+
+## 🚀 Run Backend Only (FastAPI)
+
+Open terminal as Administrator and run:
 ```bash
 cd backend
-# To create environment (once)
-python -m venv venv
-
-# Windows
-venv\Scripts\activate  
-
-# Linux/Mac
-source venv/bin/activate
+.\start_backend.bat
 ```
-
-Install dependencies:
-```bash
-pip install -r requirements.txt
-```
-
-Run FastAPI backend:
-```bash
-# Return to FYP main folder
-uvicorn backend.main:app --reload
-```
+This automatically installs requirements.txt in a virtual environment (venv).
 
 👉 Backend runs at: http://127.0.0.1:8000
 
+## 🎨 Run Frontend Only (React)
 
-## 🎨 Frontend Setup (React)
-
-Install dependencies:
+Open terminal as Administrator and run:
 ```bash
 cd frontend
-npm install
+.\start_frontend.bat
 ```
-
-Run frontend:
-```bash
-npm start
-```
+This automaticaly installs the necessary packages.
 
 👉 Frontend runs at: http://localhost:3000
-
-⚠️ If React is not installed globally:
-```bash
-npm install -g create-react-app
-```
 
 ## 🤖 AI Model Setup
 
