@@ -50,16 +50,15 @@ class ImageAgent:
 
 
     def generate_image(self, prompt_text: str, filename: str = "output.png"):
-        """
-        Generates an image with a high-resolution fix pass.
-        
-        Args:
-            prompt_text (str): The text prompt to generate an image from.
-            filename (str): The filename to save the image as.
-        """
         print(f"[ImageAgent] Generating image for prompt: '{prompt_text}'...")
-
-        # Advanced prompting for higher quality
+    
+        # Safety truncation for CLIP
+        prompt_words = prompt_text.split()
+        if len(prompt_words) > 77:
+            prompt_text = " ".join(prompt_words[:77])
+            print(f"[ImageAgent] ⚠️ Truncated prompt to 77 tokens for CLIP compatibility.")
+    
+        # Advanced prompting
         positive_prompt = f"masterpiece, best quality, ultra-detailed, photorealistic illustration, {prompt_text}"
         negative_prompt = (
             "(deformed, distorted, disfigured:1.3), poorly drawn, bad anatomy, wrong anatomy, "
@@ -67,10 +66,8 @@ class ImageAgent:
             "disconnected limbs, mutation, mutated, ugly, disgusting, blurry, amputation, "
             "BadDream, UnrealisticDream"
         )
-
-        # --- High-Resolution Fix (Two-Pass Generation) ---
-        
-        # Pass 1: Generate a smaller image (txt2img)
+    
+        # Pass 1: txt2img
         print("[ImageAgent] Running Pass 1 (txt2img)...")
         low_res_image = self.pipeline(
             prompt=positive_prompt,
@@ -81,28 +78,29 @@ class ImageAgent:
             guidance_scale=7,
             generator=self.generator,
         ).images[0]
-        
-        # Pass 2: Upscale using image-to-image
+    
+        # Pass 2: img2img (Hires fix)
         print("[ImageAgent] Running Pass 2 (img2img for Hires. fix)...")
         high_res_image = self.img2img_pipeline(
             prompt=positive_prompt,
             negative_prompt=negative_prompt,
             image=low_res_image,
             num_inference_steps=30,
-            strength=0.5,  # Denoising strength
+            strength=0.5,
             guidance_scale=7,
             generator=self.generator,
         ).images[0]
-
-        # Save the final image
+    
+        # Save
         filepath = os.path.join(self.output_dir, filename)
         try:
             high_res_image.save(filepath)
             print(f"✅ Image saved successfully as {filepath}")
             return filepath
         except Exception as e:
-            print(f"❌ An unexpected error occurred while saving the image: {e}")
+            print(f"❌ Error saving image: {e}")
             return None
+
 
 # --- Example of how to use the class ---
 if __name__ == "__main__":

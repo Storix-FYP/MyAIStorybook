@@ -1,6 +1,5 @@
 ECHO is on.
-backend/venv/
-backend/pretrained/ 
+backend/venv/ 
 __pycache__/ 
 *.pyc 
 *.pyo 
