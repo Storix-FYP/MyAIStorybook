@@ -1,205 +1,116 @@
-#-----------------------------------------------------------------------------------------------------------------------------------------
-# -----------------------------FOR Auto Download Model---------------------------------------------------------------------------------------
-
-
-# # backend/agents/image_agent.py
-# import os
-# import json
-# import torch
-# from diffusers import StableDiffusionPipeline
-# from backend.models.story_schema import Story
-# from typing import Dict, Tuple
-
-
-# class ImageAgent:
-#     """
-#     Image Agent: Generates illustrations for each scene in the story using diffusers.
-#     Returns (updated_story_dict, status_message).
-#     """
-
-#     def __init__(self, model_id: str = "runwayml/stable-diffusion-v1-5", device: str = None):
-#         # allow explicit device override; else choose cuda if available
-#         if device:
-#             self.device = device
-#         else:
-#             self.device = "cuda" if torch.cuda.is_available() else "cpu"
-#         print(f"[ImageAgent] Using device: {self.device}")
-
-#         # try to load pipeline (note: may be heavy; if you don't want to load on init, you can lazy-load)
-#         dtype = torch.float16 if self.device == "cuda" else torch.float32
-#         self.pipe = StableDiffusionPipeline.from_pretrained(
-#             model_id,
-#             torch_dtype=dtype,
-#             safety_checker=None,  # optional: remove if you want safety checks
-#         )
-#         # move to device
-#         self.pipe = self.pipe.to(self.device)
-
-#         # Create output folder
-#         self.output_dir = os.path.join("generated", "images")
-#         os.makedirs(self.output_dir, exist_ok=True)
-
-#     def generate_images(self, story_dict: Dict, first_only: bool = False) -> Tuple[Dict, str]:
-#         """
-#         Generate one image per scene in the story (or only first if first_only=True).
-
-#         Args:
-#             story_dict: Dict matching Story schema
-#             first_only: If True, only create image for the first scene
-
-#         Returns:
-#             (updated_story_dict, status_message)
-#         """
-#         story = Story(**story_dict)
-
-#         scenes_to_process = [story.scenes[0]] if first_only and len(story.scenes) > 0 else list(story.scenes)
-
-#         for scene in scenes_to_process:
-#             description = (
-#                 scene.image_description
-#                 if scene.image_description
-#                 else f"Illustration of: {scene.text}"
-#             )
-#             print(f"[ImageAgent] Generating image for scene {scene.scene_number}: {description}")
-
-#             # generate (the pipeline accepts text prompt first argument)
-#             result = self.pipe(description, num_inference_steps=25, height=512, width=512)
-#             image = result.images[0]
-
-#             # Save image
-#             filename = f"scene_{scene.scene_number}.png"
-#             filepath = os.path.join(self.output_dir, filename)
-#             image.save(filepath)
-
-#             # Update schema with image path
-#             scene.image_path = filepath
-#             # ensure image_description remains set
-#             if not scene.image_description:
-#                 scene.image_description = description
-
-#         # Convert back to dict
-#         return story.model_dump(), "Images generated ✅"
-
-# # Example test (only run as script)
-# if __name__ == "__main__":
-#     from backend.agents.story_agent import StoryAgent
-
-#     story_agent = StoryAgent()
-#     story_dict, s_status = story_agent.generate_story("A brave dog explores space with a robot friend.")
-#     print("Story status:", s_status)
-
-#     # test only first image so we avoid long runs
-#     image_agent = ImageAgent()
-#     updated, img_status = image_agent.generate_images(story_dict, first_only=True)
-#     print("Image status:", img_status)
-#     print(json.dumps(updated, indent=2, ensure_ascii=False))
-#     print("✅ Images saved in generated/images/")
-
-
-
-
-
-
-
-
-
-#-----------------------------------------------------------------------------------------------------------------------------------------
-# -----------------------------FOR Downloaded Model---------------------------------------------------------------------------------------
-
 # backend/agents/image_agent.py
 import os
-import json
 import torch
-from diffusers import StableDiffusionPipeline
-from backend.models.story_schema import Story
-from typing import Dict, Tuple
-
+from diffusers import StableDiffusionPipeline, AutoPipelineForImage2Image, DPMSolverMultistepScheduler
+from PIL import Image
 
 class ImageAgent:
     """
-    Image Agent: Generates illustrations for each scene in the story using diffusers.
-    Returns (updated_story_dict, status_message).
+    Image Agent: Generates illustrations using a local Stable Diffusion model,
+    including a high-resolution fix.
     """
-
     def __init__(
         self,
-        model_path: str = r"C:\Users\wahab\Downloads\FYP\stable-diffusion-webui\models\Stable-diffusion\realismByStableYogi_sd15V9.safetensors",
-        device: str = None,
+        model_path: str = r"C:\Users\wahab\Downloads\FYP\stable-diffusion-webui\models\Stable-diffusion\dreamshaper_8.safetensors"
     ):
-        # allow explicit device override; else choose cuda if available
-        if device:
-            self.device = device
-        else:
-            self.device = "cuda" if torch.cuda.is_available() else "cpu"
+        if not os.path.exists(model_path):
+            raise FileNotFoundError(
+                f"Model checkpoint not found at '{model_path}'. "
+                "Please update the path in ImageAgent."
+            )
+
+        self.device = "cuda" if torch.cuda.is_available() else "cpu"
+        self.generator = torch.Generator(device=self.device)
         print(f"[ImageAgent] Using device: {self.device}")
 
-        # choose dtype
-        dtype = torch.float16 if self.device == "cuda" else torch.float32
-
-        # load pipeline from single .safetensors file
-        self.pipe = StableDiffusionPipeline.from_single_file(
+        # --- Model Loading ---
+        print("[ImageAgent] Loading Stable Diffusion model... This may take a moment.")
+        
+        # 1. Use StableDiffusionPipeline to load the local .safetensors file
+        self.pipeline = StableDiffusionPipeline.from_single_file(
             model_path,
-            torch_dtype=dtype,
-            safety_checker=None,  # optional: remove if you want safety checks
+            torch_dtype=torch.float16,
+            use_safetensors=True,
         )
-        self.pipe = self.pipe.to(self.device)
+
+        # 2. Use a high-quality scheduler
+        self.pipeline.scheduler = DPMSolverMultistepScheduler.from_config(
+            self.pipeline.scheduler.config, use_karras_sigmas=True
+        )
+
+        # 3. Move pipeline to the GPU and create the img2img pipeline for the hires-fix
+        self.pipeline.to(self.device)
+        self.img2img_pipeline = AutoPipelineForImage2Image.from_pipe(self.pipeline)
+        
+        print("[ImageAgent] Model loaded successfully.")
 
         # Create output folder
         self.output_dir = os.path.join("generated", "images")
         os.makedirs(self.output_dir, exist_ok=True)
 
-    def generate_images(self, story_dict: Dict, first_only: bool = False) -> Tuple[Dict, str]:
-        """
-        Generate one image per scene in the story (or only first if first_only=True).
-        """
-        story = Story(**story_dict)
 
-        scenes_to_process = [story.scenes[0]] if first_only and len(story.scenes) > 0 else list(story.scenes)
+    def generate_image(self, prompt_text: str, filename: str = "output.png"):
+        print(f"[ImageAgent] Generating image for prompt: '{prompt_text}'...")
+    
+        # Safety truncation for CLIP
+        prompt_words = prompt_text.split()
+        if len(prompt_words) > 77:
+            prompt_text = " ".join(prompt_words[:77])
+            print(f"[ImageAgent] ⚠️ Truncated prompt to 77 tokens for CLIP compatibility.")
+    
+        # Advanced prompting
+        positive_prompt = f"masterpiece, best quality, ultra-detailed, photorealistic illustration, {prompt_text}"
+        negative_prompt = (
+            "(deformed, distorted, disfigured:1.3), poorly drawn, bad anatomy, wrong anatomy, "
+            "extra limb, missing limb, floating limbs, (mutated hands and fingers:1.4), "
+            "disconnected limbs, mutation, mutated, ugly, disgusting, blurry, amputation, "
+            "BadDream, UnrealisticDream"
+        )
+    
+        # Pass 1: txt2img
+        print("[ImageAgent] Running Pass 1 (txt2img)...")
+        low_res_image = self.pipeline(
+            prompt=positive_prompt,
+            negative_prompt=negative_prompt,
+            width=512,
+            height=512,
+            num_inference_steps=25,
+            guidance_scale=7,
+            generator=self.generator,
+        ).images[0]
+    
+        # Pass 2: img2img (Hires fix)
+        print("[ImageAgent] Running Pass 2 (img2img for Hires. fix)...")
+        high_res_image = self.img2img_pipeline(
+            prompt=positive_prompt,
+            negative_prompt=negative_prompt,
+            image=low_res_image,
+            num_inference_steps=30,
+            strength=0.5,
+            guidance_scale=7,
+            generator=self.generator,
+        ).images[0]
+    
+        # Save
+        filepath = os.path.join(self.output_dir, filename)
+        try:
+            high_res_image.save(filepath)
+            print(f"✅ Image saved successfully as {filepath}")
+            return filepath
+        except Exception as e:
+            print(f"❌ Error saving image: {e}")
+            return None
 
-        for scene in scenes_to_process:
-            description = (
-                scene.image_description
-                if scene.image_description
-                else f"Illustration of: {scene.text}"
-            )
-            print(f"[ImageAgent] Generating image for scene {scene.scene_number}: {description}")
 
-            # generate
-            result = self.pipe(description, num_inference_steps=25, height=512, width=512)
-            image = result.images[0]
-
-            # Save image
-            filename = f"scene_{scene.scene_number}.png"
-            filepath = os.path.join(self.output_dir, filename)
-            image.save(filepath)
-
-            # Update schema with image path
-            scene.image_path = filepath
-            if not scene.image_description:
-                scene.image_description = description
-
-        # Convert back to dict
-        story_out = story.model_dump()
-        
-        # Remove image_description so frontend only sees text + image
-        for scene in story_out["scenes"]:
-            scene.pop("image_description", None)
-        
-        return story_out, "Images generated ✅"
-
-
-
-# Example test (only run as script)
+# --- Example of how to use the class ---
 if __name__ == "__main__":
-    from backend.agents.story_agent import StoryAgent
-
-    story_agent = StoryAgent()
-    story_dict, s_status = story_agent.generate_story("A brave dog explores space with a robot friend.")
-    print("Story status:", s_status)
-
-    # test only first image so we avoid long runs
-    image_agent = ImageAgent()
-    updated, img_status = image_agent.generate_images(story_dict, first_only=True)
-    print("Image status:", img_status)
-    print(json.dumps(updated, indent=2, ensure_ascii=False))
-    print("✅ Images saved in generated/images/")
+    try:
+        image_agent = ImageAgent()
+        image_agent.generate_image(
+            prompt_text="A brave dog in a space suit exploring a vibrant alien planet",
+            filename="space_dog.png"
+        )
+    except FileNotFoundError as e:
+        print(f"Error: {e}")
+    except Exception as e:
+        print(f"An unexpected error occurred: {e}")
