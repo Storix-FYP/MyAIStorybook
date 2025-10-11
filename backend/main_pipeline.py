@@ -2,7 +2,7 @@
 import json
 from backend.agents.story_agent import StoryAgent
 from backend.agents.image_agent import ImageAgent
-from backend.agents.review_agent import ReviewAgent
+from backend.agents.reviewer_agent import ReviewAgent
 
 
 def run_pipeline(prompt: str):
