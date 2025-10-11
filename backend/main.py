@@ -27,12 +27,14 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Ensure generated images dir exists
+# Ensure generated directories exist
 GENERATED_DIR = os.path.join(os.path.dirname(__file__), "..", "generated")
 IMAGES_DIR = os.path.join(GENERATED_DIR, "images")
+STORIES_DIR = os.path.join(GENERATED_DIR, "stories") # New directory for JSON files
 os.makedirs(IMAGES_DIR, exist_ok=True)
+os.makedirs(STORIES_DIR, exist_ok=True) # Create the stories directory
 
-# Serve generated images as static files
+# Serve generated files as static files
 app.mount("/generated", StaticFiles(directory=GENERATED_DIR), name="generated")
 
 @app.get("/", response_class=HTMLResponse)
