@@ -11,7 +11,7 @@ class ImageAgent:
     """
     def __init__(
         self,
-        model_path: str = r"C:\Users\wahab\Downloads\FYP\stable-diffusion-webui\models\Stable-diffusion\dreamshaper_8.safetensors"
+        model_path: str = r"C:\Users\Ahmed Ali\Desktop\FYP\pretrained\dreamshaper_8.safetensors"
     ):
         if not os.path.exists(model_path):
             raise FileNotFoundError(

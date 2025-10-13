@@ -220,7 +220,7 @@ async def api_generate(request: Request):
     # --- END OF NEW CODE ---
 
     # --- Final combined status ---
-    status_msg = review_status or image_status or story_status
+    status_msg = image_status or story_status
 
     return JSONResponse({"status": status_msg, "story":final_story})
 
