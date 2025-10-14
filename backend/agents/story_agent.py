@@ -14,14 +14,16 @@ class StoryAgent:
         self.max_retries = max_retries
 
     def generate_story(self, prompt: str, generate_images: bool = False) -> Tuple[Dict[str, Any], str]:
-        # Single attempt (Director handles inner retries). Could wrap in our own retries if desired.
+        # Director now returns a dictionary with story, status, and intermediate outputs
         result = self.director.create_story(prompt, generate_images=generate_images)
-        # Director returns {"status": {...}, "story": {...}}
+        
         status = result.get("status", {})
-        story = result.get("story", {})
-        # format a friendly status string
+        
+        # Format a friendly status string
         if isinstance(status, dict):
             status_str = " | ".join(f"{k}:{v}" for k, v in status.items())
         else:
             status_str = str(status)
-        return story, status_str
+            
+        # Return the entire result dictionary, not just the story
+        return result, status_str

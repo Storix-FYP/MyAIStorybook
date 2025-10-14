@@ -1,27 +1,36 @@
-// src/components/StoryInput.js
 import React, { useState } from "react";
+import { API_ENDPOINTS } from "../../utils/constants";
 import "./StoryInput.css";
 
-export default function StoryInput({ onStoryGenerated, setLoading, setError }) {
-  const [prompt, setPrompt] = useState("");
-  const [generateImages, setGenerateImages] = useState(true);
-  const [localError, setLocalError] = useState(null); // Add local error state
+interface StoryInputProps {
+  onStoryGenerated: (story: any) => void;
+  setLoading: (loading: boolean) => void;
+  setError: (error: string | null) => void;
+}
 
-  const handleSubmit = async () => {
+const StoryInput: React.FC<StoryInputProps> = ({ onStoryGenerated, setLoading, setError }) => {
+  const [prompt, setPrompt] = useState<string>("");
+  const [generateImages, setGenerateImages] = useState<boolean>(true);
+  const [localError, setLocalError] = useState<string | null>(null);
+
+  const handleSubmit = async (): Promise<void> => {
     if (!prompt.trim()) {
-      setLocalError("Please provide an idea to spark the magic!"); // Use local error
+      setLocalError("Please provide an idea to spark the magic!");
       return;
     }
     setLoading(true);
-    setLocalError(null); // Clear local error
-    setError(null); // Clear parent error
+    setLocalError(null);
+    setError(null);
+    
     try {
-      const res = await fetch("http://localhost:8000/api/generate", {
+      const res = await fetch(API_ENDPOINTS.GENERATE, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ prompt, generate_images: generateImages }),
       });
+      
       if (!res.ok) throw new Error(`The magic faltered. Please try a different idea.`);
+      
       const data = await res.json();
       if (data?.story) {
         onStoryGenerated(data.story);
@@ -30,17 +39,27 @@ export default function StoryInput({ onStoryGenerated, setLoading, setError }) {
       }
     } catch (err) {
       console.error("Generation failed:", err);
-      setLocalError(err.message); // Use local error
-      setError(err.message); // Also set parent error if needed
+      const errorMessage = err instanceof Error ? err.message : "An unexpected error occurred";
+      setLocalError(errorMessage);
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
   };
 
+  const handleKeyPress = (e: React.KeyboardEvent<HTMLTextAreaElement>): void => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSubmit();
+    }
+  };
+
   return (
     <div className="story-input-wrapper">
-      <h2>Begin Your Adventure</h2>
-      <p>Whisper an idea, and watch a world unfold.</p>
+      <div className="story-input-header">
+        <h2>Begin Your Adventure</h2>
+        <p>Whisper an idea, and watch a world unfold.</p>
+      </div>
       
       <div className="input-field-container">
         <textarea
@@ -49,10 +68,10 @@ export default function StoryInput({ onStoryGenerated, setLoading, setError }) {
           value={prompt}
           onChange={(e) => {
             setPrompt(e.target.value);
-            setLocalError(null); // Clear error when user types
+            setLocalError(null);
           }}
-          onKeyPress={(e) => e.key === 'Enter' && !e.shiftKey && handleSubmit()}
-          rows="3"
+          onKeyPress={handleKeyPress}
+          rows={3}
         />
       </div>
 
@@ -74,8 +93,9 @@ export default function StoryInput({ onStoryGenerated, setLoading, setError }) {
         Weave Magic
       </button>
 
-      {/* Fix: Show localError instead of setError */}
       {localError && <p className="error-message">{localError}</p>}
     </div>
   );
-}
+};
+
+export default StoryInput;
