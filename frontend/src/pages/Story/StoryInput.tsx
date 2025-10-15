@@ -1,5 +1,7 @@
+'use client';
+
 import React, { useState } from "react";
-import { API_ENDPOINTS } from "../../utils/constants";
+import { API_ENDPOINTS } from "@/utils/constants";
 import "./StoryInput.css";
 
 interface StoryInputProps {

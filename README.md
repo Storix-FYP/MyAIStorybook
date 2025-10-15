@@ -1,7 +1,7 @@
 # 📖 Storybook-FYP
 
-**AI-powered storybook generator** with a **FastAPI backend** + **React frontend**.  
-It generates children’s stories, reviews them, and illustrates scenes using **Stable Diffusion**.
+**AI-powered storybook generator** with a **FastAPI backend** + **Next.js frontend**.  
+It generates children's stories, reviews them, and illustrates scenes using **Stable Diffusion**.
 
 ---
 
@@ -29,11 +29,11 @@ storybook-fyp/
 
 |
 
-│── frontend/ # React frontend
+│── frontend/ # Next.js frontend
 
 │ ├── public/ # Static assets
 
-│ ├── src/ # React components & logic
+│ ├── src/ # Next.js app directory & components
 
 │ └── package.json # Frontend dependencies
 
@@ -117,14 +117,14 @@ This automatically installs requirements.txt in a virtual environment (venv).
 
 👉 Backend runs at: http://127.0.0.1:8000
 
-## 🎨 Run Frontend Only (React)
+## 🎨 Run Frontend Only (Next.js)
 
 Open terminal as Administrator and run:
 ```bash
 cd frontend
 .\start_frontend.bat
 ```
-This automaticaly installs the necessary packages.
+This automatically installs the necessary packages.
 
 👉 Frontend runs at: http://localhost:3000
 
@@ -163,7 +163,7 @@ ollama run llama3.1:8b-instruct-q4_K_M  "Tell me a short story about a robot and
 ## ⚠️ Common Issues
 
 * Branch conflicts → Always git pull origin main before pushing.
-* React not found → Run npm install -g create-react-app.
+* Next.js not found → Run npm install -g next.
 * CUDA errors → Ensure PyTorch matches your CUDA version.
 * Model not loading → Check .safetensors file is in backend/models/pretrained/.
 

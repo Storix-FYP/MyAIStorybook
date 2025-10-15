@@ -1,5 +1,5 @@
 import React from 'react';
-import { ContactSection } from '../../shared/components';
+import { ContactSection } from '@/shared/components';
 import './LandingPage.css';
 
 interface LandingPageProps {
