@@ -1,6 +1,8 @@
+'use client';
+
 import React, { useState, useEffect } from 'react';
-import { useTheme } from '../contexts/ThemeContext';
-import ThemeToggle from '../shared/components/ThemeToggle';
+import { useTheme } from '@/contexts/ThemeContext';
+import ThemeToggle from '@/shared/components/ThemeToggle';
 import './Navigation.css';
 
 interface NavigationProps {

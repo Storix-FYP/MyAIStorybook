@@ -1,5 +1,7 @@
+'use client';
+
 import React from 'react';
-import { useLoadingMessages } from '../../hooks/useLoadingMessages';
+import { useLoadingMessages } from '@/hooks/useLoadingMessages';
 import './LoadingExperience.css';
 
 const LoadingExperience: React.FC = () => {

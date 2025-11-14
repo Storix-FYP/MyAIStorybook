@@ -1,6 +1,6 @@
 @echo off
 echo ==================================
-echo  🎨 Setting up & Starting Frontend
+echo  🎨 Setting up & Starting Next.js Frontend
 echo ==================================
 
 echo Checking for Node.js dependencies...
@@ -13,6 +13,6 @@ IF NOT EXIST node_modules (
     echo   -> node_modules found.
 )
 
-:: 2. Start the React development server
-echo Starting React app at http://localhost:3000
-npm start
+:: 2. Start the Next.js development server
+echo Starting Next.js app at http://localhost:3000
+npm run dev
