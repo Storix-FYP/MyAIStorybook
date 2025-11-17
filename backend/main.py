@@ -8,7 +8,7 @@ import traceback
 import torch
 import subprocess
 import sys
-from fastapi import FastAPI, Request, HTTPException, status
+from fastapi import FastAPI, Request, HTTPException, status, Depends
 from fastapi.responses import JSONResponse, FileResponse, HTMLResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
@@ -20,6 +20,12 @@ from backend.agents.story_agent import StoryAgent
 from backend.agents.image_agent import ImageAgent
 # ReviewerAgent is now only called inside DirectorAgent
 # from backend.agents.reviewer_agent import ReviewerAgent
+
+# --- Import Auth ---
+from backend.auth.routes import router as auth_router
+from backend.auth.database import engine, Base
+from backend.auth.dependencies import get_current_user_optional
+from backend.auth.models import User
 
 # -------------------
 # Utility: Device info
@@ -89,6 +95,23 @@ os.makedirs(STORIES_DIR, exist_ok=True)
 # Serve generated static files
 app.mount("/generated", StaticFiles(directory=GENERATED_DIR), name="generated")
 
+# Initialize database tables (lazy initialization with error handling)
+def init_database():
+    """Initialize database tables if connection is available"""
+    try:
+        Base.metadata.create_all(bind=engine)
+        print("✅ Database tables initialized successfully")
+    except Exception as e:
+        print(f"⚠️ Warning: Could not initialize database: {e}")
+        print("⚠️ Authentication features will not be available until database is configured.")
+        print("⚠️ To fix: Set DATABASE_URL environment variable or configure PostgreSQL connection.")
+
+# Try to initialize database, but don't fail if it's not available
+init_database()
+
+# Include auth routes
+app.include_router(auth_router)
+
 # -------------------------
 # Routes
 # -------------------------
@@ -107,7 +130,7 @@ async def device():
 # Main generation endpoint
 # -------------------------
 @app.post("/api/generate")
-async def api_generate(request: Request):
+async def api_generate(request: Request, current_user: User = Depends(get_current_user_optional)):
     body = await request.json()
     prompt = body.get("prompt")
     generate_images = body.get("generate_images", True)
@@ -115,6 +138,13 @@ async def api_generate(request: Request):
 
     if not prompt:
         raise HTTPException(status_code=400, detail="Missing 'prompt' in request body.")
+    
+    # Check if user is authenticated for image generation
+    if generate_images and current_user is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Please login to generate images. Guest users can only create text stories."
+        )
 
     # --- Step 1: PromptAgent ---
     prompt_agent = PromptAgent()

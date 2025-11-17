@@ -1,6 +1,6 @@
 @echo off
 echo =================================
-echo  🚀 Setting up & Starting Backend
+echo  Setting up & Starting Backend
 echo =================================
 
 :: 1. Check for Virtual Environment and install dependencies if needed.
@@ -21,10 +21,20 @@ IF NOT EXIST venv\Scripts\activate (
 echo Activating venv...
 call venv\Scripts\activate
 
-:: 3. Navigate back to the project root directory
+:: 3. Set DATABASE_URL environment variable (if not already set)
+:: Update the connection string below with your PostgreSQL credentials
+if "%DATABASE_URL%"=="" (
+    echo Setting DATABASE_URL environment variable...
+    set DATABASE_URL=postgresql://postgres:355440@localhost:5432/myaistorybook
+    echo   -> DATABASE_URL set to: postgresql://postgres:***@localhost:5432/myaistorybook
+) else (
+    echo DATABASE_URL already set, using existing value...
+)
+
+:: 4. Navigate back to the project root directory
 echo Returning to project root to start server...
 cd ..
 
-:: 4. Start the Uvicorn server from the root directory
+:: 5. Start the Uvicorn server from the root directory
 echo Starting Uvicorn server at http://127.0.0.1:8000
 uvicorn backend.main:app --reload

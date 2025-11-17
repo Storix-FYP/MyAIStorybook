@@ -10,7 +10,10 @@ export const LOADING_MESSAGES: string[] = [
 export const API_ENDPOINTS = {
   GENERATE: 'http://localhost:8000/api/generate',
   DEVICE: 'http://localhost:8000/device',
-  GENERATED: 'http://localhost:8000/generated'
+  GENERATED: 'http://localhost:8000/generated',
+  AUTH_LOGIN: 'http://localhost:8000/api/auth/login',
+  AUTH_REGISTER: 'http://localhost:8000/api/auth/register',
+  AUTH_ME: 'http://localhost:8000/api/auth/me'
 } as const;
 
 export const APP_CONFIG = {

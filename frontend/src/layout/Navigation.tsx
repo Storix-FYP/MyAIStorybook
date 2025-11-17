@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useTheme } from '@/contexts/ThemeContext';
+import { useAuth } from '@/contexts/AuthContext';
 import ThemeToggle from '@/shared/components/ThemeToggle';
 import './Navigation.css';
 
@@ -9,20 +10,36 @@ interface NavigationProps {
   onReset: () => void;
   showReset: boolean;
   onGoHome?: () => void;
+  onShowLogin?: () => void;
+  onShowRegister?: () => void;
 }
 
-const Navigation: React.FC<NavigationProps> = ({ onReset, showReset = false, onGoHome }) => {
+const Navigation: React.FC<NavigationProps> = ({ onReset, showReset = false, onGoHome, onShowLogin, onShowRegister }) => {
   const [isScrolled, setIsScrolled] = useState<boolean>(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false);
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState<boolean>(false);
   const { theme } = useTheme();
+  const { isAuthenticated, user, logout } = useAuth();
 
   useEffect(() => {
     const handleScroll = (): void => {
       setIsScrolled(window.scrollY > 50);
     };
 
+    const handleClickOutside = (event: MouseEvent): void => {
+      const target = event.target as HTMLElement;
+      if (!target.closest('.nav-user-menu-container')) {
+        setIsUserMenuOpen(false);
+      }
+    };
+
     window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    document.addEventListener('mousedown', handleClickOutside);
+    
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
   }, []);
 
   const scrollToSection = (sectionId: string): void => {
@@ -74,6 +91,56 @@ const Navigation: React.FC<NavigationProps> = ({ onReset, showReset = false, onG
           >
             Contact
           </button>
+          {!isAuthenticated ? (
+            <>
+              <button 
+                className="nav-link nav-button" 
+                onClick={onShowLogin}
+              >
+                Login
+              </button>
+              <button 
+                className="nav-link nav-button-primary" 
+                onClick={onShowRegister}
+              >
+                Sign Up
+              </button>
+            </>
+          ) : (
+            <div className="nav-user">
+              <div className="nav-user-menu-container">
+                <div 
+                  className="nav-avatar" 
+                  onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+                  title="Click to view profile"
+                >
+                  {user?.username?.charAt(0).toUpperCase() || 'U'}
+                </div>
+                {isUserMenuOpen && (
+                  <div className="nav-user-dropdown">
+                    <div className="nav-user-dropdown-item">
+                      <span className="nav-user-dropdown-label">Email:</span>
+                      <span className="nav-user-dropdown-value">{user?.email}</span>
+                    </div>
+                    <div className="nav-user-dropdown-item">
+                      <span className="nav-user-dropdown-label">Username:</span>
+                      <span className="nav-user-dropdown-value">{user?.username}</span>
+                    </div>
+                    <div className="nav-user-dropdown-divider"></div>
+                    <button 
+                      className="nav-user-dropdown-button" 
+                      onClick={() => {
+                        logout();
+                        setIsUserMenuOpen(false);
+                      }}
+                    >
+                      Logout
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
           <ThemeToggle />
           {showReset && (
             <button 
@@ -125,6 +192,37 @@ const Navigation: React.FC<NavigationProps> = ({ onReset, showReset = false, onG
         >
           Contact
         </button>
+        {!isAuthenticated ? (
+          <>
+            <button 
+              className="mobile-nav-link" 
+              onClick={() => { onShowLogin?.(); setIsMobileMenuOpen(false); }}
+            >
+              Login
+            </button>
+            <button 
+              className="mobile-nav-link" 
+              onClick={() => { onShowRegister?.(); setIsMobileMenuOpen(false); }}
+            >
+              Sign Up
+            </button>
+          </>
+        ) : (
+          <>
+            <div className="mobile-nav-user">
+              <div className="mobile-nav-avatar" title={user?.username}>
+                {user?.username?.charAt(0).toUpperCase() || 'U'}
+              </div>
+              <span className="mobile-nav-username">{user?.username}</span>
+            </div>
+            <button 
+              className="mobile-nav-link" 
+              onClick={() => { logout(); setIsMobileMenuOpen(false); }}
+            >
+              Logout
+            </button>
+          </>
+        )}
         <div className="mobile-theme-toggle">
           <ThemeToggle />
         </div>

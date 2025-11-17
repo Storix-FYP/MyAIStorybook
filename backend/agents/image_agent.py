@@ -11,12 +11,31 @@ class ImageAgent:
     """
     def __init__(
         self,
-        model_path: str = r"C:\Users\Ahmed Ali\Desktop\FYP\pretrained\dreamshaper_8.safetensors"
+        model_path: str = None
     ):
-        if not os.path.exists(model_path):
+        # Get model path from environment variable or use default
+        if model_path is None:
+            model_path = os.getenv(
+                "SD_CHECKPOINT_PATH", 
+                "backend/pretrained/dreamshaper_8.safetensors"
+            )
+        
+        # Check if it's a directory (old format) or file (new format)
+        if os.path.isdir(model_path):
+            # Look for .safetensors files in the directory
+            safetensors_files = [f for f in os.listdir(model_path) if f.endswith('.safetensors')]
+            if safetensors_files:
+                model_path = os.path.join(model_path, safetensors_files[0])
+                print(f"[ImageAgent] Found model file: {model_path}")
+            else:
+                raise FileNotFoundError(
+                    f"No .safetensors files found in directory '{model_path}'. "
+                    "Please ensure you have a Stable Diffusion model file."
+                )
+        elif not os.path.exists(model_path):
             raise FileNotFoundError(
                 f"Model checkpoint not found at '{model_path}'. "
-                "Please update the path in ImageAgent."
+                "Please set SD_CHECKPOINT_PATH environment variable or place model in backend/pretrained/"
             )
 
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
