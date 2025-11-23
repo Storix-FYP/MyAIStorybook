@@ -1,0 +1,53 @@
+{
+  "title": "The Curious Young Adventurer",
+  "setting": "Around the World",
+  "characters": [
+    "Max"
+  ],
+  "scenes": [
+    {
+      "scene_number": 1,
+      "text": "Max had always been a curious boy, eager to explore and learn about new places. One day, he packed his bags and set out on an adventure around the world. He traveled to vibrant cities, like Tokyo's neon streets and Rio's Carnival celebrations. Max marveled at breathtaking landscapes, from the Grand Canyon's vast expanse to the majestic fjords of Norway. Along the way, he met people from different cultures and tried their delicious foods. His heart filled with joy and wonder.",
+      "image_description": "A young boy standing in front of a vibrant Tokyo street market",
+      "image_path": null
+    },
+    {
+      "scene_number": 2,
+      "text": "Max visited ancient ruins, like the pyramids of Egypt, where he learned about pharaohs and mummies. He watched traditional dances, such as the Samba and Flamenco, and even tried his hand at playing a new instrument. The boy from small-town USA was amazed by the rich history and diverse customs he encountered. Max made friends with fellow travelers and locals alike, sharing stories and laughter around campfires and in cozy cafes.",
+      "image_description": "A young boy wearing a traditional Egyptian headdress, surrounded by ancient pyramids",
+      "image_path": null
+    },
+    {
+      "scene_number": 3,
+      "text": "As Max continued his journey, he experienced the simple joys of everyday life in different countries. He helped prepare meals with Italian nonnas and learned to ride a bike through winding Vietnamese streets. The boy's heart swelled with gratitude for the kindness of strangers and the beauty of the world around him. His adventure became a treasure trove of memories, inspiring him to see the world as a kaleidoscope of colors and experiences.",
+      "image_description": "A young boy riding a bike through a vibrant Vietnamese market",
+      "image_path": null
+    }
+  ],
+  "consistency_report": {
+    "per_scene": {
+      "1": {
+        "scene_number": 1,
+        "word_count": 84,
+        "length_score": 1.0,
+        "has_image": true
+      },
+      "2": {
+        "scene_number": 2,
+        "word_count": 72,
+        "length_score": 1.0,
+        "has_image": true
+      },
+      "3": {
+        "scene_number": 3,
+        "word_count": 74,
+        "length_score": 1.0,
+        "has_image": true
+      }
+    },
+    "overall": {
+      "avg_length_score": 1.0,
+      "image_coverage": 1.0
+    }
+  }
+}

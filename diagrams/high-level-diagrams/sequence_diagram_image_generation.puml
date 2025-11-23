@@ -1,0 +1,52 @@
+@startuml Image Generation Sequence
+' Image Generation Flow
+' Shows the image generation process with character consistency
+
+actor User
+participant "Frontend" as FE
+participant "FastAPI Backend" as API
+participant "Director Agent" as Director
+participant "Image Agent" as ImageAgent
+participant "Stable Diffusion" as SD
+participant "IP-Adapter" as IPAdapter
+participant "File System" as FS
+
+User -> FE: Enable image generation
+FE -> API: POST /api/generate (with images: true)
+API -> Director: Start pipeline with image flag
+
+Director -> ImageAgent: Generate scene illustrations
+ImageAgent -> ImageAgent: Process scene descriptions
+ImageAgent -> ImageAgent: Create image prompts
+
+loop For each scene
+    ImageAgent -> SD: Generate initial image
+    SD -> ImageAgent: Base scene image
+    
+    alt Character consistency enabled
+        ImageAgent -> IPAdapter: Apply character consistency
+        IPAdapter -> IPAdapter: Maintain character appearance
+        IPAdapter -> ImageAgent: Consistent character image
+    end
+    
+    ImageAgent -> ImageAgent: Apply style transfer
+    ImageAgent -> ImageAgent: Upscale and enhance
+    ImageAgent -> FS: Save image file
+    FS -> ImageAgent: File path confirmation
+end
+
+ImageAgent -> Director: All images generated
+Director -> API: Story with image URLs
+API -> FE: Story data with image paths
+FE -> User: Display story with illustrations
+
+note right of ImageAgent
+  **Image Generation Process:**
+  1. Process scene descriptions
+  2. Generate base images with SD
+  3. Apply character consistency
+  4. Style transfer and upscaling
+  5. Save to file system
+end note
+
+@enduml

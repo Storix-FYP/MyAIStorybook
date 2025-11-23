@@ -1,0 +1,144 @@
+%% State Transition Diagram: Complete FYP System Lifecycle
+%% Shows all possible states and transitions across all iterations
+
+stateDiagram-v2
+    [*] --> Idle : System Ready
+    
+    Idle --> ValidatingPrompt : User submits prompt
+    Idle --> VoiceInput : Voice input mode
+    Idle --> ChatMode : Interactive chat mode
+    
+    %% Voice Input Branch
+    VoiceInput --> ProcessingSpeech : Voice detected
+    ProcessingSpeech --> TranscribingAudio : STT processing
+    TranscribingAudio --> ValidatingPrompt : Text transcribed
+    TranscribingAudio --> ErrorSTTFailure : Transcription failed
+    
+    %% Chat Mode Branch  
+    ChatMode --> ProcessingChat : Chat message received
+    ProcessingChat --> GeneratingResponse : Chatbot processing
+    GeneratingResponse --> ChatMode : Response generated
+    GeneratingResponse --> ErrorChatFailure : Chat generation failed
+    
+    %% Main Story Generation Flow
+    ValidatingPrompt --> EnhancingPrompt : Prompt is valid
+    ValidatingPrompt --> ErrorInvalidPrompt : Prompt is invalid/nonsense
+    
+    EnhancingPrompt --> DetectingLanguage : Prompt enhanced
+    DetectingLanguage --> DeterminingAgeGroup : Language detected
+    DeterminingAgeGroup --> GeneratingStory : Age group determined
+    
+    GeneratingStory --> ReviewingContent : Story generated (3 scenes)
+    GeneratingStory --> RetryGeneration : JSON parse error
+    GeneratingStory --> ErrorGenerationFailure : Max retries exceeded
+    
+    RetryGeneration --> GeneratingStory : Retry attempt (max 2)
+    
+    ReviewingContent --> EditingFormatting : Quality validated
+    ReviewingContent --> ErrorContentRejection : Content rejected
+    
+    EditingFormatting --> GeneratingPDF : Content polished
+    EditingFormatting --> ApplyingStyleGuide : Style formatting
+    
+    ApplyingStyleGuide --> GeneratingPDF : Style applied
+    
+    GeneratingPDF --> CheckImageToggle : PDF created
+    
+    CheckImageToggle --> GeneratingImages : Images enabled
+    CheckImageToggle --> CheckAudioToggle : Images disabled
+    
+    CheckAudioToggle --> GeneratingAudio : Audio enabled
+    CheckAudioToggle --> SavingStory : Audio disabled
+    
+    %% Image Generation States
+    GeneratingImages --> ProcessingCharacterConsistency : Images generated
+    ProcessingCharacterConsistency --> ApplyingStyleTransfer : Consistency applied
+    ApplyingStyleTransfer --> UpscalingImages : Style transfer complete
+    UpscalingImages --> SavingImages : Upscaling complete
+    SavingImages --> CheckAudioToggle : Images saved
+    
+    GeneratingImages --> SavingStory : Image generation failed<br/>(graceful degradation)
+    
+    %% Audio Generation States
+    GeneratingAudio --> SynthesizingSpeech : Audio generation started
+    SynthesizingSpeech --> ApplyingVoiceEffects : Speech synthesized
+    ApplyingVoiceEffects --> SavingAudio : Voice effects applied
+    SavingAudio --> SavingStory : Audio saved
+    
+    GeneratingAudio --> SavingStory : Audio generation failed<br/>(graceful degradation)
+    
+    %% Story Saving and Evaluation
+    SavingStory --> SpawningEvaluation : Story saved to file
+    SavingStory --> UpdatingUserPreferences : Learning from interaction
+    
+    UpdatingUserPreferences --> SpawningEvaluation : Preferences updated
+    
+    SpawningEvaluation --> Completed : Evaluation started in background
+    
+    Completed --> [*] : Return to frontend
+    Completed --> InteractiveMode : Interactive features enabled
+    
+    %% Interactive Mode States
+    InteractiveMode --> WaitingForInput : Ready for user interaction
+    WaitingForInput --> ProcessingUserInput : User provides input
+    ProcessingUserInput --> GeneratingResponse : Input processed
+    GeneratingResponse --> InteractiveMode : Response ready
+    WaitingForInput --> [*] : User exits
+    
+    %% Error States
+    ErrorInvalidPrompt --> [*] : Return error to user
+    ErrorGenerationFailure --> [*] : Return error to user
+    ErrorContentRejection --> [*] : Return error to user
+    ErrorSTTFailure --> [*] : Return error to user
+    ErrorChatFailure --> [*] : Return error to user
+    
+    note right of ValidatingPrompt
+        Prompt Agent classifies:
+        - normal
+        - detailed  
+        - invalid
+        - nonsense
+        + language detection
+        + age group determination
+    end note
+    
+    note right of GeneratingStory
+        Writer Agent uses Ollama
+        with retry logic (up to 2 attempts)
+        for JSON parsing failures
+        + character development
+        + dialogue generation
+    end note
+    
+    note right of GeneratingImages
+        Advanced generation:
+        1. txt2img with character consistency
+        2. img2img hires fix
+        3. style transfer
+        4. upscaling
+        Takes 60-120s per scene on GPU
+    end note
+    
+    note right of GeneratingAudio
+        TTS processing:
+        1. Text-to-speech synthesis
+        2. Voice effect application
+        3. Emotion detection
+        4. Audio optimization
+    end note
+    
+    note right of SpawningEvaluation
+        Non-blocking subprocess
+        Evaluation runs in background
+        Does not delay response
+        + user preference learning
+    end note
+    
+    note right of InteractiveMode
+        Real-time features:
+        - Voice interaction
+        - Chat responses
+        - Dynamic story modification
+        - User preference adaptation
+    end note
+

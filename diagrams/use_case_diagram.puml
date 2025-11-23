@@ -1,0 +1,173 @@
+@startuml MyAIStorybook Use Cases
+' Use Case Diagram for MyAIStorybook - Based on Scope Document
+' Shows use cases for the actual project scope
+
+left to right direction
+skinparam packageStyle rectangle
+
+' Define actors
+actor "User\n(Parent/Educator/Child)" as User
+
+' Define system boundary
+rectangle "MyAIStorybook System" {
+  
+  ' Core Story Generation Use Cases
+  usecase "UC1: Generate Story\nfrom Text Prompt" as UC1
+  usecase "UC2: Generate Story\nfrom Voice Input" as UC2
+  usecase "UC3: Interactive\nStory Chat" as UC3
+  
+  ' Media Generation Use Cases
+  usecase "UC4: Generate\nStory Images" as UC4
+  usecase "UC5: Generate\nStory Audio" as UC5
+  usecase "UC6: Character\nConsistency" as UC6
+  
+  ' Export Use Cases
+  usecase "UC7: Export Story\nto PDF" as UC7
+  usecase "UC8: Export Story\nto Audio Book" as UC8
+  
+  ' User Experience Use Cases
+  usecase "UC9: Toggle\nTheme" as UC9
+  usecase "UC10: Customize\nUser Preferences" as UC10
+  
+  ' Internal sub-processes
+  usecase "Validate Input" as UC1a
+  usecase "Process Voice" as UC2a
+  usecase "Generate Text" as UC1b
+  usecase "Generate Images" as UC4a
+  usecase "Generate Audio" as UC5a
+  usecase "Quality Review" as UC1c
+  usecase "Display Story" as UC1d
+}
+
+' User associations
+User --> UC1
+User --> UC2
+User --> UC3
+User --> UC4
+User --> UC5
+User --> UC6
+User --> UC7
+User --> UC8
+User --> UC9
+User --> UC10
+
+' Include relationships
+UC1 .> UC1a : <<include>>
+UC1 .> UC1b : <<include>>
+UC1 .> UC1c : <<include>>
+UC1 .> UC1d : <<include>>
+
+UC2 .> UC2a : <<include>>
+UC2 .> UC1b : <<include>>
+UC2 .> UC1c : <<include>>
+UC2 .> UC1d : <<include>>
+
+UC4 .> UC4a : <<include>>
+UC5 .> UC5a : <<include>>
+
+' Extend relationships
+UC1 <.. UC4 : <<extend>>\n(optional)
+UC1 <.. UC5 : <<extend>>\n(optional)
+UC1 <.. UC6 : <<extend>>\n(optional)
+
+UC2 <.. UC4 : <<extend>>\n(optional)
+UC2 <.. UC5 : <<extend>>\n(optional)
+
+UC3 <.. UC5 : <<extend>>\n(optional)
+
+' Notes for major use cases
+note right of UC1
+  **Primary Use Case - Text Input**
+  
+  Preconditions:
+  - System running
+  - Valid text prompt entered
+  
+  Main Flow:
+  1. User enters story prompt
+  2. User selects generation options
+  3. User clicks "Generate Story"
+  4. System processes through agents
+  5. System displays story with media
+  
+  Postconditions:
+  - Story displayed with navigation
+  - PDF created automatically
+  - Images generated (if enabled)
+  - Audio generated (if enabled)
+end note
+
+note right of UC2
+  **Voice Input Mode**
+  
+  Preconditions:
+  - Microphone access granted
+  - Voice input detected
+  
+  Main Flow:
+  1. User speaks story prompt
+  2. System transcribes speech
+  3. System processes as text prompt
+  4. System generates story
+  5. System provides audio feedback
+  
+  Postconditions:
+  - Story generated from voice
+  - Audio narration available
+end note
+
+note right of UC3
+  **Interactive Chat Mode**
+  
+  Preconditions:
+  - Chat mode enabled
+  - User preferences set
+  
+  Main Flow:
+  1. User starts conversation
+  2. System responds contextually
+  3. User can modify story elements
+  4. System adapts to preferences
+  5. User can generate final story
+  
+  Postconditions:
+  - Interactive story experience
+  - Personalized content
+end note
+
+note right of UC4
+  **Image Generation with Character Consistency**
+  
+  Features:
+  - IP-Adapter integration
+  - Character consistency across scenes
+  - High-resolution output
+  - Scene composition
+  - Artistic style options
+end note
+
+note right of UC5
+  **Audio Generation**
+  
+  Features:
+  - Coqui TTS synthesis
+  - Voice style selection
+  - Page-by-page narration
+  - Accessibility support
+end note
+
+note bottom of User
+  **User Demographics:**
+  - Parents (40%)
+  - Educators (30%)
+  - Children (20%)
+  - Content Creators (10%)
+  
+  **Usage Patterns:**
+  - Home use (60%)
+  - Educational (30%)
+  - Professional (10%)
+end note
+
+@enduml
+

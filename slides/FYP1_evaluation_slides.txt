@@ -1,0 +1,117 @@
+# FYP-1 Evaluation Slides Outline for MyAIStorybook
+# (Use this text as a master guide for your slide creation)
+
+---
+
+## 1. Title Slide
+- Project Title: MyAIStorybook
+- Team Members: Muhammad Abdul Wahab Kiyani, Syed Ahmed Ali Zaidi, Mujahid Abbas
+- Supervisor: Mr. Muhammad Aamir Gulzar
+- Session: 2022-2026 | Department of Computer Science | NUCES Islamabad
+- Date: FYP-1 Evaluation
+
+*(No diagram)*
+
+---
+
+## 2. FYP Goals & Objectives (1 min)
+- Empower non-technical users (parents, educators) to create personalized, illustrated children's storybooks quickly and privately.
+- Iteration 1 goal: Complete core story pipeline—text story and optional images—from simple prompt to PDF export.
+- All processing is local (privacy-first, no cloud needed).
+- Leverage FastAPI backend, Next.js frontend, Ollama LLM and Stable Diffusion.
+
+**Include:**
+- Use Case Diagram *(use `use_case_diagram_simplified.puml`)*
+
+**Speaker: Wahab**
+- Brief project vision & relevance.
+- Point to use case diagram and summarize supported features this phase.
+
+---
+
+## 3. Addressing Faculty Feedback (1 min)
+- Feedback after FYP-1 defence:
+    - Extend the scope (broader customization, better comparative analysis)
+    - Plan with supervisor for resource approval
+    - Address accuracy: Story authentication, image/narrative similarity, chatbot consistency
+    - Implement further checks for appropriate content
+- How we’re responding:
+    - Solution ready for advanced feature additions in FYP-2/3 (chatbot, TTS/STT, analytics, user accounts, content checks)
+    - Pipeline foundation in place for extensions: Evaluation agent, modular agents, error handling
+
+*(No diagram)*
+
+**Speaker: Ahmed Ali**
+- Summarize the feedback.
+- Mention how team adapted and planned to address each point.
+
+---
+
+## 4. Progress Since Last Evaluation (2 min)
+- Backend: Multi-agent pipeline fully functional—Prompt, Writer, Reviewer, Editor, Image Agent.
+- Frontend: Next.js UI, modern themed experience, landing page, story input, image toggle, story navigation, PDF export.
+- File & model storage, local-only processing.
+- Demo: Storybook generation pipeline in action (prompt to story, images, PDF).
+- Known & planned improvements: Performance, real-time feedback, full session management, extensibility.
+
+**Include:**
+- High-Level Architecture Diagram *(use `architecture_diagram_high_level.puml`)*
+
+**Speaker: Mujahid**
+- Walk through the working pipeline and UI; what “actually works.”
+- Highlight demo screens.
+- “This is a strong base for next steps.”
+
+---
+
+## 5. Outstanding & Future Work (1 min)
+- Config/environment management (.env support)
+- Chatbot/interactive mode (planned for FYP-2/3)
+- Text-to-Speech & Speech-to-Text
+- Better evaluation/analytics and reporting
+- User accounts, security, retention policy
+- Cloud & mobile support, advanced UI customization, content moderation, character consistency, progress tracking
+
+**Optional:**
+- Domain Model Diagram *(use `domain_model_simplified.mmd`)*
+
+**Speaker: Mujahid**
+- Concisely list technical next steps & planned features by iteration.
+
+---
+
+## 6. Key System Diagrams
+- Overview and summary of diagrams that describe the current and intended system:
+    1. **Activity Diagram** *(activity_diagram_simplified.mmd)*: Shows story generation pipeline from prompt to output.
+    2. **Data Flow Diagram** *(data_flow_diagram_detailed.mmd)*: Visualizes data and process flow.
+    3. **Sequence Diagram** *(sequence_diagram_basic_generation.puml)*: Depicts the main agent and data interactions.
+    4. **State Diagram** *(state_diagram_simplified.mmd)*: Illustrates story job lifecycle.
+    5. **Class Diagram** *(class_diagram_simplified.mmd)*: Shows system structure/entities for extensibility reference.
+
+**Speaker: All (split as preferred, e.g., Wahab – Activity & DFD, Ahmed Ali – Sequence & State, Mujahid – Class)**
+- For each, “This diagram shows… It helps us ensure…”
+- Walkthrough in logical order, connecting back to previous explanations.
+
+---
+
+## 7. Demonstration – Integrated & Tested System
+- Live or recorded demo: 
+    - Input prompt, toggle images
+    - Show PDF export
+    - Show error handling/feedback
+    - Story navigation, user experience
+
+**Speaker: Wahab**
+- Narrate demo steps as shown live or via video.
+
+---
+
+## 8. Q&A / Closing
+- Thank you for your attention!
+- Invite questions, offer to clarify roadmap and next steps.
+
+**Speaker: All**
+- Closing remarks and readiness for any questions.
+
+---
+# (End of file)

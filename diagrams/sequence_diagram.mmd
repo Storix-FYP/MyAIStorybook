@@ -1,0 +1,143 @@
+%% Sequence Diagram: Complete FYP System - Multi-Agent Story Generation
+%% Shows complete message flow across all iterations including future features
+
+sequenceDiagram
+    actor User
+    participant Frontend as Next.js Frontend
+    participant API as FastAPI Backend
+    participant StoryAgent
+    participant Director as DirectorAgent
+    participant Prompt as PromptAgent
+    participant Writer as WriterAgent
+    participant Reviewer as ReviewerAgent
+    participant Editor as EditorAgent
+    participant Image as ImageAgent
+    participant TTS as TTSAgent
+    participant STT as STTAgent
+    participant Chatbot as ChatbotAgent
+    participant Ollama
+    participant SD as Stable Diffusion
+    participant Coqui as Coqui TTS
+    participant Whisper as OpenAI Whisper
+
+    Note over User,Whisper: Complete FYP System Workflow
+
+    User->>Frontend: 1. Enter prompt & select options
+    activate Frontend
+    Frontend->>API: 2. POST /api/generate<br/>{prompt, generate_images, generate_audio, mode}
+    activate API
+    
+    API->>StoryAgent: 3. generate_story(prompt, options)
+    activate StoryAgent
+    StoryAgent->>Director: 4. create_story(prompt, options)
+    activate Director
+    
+    Note over Director,Prompt: Step 1: Advanced Prompt Processing
+    Director->>Prompt: 5. process_prompt(user_prompt)
+    activate Prompt
+    Prompt->>Ollama: 6. Validate, enhance & classify prompt
+    Ollama-->>Prompt: Enhanced prompt + classification
+    Prompt->>Prompt: 7. Detect language & age group
+    Prompt-->>Director: 8. (enhanced_prompt, type, language, age_group)
+    deactivate Prompt
+    
+    Note over Director,Writer: Step 2: Intelligent Story Generation
+    Director->>Writer: 9. generate_story(enhanced_prompt, context)
+    activate Writer
+    Writer->>Ollama: 10. Generate story with character development
+    Ollama-->>Writer: JSON story with rich characters
+    Writer->>Writer: 11. Create character backstories
+    Writer-->>Director: 12. (story_dict, "Story generated ✅")
+    deactivate Writer
+    
+    Note over Director,Reviewer: Step 3: Comprehensive Quality Review
+    Director->>Reviewer: 13. review_story(story_dict)
+    activate Reviewer
+    Reviewer->>Ollama: 14. Validate content, coherence & age-appropriateness
+    Ollama-->>Reviewer: Detailed validation feedback
+    Reviewer->>Reviewer: 15. Check educational value
+    Reviewer-->>Director: 16. (reviewed_story, "Review complete ✅")
+    deactivate Reviewer
+    
+    Note over Director,Editor: Step 4: Professional Editing & Export
+    Director->>Editor: 17. edit_story(reviewed_story)
+    activate Editor
+    Editor->>Editor: 18. Polish text & apply style guide
+    Editor->>Editor: 19. Generate PDF with illustrations
+    Editor->>Editor: 20. Format for publication
+    Editor-->>Director: 21. (final_story, "Edit complete ✅")
+    deactivate Editor
+    
+    Director-->>StoryAgent: 22. {story, status, outputs}
+    deactivate Director
+    StoryAgent-->>API: 23. (result, status_string)
+    deactivate StoryAgent
+    
+    Note over API,Image: Step 5: Advanced Image Generation (if enabled)
+    loop For each scene with character consistency
+        API->>Image: 24. generate_image(scene_desc, character_refs, filename)
+        activate Image
+        Image->>SD: 25. txt2img with character consistency
+        SD-->>Image: Low-res image
+        Image->>SD: 26. img2img hires fix with style transfer
+        SD-->>Image: High-res consistent image
+        Image->>Image: 27. Apply upscaling & style transfer
+        Image-->>API: 28. image_path
+        deactivate Image
+    end
+    
+    Note over API,TTS: Step 6: Audio Generation (if enabled)
+    alt Audio Generation Enabled
+        loop For each scene
+            API->>TTS: 29. generate_audio(scene_text, voice_style)
+            activate TTS
+            TTS->>Coqui: 30. Synthesize speech with emotion
+            Coqui-->>TTS: Audio file with voice effects
+            TTS-->>API: 31. audio_path
+            deactivate TTS
+        end
+    end
+    
+    Note over API,Chatbot: Step 7: Interactive Features (if enabled)
+    alt Chatbot Mode Enabled
+        API->>Chatbot: 32. Initialize conversation context
+        activate Chatbot
+        Chatbot->>Ollama: 33. Prepare conversational AI
+        Ollama-->>Chatbot: Context ready
+        Chatbot-->>API: 34. Chatbot ready for interaction
+        deactivate Chatbot
+    end
+    
+    API->>API: 35. Add all URLs to story
+    API->>API: 36. Save final story JSON with metadata
+    
+    Note over API: Step 8: Background Evaluation & Learning
+    API->>EvaluationAgent: 37. Spawn subprocess (non-blocking)
+    API->>API: 38. Update user preferences & learning
+    
+    API-->>Frontend: 39. {status, story with all media URLs, chatbot_ready}
+    deactivate API
+    
+    Frontend->>Frontend: 40. Parse story & prepare display
+    Frontend->>Frontend: 41. Initialize audio players & chatbot
+    
+    alt Interactive Mode
+        Frontend-->>User: 42. Show story with audio, chatbot & navigation
+        User->>Frontend: 43. Voice input or chat interaction
+        Frontend->>STT: 44. Process voice input
+        STT->>Whisper: 45. Transcribe speech
+        Whisper-->>STT: Text transcription
+        STT-->>Frontend: 46. Transcribed text
+        Frontend->>API: 47. Send chat message
+        API->>Chatbot: 48. Process user input
+        Chatbot->>Ollama: 49. Generate response
+        Ollama-->>Chatbot: Response text
+        Chatbot-->>API: 50. Chat response
+        API-->>Frontend: 51. Chat response
+        Frontend-->>User: 52. Display chat response
+    else Standard Mode
+        Frontend-->>User: 53. Show story with page navigation & audio
+    end
+    
+    deactivate Frontend
+

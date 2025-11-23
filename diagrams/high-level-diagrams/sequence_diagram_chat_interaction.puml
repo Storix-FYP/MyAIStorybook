@@ -1,0 +1,43 @@
+@startuml Chat Interaction Sequence
+' Simplified Interactive Chat Mode Flow
+
+actor User
+participant "Frontend" as FE
+participant "Backend" as API
+participant "Chatbot" as Chat
+participant "Database" as DB
+
+== Start Chat ==
+User -> FE: Start chat mode
+FE -> API: Create chat session
+API -> Chat: Initialize chatbot
+API -> DB: Save session
+API -> FE: Chat ready
+FE -> User: Show chat interface
+
+== Conversation ==
+User -> FE: Send message
+FE -> API: Process message
+API -> Chat: Generate response
+Chat -> API: AI response
+API -> DB: Save conversation
+API -> FE: Chat response
+FE -> User: Display response
+
+== Generate Story ==
+User -> FE: Generate story from chat
+FE -> API: Extract story from conversation
+API -> Chat: Get story requirements
+Chat -> API: Story prompt
+API -> API: Generate story
+API -> FE: Generated story
+FE -> User: Display story
+
+== End Chat ==
+User -> FE: End chat
+FE -> API: Close session
+API -> DB: Save final data
+API -> FE: Session ended
+FE -> User: Return to main
+
+@enduml

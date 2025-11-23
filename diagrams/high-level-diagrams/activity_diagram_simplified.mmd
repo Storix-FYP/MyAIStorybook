@@ -1,0 +1,64 @@
+%% Activity Diagram - Simplified High-Level Version
+%% MyAIStorybook Core Story Generation Workflow
+%% Focuses on essential activities for better readability
+
+flowchart TD
+    Start([User Submits<br/>Story Prompt]) --> ValidateInput[Validate &<br/>Enhance Input]
+    
+    ValidateInput --> ValidCheck{Input<br/>Valid?}
+    
+    ValidCheck -->|No| Error1[Return Error:<br/>Invalid Input]
+    ValidCheck -->|Yes| GenerateStory[Generate Story<br/>with Characters]
+    
+    GenerateStory --> ParseCheck{Story<br/>Generated?}
+    ParseCheck -->|No| Error2[Return Error:<br/>Generation Failed]
+    ParseCheck -->|Yes| ReviewContent[Review Content<br/>Quality]
+    
+    ReviewContent --> ContentCheck{Content<br/>Approved?}
+    ContentCheck -->|No| Error3[Return Error:<br/>Content Rejected]
+    ContentCheck -->|Yes| EditContent[Edit & Format<br/>Content]
+    
+    EditContent --> CheckImages{Generate<br/>Images?}
+    
+    CheckImages -->|No| CheckAudio{Generate<br/>Audio?}
+    CheckImages -->|Yes| GenerateImages[Generate Scene<br/>Images]
+    
+    GenerateImages --> ImageSuccess{Images<br/>Generated?}
+    ImageSuccess -->|Failed| LogImageError[Log Error<br/>Continue without images]
+    ImageSuccess -->|Success| SaveImages[Save Images]
+    
+    LogImageError --> CheckAudio
+    SaveImages --> CheckAudio
+    
+    CheckAudio -->|No| SaveStory[Save Story<br/>to File System]
+    CheckAudio -->|Yes| GenerateAudio[Generate Scene<br/>Audio]
+    
+    GenerateAudio --> AudioSuccess{Audio<br/>Generated?}
+    AudioSuccess -->|Failed| LogAudioError[Log Error<br/>Continue without audio]
+    AudioSuccess -->|Success| SaveAudio[Save Audio Files]
+    
+    LogAudioError --> SaveStory
+    SaveAudio --> SaveStory
+    
+    SaveStory --> AddURLs[Add Media URLs<br/>to Story JSON]
+    AddURLs --> ReturnResponse[Return Story JSON<br/>to Frontend]
+    
+    ReturnResponse --> Display[Display Story<br/>with Navigation]
+    Display --> End([End])
+    
+    Error1 --> End
+    Error2 --> End
+    Error3 --> End
+    
+    %% Styling
+    classDef startEnd fill:#90EE90,stroke:#000000,stroke-width:2px
+    classDef process fill:#87CEEB,stroke:#000000,stroke-width:2px
+    classDef decision fill:#FFFACD,stroke:#000000,stroke-width:2px
+    classDef error fill:#FFB6C1,stroke:#000000,stroke-width:2px
+    classDef media fill:#E6E6FA,stroke:#000000,stroke-width:2px
+    
+    class Start,End startEnd
+    class ValidateInput,GenerateStory,ReviewContent,EditContent,SaveStory,AddURLs,ReturnResponse,Display process
+    class ValidCheck,ParseCheck,ContentCheck,CheckImages,CheckAudio,ImageSuccess,AudioSuccess decision
+    class Error1,Error2,Error3,LogImageError,LogAudioError error
+    class GenerateImages,SaveImages,GenerateAudio,SaveAudio media

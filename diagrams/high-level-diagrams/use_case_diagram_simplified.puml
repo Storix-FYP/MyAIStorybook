@@ -1,0 +1,62 @@
+@startuml MyAIStorybook Simplified Use Cases
+' Simplified Use Case Diagram for MyAIStorybook
+' Clean, readable version without complex relationships
+
+left to right direction
+skinparam packageStyle rectangle
+
+' Define actors
+actor "User\n(Parent/Educator/Child)" as User
+actor "Admin" as Admin
+actor "External\nAPIs" as External
+
+' Define system boundary
+rectangle "MyAIStorybook System" {
+  
+  ' Core Story Generation Use Cases
+  usecase "Generate Story\nfrom Text Prompt" as UC1
+  usecase "Generate Story\nfrom Voice Input" as UC2
+  usecase "Interactive\nStory Chat" as UC3
+  
+  ' Media Generation Use Cases
+  usecase "Generate\nStory Images" as UC4
+  usecase "Generate\nStory Audio" as UC5
+  usecase "Character\nConsistency" as UC6
+  
+  ' Export Use Cases
+  usecase "Export Story\nto PDF" as UC7
+  usecase "Export Story\nto Audio Book" as UC8
+  
+  ' User Experience Use Cases
+  usecase "Customize\nUser Preferences" as UC9
+  usecase "View Story\nHistory" as UC10
+  
+  ' Administrative Use Cases
+  usecase "Manage User\nAccounts" as UC11
+  usecase "Manage\nSubscriptions" as UC12
+  usecase "System\nMonitoring" as UC13
+}
+
+' User associations
+User --> UC1
+User --> UC2
+User --> UC3
+User --> UC4
+User --> UC5
+User --> UC6
+User --> UC7
+User --> UC8
+User --> UC9
+User --> UC10
+
+' Admin associations
+Admin --> UC11
+Admin --> UC12
+Admin --> UC13
+
+' External API associations
+External --> UC4
+External --> UC5
+External --> UC6
+
+@enduml

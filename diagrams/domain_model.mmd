@@ -1,0 +1,210 @@
+%% Domain Model / Entity-Relationship Diagram
+%% Complete FYP system entities and relationships
+
+erDiagram
+    %% Core Story Entities
+    STORY ||--o{ SCENE : contains
+    STORY ||--|| STORY_META : has
+    STORY ||--o{ CHARACTER : features
+    STORY ||--o| PDF_EXPORT : generates
+    STORY ||--o{ AUDIO_FILE : has_audio
+    STORY ||--o{ EVALUATION_METRICS : evaluated_by
+    
+    %% User and Interaction Entities
+    USER ||--o{ STORY : creates
+    USER ||--o{ USER_PREFERENCES : has
+    USER ||--o{ CHAT_SESSION : participates_in
+    
+    %% Scene and Media Entities
+    SCENE ||--o| IMAGE_FILE : illustrated_by
+    SCENE ||--o| AUDIO_FILE : has_audio
+    SCENE ||--o{ CHARACTER : features
+    
+    %% Chat and Interaction Entities
+    CHAT_SESSION ||--o{ CHAT_MESSAGE : contains
+    CHAT_MESSAGE ||--|| USER : sent_by
+    CHAT_MESSAGE ||--|| CHATBOT_AGENT : processed_by
+    
+    %% Agent and Processing Entities
+    AGENT_EXECUTION ||--|| STORY : processes
+    AGENT_EXECUTION ||--|| AGENT_TYPE : uses
+    
+    %% Core Story Entity
+    STORY {
+        string story_id PK
+        string title
+        string setting
+        string language
+        string age_group
+        string theme
+        string status
+        timestamp generation_timestamp
+        timestamp last_modified
+        string user_id FK
+    }
+    
+    %% Scene Entity
+    SCENE {
+        string scene_id PK
+        string story_id FK
+        int scene_number
+        string text
+        string image_description
+        string audio_description
+        float duration
+        string mood
+        string location
+    }
+    
+    %% Character Entity
+    CHARACTER {
+        string character_id PK
+        string story_id FK
+        string name
+        string description
+        string appearance
+        string personality
+        string role
+        string voice_style
+        string image_reference
+    }
+    
+    %% Story Metadata
+    STORY_META {
+        string story_id FK
+        string prompt_type
+        string original_prompt
+        string enhanced_prompt
+        string language_detected
+        string age_group_detected
+        float generation_time
+        string model_used
+        string agent_versions
+        json processing_log
+    }
+    
+    %% PDF Export Entity
+    PDF_EXPORT {
+        string export_id PK
+        string story_id FK
+        string filename
+        string file_path
+        string format
+        int page_count
+        timestamp export_timestamp
+        string export_quality
+    }
+    
+    %% Image File Entity
+    IMAGE_FILE {
+        string image_id PK
+        string scene_id FK
+        string filename
+        string file_path
+        int width
+        int height
+        string format
+        string style
+        string character_consistency_id
+        timestamp generation_timestamp
+        float generation_time
+    }
+    
+    %% Audio File Entity
+    AUDIO_FILE {
+        string audio_id PK
+        string scene_id FK
+        string filename
+        string file_path
+        string format
+        float duration
+        string voice_style
+        string emotion_detected
+        timestamp generation_timestamp
+        float generation_time
+    }
+    
+    %% Evaluation Metrics
+    EVALUATION_METRICS {
+        string evaluation_id PK
+        string story_id FK
+        float coherence_score
+        float age_appropriateness
+        float creativity_score
+        float educational_value
+        float engagement_score
+        string feedback_summary
+        timestamp evaluation_timestamp
+        string evaluator_version
+    }
+    
+    %% User Entity
+    USER {
+        string user_id PK
+        string username
+        string email
+        string preferred_language
+        string age_group_preference
+        string theme_preferences
+        timestamp registration_date
+        timestamp last_active
+        json interaction_history
+    }
+    
+    %% User Preferences
+    USER_PREFERENCES {
+        string preference_id PK
+        string user_id FK
+        string preferred_voice_style
+        string preferred_image_style
+        string preferred_story_length
+        string preferred_themes
+        json custom_settings
+        timestamp last_updated
+    }
+    
+    %% Chat Session
+    CHAT_SESSION {
+        string session_id PK
+        string user_id FK
+        string story_id FK
+        string status
+        timestamp start_time
+        timestamp end_time
+        json context_data
+    }
+    
+    %% Chat Message
+    CHAT_MESSAGE {
+        string message_id PK
+        string session_id FK
+        string user_id FK
+        string content
+        string message_type
+        string response_type
+        timestamp timestamp
+        json metadata
+    }
+    
+    %% Agent Execution
+    AGENT_EXECUTION {
+        string execution_id PK
+        string story_id FK
+        string agent_type
+        string status
+        timestamp start_time
+        timestamp end_time
+        json input_data
+        json output_data
+        string error_message
+    }
+    
+    %% Agent Type
+    AGENT_TYPE {
+        string agent_name PK
+        string version
+        string capabilities
+        json configuration
+        timestamp last_updated
+    }
+

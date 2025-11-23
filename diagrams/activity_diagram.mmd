@@ -1,0 +1,123 @@
+%% Activity Diagram: Complete FYP System Workflow
+%% Shows decision points and parallel processing across all iterations
+
+flowchart TD
+    Start([User Interaction<br/>Multiple Input Methods]) --> InputType{Input<br/>Type?}
+    
+    %% Voice Input Branch
+    InputType -->|Voice| VoiceInput[STT Agent:<br/>Process Voice Input]
+    VoiceInput --> Transcribe[Transcribe Audio<br/>via OpenAI Whisper]
+    Transcribe --> VoiceSuccess{Transcription<br/>Success?}
+    VoiceSuccess -->|Failed| ErrorSTT[Return STT Error]
+    VoiceSuccess -->|Success| Input[Prompt Agent:<br/>Validate & Enhance Input]
+    ErrorSTT --> End1([End])
+    
+    %% Chat Input Branch
+    InputType -->|Chat| ChatInput[Chatbot Agent:<br/>Process Chat Message]
+    ChatInput --> ChatResponse[Generate Response<br/>via Ollama]
+    ChatResponse --> ChatSuccess{Response<br/>Generated?}
+    ChatSuccess -->|Failed| ErrorChat[Return Chat Error]
+    ChatSuccess -->|Success| ChatDisplay[Display Chat Response]
+    ChatDisplay --> ContinueChat{Continue<br/>Chat?}
+    ContinueChat -->|Yes| ChatInput
+    ContinueChat -->|No| End2([End])
+    ErrorChat --> End2
+    
+    %% Text Input Branch
+    InputType -->|Text| Input[Prompt Agent:<br/>Validate & Enhance Input]
+    
+    Input --> ValidCheck{Valid<br/>Prompt?}
+    
+    ValidCheck -->|No: Invalid/Nonsense| Error1[Return 400 Error:<br/>&quot;Invalid or meaningless prompt&quot;]
+    Error1 --> End1
+    
+    ValidCheck -->|Yes: Normal/Detailed| LanguageDetect[Detect Language<br/>& Age Group]
+    
+    LanguageDetect --> Writer[Writer Agent:<br/>Generate Story Structure<br/>with Character Development]
+    
+    Writer --> ParseCheck{JSON<br/>Parse<br/>Success?}
+    ParseCheck -->|No| RetryCheck{Retries<br/>&lt; 2?}
+    RetryCheck -->|Yes| Writer
+    RetryCheck -->|No| Error2[Return 500 Error:<br/>&quot;Generation failed&quot;]
+    Error2 --> End1
+    
+    ParseCheck -->|Yes| Reviewer[Reviewer Agent:<br/>Validate Content Quality<br/>& Age-appropriateness]
+    
+    Reviewer --> ContentCheck{Content<br/>Approved?}
+    ContentCheck -->|No| ErrorContent[Return Content Error]
+    ContentCheck -->|Yes| Editor[Editor Agent:<br/>Polish Text & Apply Style Guide]
+    
+    Editor --> PDFGen[Generate PDF Export<br/>with Professional Formatting]
+    
+    PDFGen --> ImgCheck{Generate<br/>Images<br/>Toggle?}
+    
+    ImgCheck -->|No| AudioCheck{Generate<br/>Audio<br/>Toggle?}
+    
+    ImgCheck -->|Yes| ImgLoop[Image Agent:<br/>For each of 3 scenes]
+    
+    ImgLoop --> ImgGen[Generate Image:<br/>1. txt2img with character consistency<br/>2. img2img hires fix<br/>3. style transfer<br/>4. upscaling]
+    
+    ImgGen --> ImgSuccess{Image<br/>Generation<br/>Success?}
+    
+    ImgSuccess -->|Failed| LogImgError[Log Error<br/>Continue with text-only]
+    LogImgError --> SaveImages
+    
+    ImgSuccess -->|Success| SaveImages[Save PNG to<br/>generated/images]
+    
+    SaveImages --> MoreScenes{More<br/>Scenes?}
+    MoreScenes -->|Yes| ImgLoop
+    MoreScenes -->|No| AudioCheck
+    
+    AudioCheck -->|No| SaveStory[Save Story JSON<br/>to generated/stories]
+    
+    AudioCheck -->|Yes| AudioLoop[TTS Agent:<br/>For each scene]
+    
+    AudioLoop --> AudioGen[Generate Audio:<br/>1. Text-to-speech synthesis<br/>2. Voice effect application<br/>3. Emotion detection]
+    
+    AudioGen --> AudioSuccess{Audio<br/>Generation<br/>Success?}
+    
+    AudioSuccess -->|Failed| LogAudioError[Log Error<br/>Continue without audio]
+    LogAudioError --> SaveAudio
+    
+    AudioSuccess -->|Success| SaveAudio[Save Audio to<br/>generated/audio]
+    
+    SaveAudio --> MoreAudio{More<br/>Scenes?}
+    MoreAudio -->|Yes| AudioLoop
+    MoreAudio -->|No| SaveStory
+    
+    SaveStory --> AddURLs[Add Image & Audio URLs<br/>to Story JSON]
+    
+    AddURLs --> EvalBG[Spawn Background Process:<br/>Evaluation Agent]
+    
+    AddURLs --> Learning[Update User Preferences<br/>& Learning Model]
+    
+    Learning --> Response[Return Story JSON<br/>with all media URLs to Frontend]
+    
+    Response --> Display[Frontend:<br/>Display Story with<br/>Page Navigation & Audio Controls]
+    
+    Display --> InteractiveCheck{Interactive<br/>Mode<br/>Enabled?}
+    
+    InteractiveCheck -->|No| End3([End])
+    InteractiveCheck -->|Yes| InteractiveMode[Interactive Mode:<br/>Voice & Chat Features]
+    
+    InteractiveMode --> UserInteraction{User<br/>Interaction?}
+    UserInteraction -->|Voice| VoiceInput
+    UserInteraction -->|Chat| ChatInput
+    UserInteraction -->|Exit| End3
+    
+    ErrorContent --> End1
+    
+    style Start fill:#90EE90
+    style End1 fill:#FFB6C1
+    style End2 fill:#FFB6C1
+    style End3 fill:#90EE90
+    style Error1 fill:#FFB6C1
+    style Error2 fill:#FFB6C1
+    style ErrorSTT fill:#FFB6C1
+    style ErrorChat fill:#FFB6C1
+    style ErrorContent fill:#FFB6C1
+    style Display fill:#87CEEB
+    style ImgGen fill:#FFFACD
+    style AudioGen fill:#E6E6FA
+    style EvalBG fill:#E6E6FA
+    style InteractiveMode fill:#DDA0DD

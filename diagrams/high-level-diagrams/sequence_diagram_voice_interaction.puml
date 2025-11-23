@@ -1,0 +1,30 @@
+@startuml Voice Interaction Sequence
+' Simplified Voice Input and Audio Generation Flow
+
+actor User
+participant "Frontend" as FE
+participant "Backend" as API
+participant "Voice Processing" as Voice
+participant "Audio Generation" as Audio
+participant "File System" as FS
+
+User -> FE: Click microphone & speak
+FE -> API: Voice input request
+API -> Voice: Process speech
+Voice -> API: Transcribed text
+API -> API: Generate story from voice
+
+API -> Audio: Create narration
+Audio -> Audio: Process story text
+Audio -> FS: Save audio files
+Audio -> API: Audio file paths
+
+API -> FE: Story with audio
+FE -> User: Display story + audio controls
+
+User -> FE: Play audio
+FE -> FS: Load audio
+FS -> FE: Audio data
+FE -> User: Play narration
+
+@enduml

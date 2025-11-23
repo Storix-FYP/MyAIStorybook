@@ -1,0 +1,220 @@
+NUCES
+
+29th August 2025
+
+My AI Story Book
+Presented By:
+M. Abdul Wahab
+Ahmed Ali
+Mujahid Abbas
+
+Supervisor: Muhammad Aamir Gulzar
+
+Overview
+Introduction
+
+01
+
+Technical
+Implementation
+
+05
+
+Motivation
+
+02
+
+Work Overview
+
+06
+
+Problem Statement
+
+03
+
+Work Division
+
+07
+
+Proposed Solution
+
+04
+
+Tools and Technology
+
+08
+
+What is My AIStoryBook?
+• AI-powered storybook generator
+• Creates personalized, illustrated, and
+narrated storybooks
+• Supports both interactive co-creation and
+simple generation modes
+• Ensures character consistency across all
+story pages
+
+What Users Want?
+• Parents: Want safe, educational, personalized content without
+screen time concerns
+• Teachers: Need customizable teaching tools with moral/cultural
+lessons
+• Children: Require engaging, interactive content that stimulates
+imagination
+
+Problems with Existing
+Solutions
+01 Character Inconsistency: Traditional AI generates
+different character appearances across story pages
+02 Lack of Structure: AI-generated stories often lack
+proper narrative flow and age-appropriate
+content
+03 Limited Personalization: Difficulty incorporating
+user's own characters or preferences
+04 Complex User Interface: Existing tools require
+prompt engineering skills
+
+Problems with Existing
+Solutions
+
+Proposed
+Solution
+
+Key Features of Proposed Solution
+• Chatbot Modes
+• Story Generator Modes
+• Character Consistency
+• Voice Commands
+
+Cont...
+• Illustrations
+• Styled PDF Generator
+• Personalized Story Enhancement
+• Voice Narrator
+• Visual Book-Like User Interface
+
+Flowchart
+
+Technical Implementation
+• Prompt Engineering
+• Multi-Agent System
+• Character Consistency
+Pipeline
+• LangChain Orchestration
+
+“Core Story Generation & Basic UI”
+
+Iteration # 1
+
+Wahab:
+• Set up Ollama.
+• Implement
+Director Agent
+pipeline.
+• Do simple story
+generation.
+
+Ahmed:
+• Install & configure
+Stable Diffusion
+1.5
+• Implement Writer
+Agent pipeline.
+• Generate 1
+illustration per
+story.
+
+Mujahid:
+• Build basic
+interface.
+• Connect backend
+(story + image).
+• Display generated
+story & image
+
+“Interactive Storytelling & Multi-Page
+Books”
+
+Wahab:
+• Add Reviewer
+Agent
+• Implement story
+enhancement
+pipeline.
+
+Ahmed:
+• Build interactive
+book UI (page
+flipping: text right,
+image left)
+• Add styled PDF
+export feature.
+
+Iteration # 2
+
+Mujahid:
+• Build interactive
+chatbot with
+context saving.
+• Connect multipage story +
+illustrations
+pipeline.
+
+“Character Consistency & Personalization”
+
+Iteration # 3
+
+Wahab:
+• Implement
+Personalized Story
+Mode
+• Integrate IP-Adapter
+for character
+consistency across
+illustrations.
+
+Ahmed:
+• Add dropdowns
+for genre, style,
+length.
+• Enhance UI to
+show simple &
+personalized
+modes.
+
+Mujahid:
+• Extend Reviewer
+Agent + Editor
+Agent workflow.
+• Build Kids’
+Character Chatbot,
+powered by story
+context.
+
+“Final Experience & Accessibility”
+
+Iteration # 4
+
+Wahab:
+• Add voice
+narration (text-tospeech).
+• Optimize multiagent flow
+• Testing and bugfixing
+
+Ahmed:
+• Final UI polishing
+(Tabs for Chatbot /
+Story Generation /
+Character Chat).
+• Smooth transitions
+between modes.
+
+Mujahid:
+• Integrate full
+pipeline into one
+cohesive system.
+• Testing, bug-fixing,
+deployment.
+
+Tools and Technology
+
+

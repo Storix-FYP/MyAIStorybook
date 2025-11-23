@@ -1,0 +1,77 @@
+%% State Transition Diagram - Simplified High-Level Version
+%% MyAIStorybook Core Story Generation Lifecycle
+%% Focuses on essential states for better readability
+
+stateDiagram-v2
+    [*] --> Idle : System Ready
+    
+    %% Main Input States
+    Idle --> ValidatingInput : User submits prompt
+    Idle --> VoiceInput : Voice input mode
+    
+    %% Voice Input Processing
+    VoiceInput --> ProcessingSpeech : Voice detected
+    ProcessingSpeech --> ValidatingInput : Text transcribed
+    ProcessingSpeech --> ErrorState : Transcription failed
+    
+    %% Core Story Generation Flow
+    ValidatingInput --> GeneratingStory : Input validated
+    ValidatingInput --> ErrorState : Invalid input
+    
+    GeneratingStory --> ReviewingContent : Story generated
+    GeneratingStory --> ErrorState : Generation failed
+    
+    ReviewingContent --> EditingContent : Quality validated
+    ReviewingContent --> ErrorState : Content rejected
+    
+    EditingContent --> CheckImageToggle : Content polished
+    
+    %% Image Generation (Conditional)
+    CheckImageToggle --> GeneratingImages : Images enabled
+    CheckImageToggle --> CheckAudioToggle : Images disabled
+    
+    GeneratingImages --> CheckAudioToggle : Images generated
+    GeneratingImages --> CheckAudioToggle : Image generation failed<br/>(graceful degradation)
+    
+    %% Audio Generation (Conditional)
+    CheckAudioToggle --> GeneratingAudio : Audio enabled
+    CheckAudioToggle --> SavingStory : Audio disabled
+    
+    GeneratingAudio --> SavingStory : Audio generated
+    GeneratingAudio --> SavingStory : Audio generation failed<br/>(graceful degradation)
+    
+    %% Final States
+    SavingStory --> Completed : Story saved
+    Completed --> [*] : Return to user
+    
+    %% Error Handling
+    ErrorState --> [*] : Return error to user
+    
+    %% State Notes
+    note right of ValidatingInput
+        Prompt Agent validates:
+        - Input format
+        - Content appropriateness
+        - Language detection
+    end note
+    
+    note right of GeneratingStory
+        Writer Agent creates:
+        - Story structure
+        - Character development
+        - Scene narratives
+    end note
+    
+    note right of GeneratingImages
+        Image Agent generates:
+        - Scene illustrations
+        - Character consistency
+        - Style application
+    end note
+    
+    note right of GeneratingAudio
+        TTS Agent creates:
+        - Voice synthesis
+        - Audio effects
+        - Quality optimization
+    end note

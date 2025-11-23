@@ -1,0 +1,35 @@
+@startuml Export Process Sequence
+' Simplified Export and Download Flow
+
+actor User
+participant "Frontend" as FE
+participant "Backend" as API
+participant "PDF Generator" as PDF
+participant "Audio Generator" as Audio
+participant "File System" as FS
+
+== PDF Export ==
+User -> FE: Export PDF
+FE -> API: PDF request
+API -> PDF: Generate PDF
+PDF -> FS: Save PDF file
+PDF -> API: File path
+API -> FE: Download link
+FE -> User: Download PDF
+
+== Audio Book Export ==
+User -> FE: Export Audio Book
+FE -> API: Audio request
+API -> Audio: Generate narration
+Audio -> FS: Save audio files
+Audio -> API: File paths
+API -> FE: Download link
+FE -> User: Download audiobook
+
+== File Download ==
+User -> FE: Download file
+FE -> FS: Request file
+FS -> FE: File data
+FE -> User: File download
+
+@enduml

@@ -1,0 +1,56 @@
+%% Data Flow Diagram - Detailed High-Level Version
+%% MyAIStorybook Level 1 DFD with Processes and Data Stores
+%% Shows actual system processes while maintaining readability
+
+flowchart TD
+    %% External Entity
+    User[👤 User]
+    
+    %% Main Processes
+    P1[1.0<br/>Validate &<br/>Enhance Input]
+    P2[2.0<br/>Generate Story<br/>Narrative]
+    P3[3.0<br/>Generate Scene<br/>Illustrations]
+    P4[4.0<br/>Review &<br/>Validate Quality]
+    P5[5.0<br/>Edit &<br/>Format Output]
+    
+    %% Data Stores
+    D1[(D1<br/>Prompts)]
+    D2[(D2<br/>Drafts)]
+    D3[(D3<br/>Images)]
+    D4[(D4<br/>Reviews)]
+    D5[(D5<br/>Stories)]
+    
+    %% Data Flows from User
+    User -->|"Raw Story Prompt +<br/>Image Toggle"| P1
+    
+    %% Process 1.0 flows
+    P1 -->|"Enhanced Prompt"| D1
+    D1 -->|"Enhanced Prompt"| P2
+    
+    %% Process 2.0 flows
+    P2 -->|"Story Draft"| D2
+    D2 -->|"Scene Descriptions"| P3
+    D2 -->|"Story Draft"| P4
+    
+    %% Process 3.0 flows
+    P3 -->|"Generated Images"| D3
+    
+    %% Process 4.0 flows
+    P4 -->|"Validation Report"| D4
+    P4 -->|"Reviewed Story"| P5
+    
+    %% Process 5.0 flows
+    D3 -->|"Image Files"| P5
+    P5 -->|"Final Story JSON"| D5
+    
+    %% Output to User
+    D5 -->|"Story JSON with<br/>Image URLs"| User
+    
+    %% Styling
+    classDef externalEntity fill:#FFFACD,stroke:#000000,stroke-width:2px
+    classDef process fill:#87CEEB,stroke:#000000,stroke-width:2px
+    classDef dataStore fill:#90EE90,stroke:#000000,stroke-width:2px
+    
+    class User externalEntity
+    class P1,P2,P3,P4,P5 process
+    class D1,D2,D3,D4,D5 dataStore

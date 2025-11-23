@@ -1,0 +1,198 @@
+graph TB
+    %% User Interface Layer
+    subgraph "Presentation Layer"
+        UI[User Interface]
+        BookUI[Book-Style UI with SSE Streaming]
+        Chat[Chatbot Interface]
+        Controls[User Controls & Settings]
+    end
+
+    %% Application Layer
+    subgraph "Application Layer"
+        AppController[Application Controller]
+        ModeManager[Mode Manager]
+        ChatBot[Chatbot Service]
+    end
+
+    %% Business Logic Layer
+    subgraph "Business Logic Layer"
+        subgraph "Story Generation Services"
+            AutoGen[Auto Story Generation]
+            PersonalGen[Personalized Story Generation]
+            StoryEnhancer[Story Enhancement Service]
+        end
+        
+        subgraph "Chat Services"
+            CharChat[Character Chat Service]
+            ContextMgr[Context Manager]
+        end
+        
+        PromptEng[Prompt Engineering Service]
+        StoryStruct[Story Structuring Service]
+    end
+
+    %% AI & ML Layer
+    subgraph "AI/ML Layer"
+        subgraph "Multi-Agent System"
+            Director[Director Agent]
+            Writer[Writer Agent]
+            Reviewer[Reviewer Agent]
+            Editor[Editor Agent]
+        end
+        
+        subgraph "LLM Service"
+            LLM[Local LLM via Ollama]
+        end
+        
+        subgraph "Image Generation Service"
+            SD[Stable Diffusion 1.5]
+            IPAdapter[IP-Adapter]
+        end
+        
+        subgraph "Orchestration"
+            LangChain[LangChain Orchestrator]
+            Workflow[Workflow Manager]
+        end
+    end
+
+    %% Data Layer
+    subgraph "Data Layer"
+        SessionMgr[Session Manager Service]
+        StoryData[Story Data Store]
+        UserData[User Preferences]
+        SessionData[Session Context]
+        ImageData[Image Assets]
+        CharData[Character Data]
+    end
+
+    %% Infrastructure Layer
+    subgraph "Infrastructure Layer"
+        FileSystem[File System Manager]
+        PDFService[PDF Generation Service]
+        TTSService[TTS Service]
+        STTService[STT Service]
+        ErrorHandler[Error Handler]
+        ConfigMgr[Configuration Manager]
+    end
+
+    %% External Dependencies
+    subgraph "External Dependencies"
+        OllamaAPI[Ollama Local API]
+        SDPipeline[Stable Diffusion Pipeline]
+        FontLibs[Font Libraries]
+        AudioLibs[Audio Libraries]
+    end
+
+    %% User Interactions & Entry Points
+    User((User)) -->|"1. Launch Application"| UI
+    User -->|"2. Select Mode"| Controls
+    User -->|"3. Input Story Prompt"| Chat
+    User -->|"4. Upload Personal Image"| Controls
+    User -->|"5. Chat with Characters"| Chat
+    User -->|"6. Export/Download"| BookUI
+    User -->|"7. Voice Input"| STTService
+    
+    %% UI Response Flow
+    UI -->|"Route User Actions"| AppController
+    Controls -->|"Mode Selection"| ModeManager
+    Controls -->|"Settings & Preferences"| SessionMgr
+    Chat -->|"Process Messages"| ChatBot
+    BookUI -->|"Display Generated Content"| User
+    
+    %% Application Flow
+    AppController --> ModeManager
+    ModeManager --> SessionMgr
+    AppController --> ChatBot
+    
+    %% Mode Routing
+    ModeManager -.->|Chatbot Mode| ChatBot
+    ModeManager -.->|Story Mode| AutoGen
+    ModeManager -.->|Story Mode| PersonalGen
+    
+    %% UI Connections
+    BookUI --> StoryData
+    Chat --> ChatBot
+    Controls --> SessionMgr
+    
+    %% Business Logic Flow
+    ChatBot --> ContextMgr
+    ChatBot --> CharChat
+    AutoGen --> PromptEng
+    PersonalGen --> StoryEnhancer
+    
+    %% Story Generation Pipeline
+    PromptEng --> Director
+    StoryEnhancer --> Writer
+    
+    %% Multi-Agent Coordination
+    Director --> Writer
+    Writer --> Reviewer
+    Reviewer --> Editor
+    Editor --> StoryStruct
+    
+    %% AI Model Integration
+    Director --> LLM
+    Writer --> LLM
+    Reviewer --> LLM
+    PersonalGen --> IPAdapter
+    IPAdapter --> SD
+    
+    %% Orchestration
+    LangChain --> Director
+    LangChain --> Writer
+    LangChain --> Reviewer
+    LangChain --> Editor
+    Workflow --> LangChain
+    
+    %% Data Flow
+    StoryStruct --> StoryData
+    CharChat --> CharData
+    ContextMgr --> SessionData
+    SessionMgr --> UserData
+    SessionMgr --> SessionData
+    IPAdapter --> ImageData
+    
+    %% Session Manager Integration
+    SessionMgr --> FileSystem
+    
+    %% Output Generation
+    Editor --> PDFService
+    Editor --> TTSService
+    StoryData --> BookUI
+    TTSService -->|Audio Output| User
+    
+    %% Infrastructure Support
+    PDFService --> FileSystem
+    TTSService --> AudioLibs
+    STTService --> AudioLibs
+    BookUI --> FontLibs
+    ErrorHandler -.-> AppController
+    ConfigMgr -.-> AppController
+    
+    %% External Integrations
+    LLM --> OllamaAPI
+    SD --> SDPipeline
+    
+    %% Data Persistence
+    StoryData --> FileSystem
+    UserData --> FileSystem
+    SessionData --> FileSystem
+    ImageData --> FileSystem
+    CharData --> FileSystem
+
+    %% Styling
+    classDef userLayer fill:#e1f5fe
+    classDef appLayer fill:#f3e5f5
+    classDef businessLayer fill:#e8f5e8
+    classDef aiLayer fill:#fff3e0
+    classDef dataLayer fill:#fce4ec
+    classDef infraLayer fill:#f1f8e9
+    classDef externalLayer fill:#fff8e1
+    
+    class UI,BookUI,Chat,Controls userLayer
+    class AppController,ModeManager,ChatBot appLayer
+    class AutoGen,PersonalGen,StoryEnhancer,CharChat,ContextMgr,PromptEng,StoryStruct businessLayer
+    class Director,Writer,Reviewer,Editor,LLM,SD,IPAdapter,LangChain,Workflow aiLayer
+    class SessionMgr,StoryData,UserData,SessionData,ImageData,CharData dataLayer
+    class FileSystem,PDFService,TTSService,STTService,ErrorHandler,ConfigMgr infraLayer
+    class OllamaAPI,SDPipeline,FontLibs,AudioLibs externalLayer

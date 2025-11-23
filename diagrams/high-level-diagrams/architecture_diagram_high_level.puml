@@ -1,0 +1,101 @@
+@startuml MyAIStorybook High-Level Architecture
+' High-Level Layered Architecture Diagram
+' Shows system layers and main components
+
+!define RECTANGLE class
+
+package "Presentation Layer" {
+  [Next.js Frontend] as Frontend
+  [User Interface] as UI
+  [Theme Management] as Theme
+}
+
+package "Business Logic Layer" {
+  [Multi-Agent Pipeline] as Pipeline
+  [Director Agent] as Director
+  [Writer Agent] as Writer
+  [Reviewer Agent] as Reviewer
+  [Editor Agent] as Editor
+  [Image Agent] as ImageAgent
+  [TTS Agent] as TTSAgent
+  [STT Agent] as STTAgent
+  [Chatbot Agent] as Chatbot
+}
+
+package "API Layer" {
+  [FastAPI Backend] as Backend
+  [REST Endpoints] as REST
+  [WebSocket] as WS
+  [Authentication] as Auth
+}
+
+package "Data Processing Layer" {
+  [LLM Processing\n(Ollama)] as LLM
+  [Image Generation\n(Stable Diffusion)] as ImageGen
+  [Audio Processing\n(Coqui TTS)] as AudioGen
+  [Speech Processing\n(Whisper)] as SpeechGen
+}
+
+package "Database Layer" {
+  [PostgreSQL] as DB
+  [User Data] as UserData
+  [Story Metadata] as StoryData
+  [Session Data] as SessionData
+}
+
+package "Storage Layer" {
+  [File System] as FileSystem
+  [Generated Images] as Images
+  [Audio Files] as Audio
+  [PDF Exports] as PDFs
+  [Story JSON] as Stories
+}
+
+package "External Services" {
+  [Ollama Service] as Ollama
+  [Model Storage] as Models
+}
+
+' Layer connections
+Frontend --> Backend
+UI --> Frontend
+Theme --> Frontend
+
+Backend --> Pipeline
+REST --> Backend
+WS --> Backend
+Auth --> Backend
+
+Pipeline --> Director
+Director --> Writer
+Director --> Reviewer
+Director --> Editor
+Director --> ImageAgent
+Director --> TTSAgent
+Director --> STTAgent
+Director --> Chatbot
+
+Writer --> LLM
+ImageAgent --> ImageGen
+TTSAgent --> AudioGen
+STTAgent --> SpeechGen
+Chatbot --> LLM
+
+Backend --> DB
+Backend --> FileSystem
+
+DB --> UserData
+DB --> StoryData
+DB --> SessionData
+
+FileSystem --> Images
+FileSystem --> Audio
+FileSystem --> PDFs
+FileSystem --> Stories
+
+LLM --> Ollama
+ImageGen --> Models
+AudioGen --> Models
+SpeechGen --> Models
+
+@enduml

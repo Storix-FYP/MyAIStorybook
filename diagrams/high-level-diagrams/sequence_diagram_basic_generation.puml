@@ -1,0 +1,49 @@
+@startuml Basic Story Generation Sequence
+' Basic Story Generation Flow
+' Shows the core text-to-story generation process
+
+actor User
+participant "Frontend" as FE
+participant "FastAPI Backend" as API
+participant "Director Agent" as Director
+participant "Prompt Agent" as Prompt
+participant "Writer Agent" as Writer
+participant "Reviewer Agent" as Reviewer
+participant "Editor Agent" as Editor
+participant "Ollama LLM" as LLM
+
+User -> FE: Enter story prompt
+User -> FE: Click "Generate Story"
+FE -> API: POST /api/generate
+API -> Director: Start pipeline
+Director -> Prompt: Validate & enhance prompt
+Prompt -> Prompt: Classify prompt type
+Prompt -> Director: Enhanced prompt + classification
+
+alt Prompt is valid
+    Director -> Writer: Generate story structure
+    Writer -> LLM: Generate story with llama3.1:8b
+    LLM -> Writer: Story JSON response
+    Writer -> Director: Structured story data
+    
+    Director -> Reviewer: Review story quality
+    Reviewer -> Reviewer: Check age-appropriateness
+    Reviewer -> Reviewer: Validate coherence
+    Reviewer -> Director: Approved story
+    
+    Director -> Editor: Polish and format
+    Editor -> Editor: Refine language
+    Editor -> Editor: Generate PDF
+    Editor -> Director: Final story + PDF
+    
+    Director -> API: Complete story response
+    API -> FE: Story data with metadata
+    FE -> User: Display story with navigation
+else Prompt is invalid
+    Prompt -> Director: Error classification
+    Director -> API: Error response
+    API -> FE: Error message
+    FE -> User: Show error, request new prompt
+end
+
+@enduml

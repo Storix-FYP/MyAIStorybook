@@ -1,0 +1,132 @@
+%% Domain Model - Simplified High-Level Version
+%% MyAIStorybook Core Entities and Relationships
+%% Focuses on essential data structures for better readability
+
+erDiagram
+    %% Core Story Entities
+    STORY ||--o{ SCENE : contains
+    STORY ||--o{ CHARACTER : features
+    STORY ||--o| PDF_EXPORT : generates
+    STORY ||--o{ IMAGE_FILE : has_images
+    STORY ||--o{ AUDIO_FILE : has_audio
+    STORY ||--o{ AGENT_EXECUTION : processed_by
+    STORY ||--o{ EVALUATION_METRICS : evaluated_by
+    
+    %% User and Interaction
+    USER ||--o{ STORY : creates
+    USER ||--o{ USER_PREFERENCES : has
+    USER ||--o{ CHAT_SESSION : participates_in
+    
+    %% Scene and Media
+    SCENE ||--o| IMAGE_FILE : illustrated_by
+    SCENE ||--o| AUDIO_FILE : has_audio
+    SCENE ||--o{ CHARACTER : features
+    
+    %% Chat and Story Generation
+    CHAT_SESSION ||--o| STORY : generates
+    
+    %% Core Story Entity
+    STORY {
+        string story_id PK
+        string title
+        string setting
+        string language
+        string status
+        datetime generation_timestamp
+        string user_id FK
+    }
+    
+    %% Scene Entity
+    SCENE {
+        string scene_id PK
+        string story_id FK
+        int scene_number
+        string text
+        string image_description
+        string audio_description
+    }
+    
+    %% Character Entity
+    CHARACTER {
+        string character_id PK
+        string story_id FK
+        string name
+        string description
+        string appearance
+        string role
+    }
+    
+    %% User Entity
+    USER {
+        string user_id PK
+        string username
+        string email
+        string preferred_language
+        datetime registration_date
+    }
+    
+    %% User Preferences
+    USER_PREFERENCES {
+        string preference_id PK
+        string user_id FK
+        string preferred_voice_style
+        string preferred_image_style
+        string preferred_themes
+    }
+    
+    %% Chat Session
+    CHAT_SESSION {
+        string session_id PK
+        string user_id FK
+        string story_id FK
+        string status
+        datetime start_time
+    }
+    
+    %% Image File
+    IMAGE_FILE {
+        string image_id PK
+        string scene_id FK
+        string filename
+        string file_path
+        string format
+        string style
+    }
+    
+    %% Audio File
+    AUDIO_FILE {
+        string audio_id PK
+        string scene_id FK
+        string filename
+        string file_path
+        string format
+        string voice_style
+    }
+    
+    %% PDF Export
+    PDF_EXPORT {
+        string export_id PK
+        string story_id FK
+        string filename
+        string file_path
+        int page_count
+    }
+    
+    %% Agent Execution
+    AGENT_EXECUTION {
+        string execution_id PK
+        string story_id FK
+        string agent_type
+        string status
+        datetime start_time
+        datetime end_time
+    }
+    
+    %% Evaluation Metrics
+    EVALUATION_METRICS {
+        string evaluation_id PK
+        string story_id FK
+        float coherence_score
+        float age_appropriateness
+        float creativity_score
+    }
