@@ -18,14 +18,18 @@ from backend.agents.editor_agent import export_pdf
 from backend.agents.prompt_agent import PromptAgent
 from backend.agents.story_agent import StoryAgent
 from backend.agents.image_agent import ImageAgent
+from backend.agents.chatbot_agent import ChatbotAgent
+from backend.agents.idea_workshop_agent import IdeaWorkshopAgent
 # ReviewerAgent is now only called inside DirectorAgent
 # from backend.agents.reviewer_agent import ReviewerAgent
 
 # --- Import Auth ---
 from backend.auth.routes import router as auth_router
-from backend.auth.database import engine, Base
+from backend.auth.database import engine, Base, get_db
 from backend.auth.dependencies import get_current_user_optional
 from backend.auth.models import User
+from backend.auth.db_models import Story, ChatConversation, ChatMessage, WorkshopSession, WorkshopMessage, WorkshopStory
+from sqlalchemy.orm import Session
 
 # -------------------
 # Utility: Device info
@@ -99,8 +103,10 @@ app.mount("/generated", StaticFiles(directory=GENERATED_DIR), name="generated")
 def init_database():
     """Initialize database tables if connection is available"""
     try:
+        # Import all models to ensure they're registered
+        from backend.auth.db_models import Story, ChatConversation, ChatMessage, WorkshopSession, WorkshopMessage, WorkshopStory
         Base.metadata.create_all(bind=engine)
-        print("✅ Database tables initialized successfully")
+        print("✅ Database tables initialized successfully (including Story, Chat, and Workshop tables)")
     except Exception as e:
         print(f"⚠️ Warning: Could not initialize database: {e}")
         print("⚠️ Authentication features will not be available until database is configured.")
@@ -130,10 +136,15 @@ async def device():
 # Main generation endpoint
 # -------------------------
 @app.post("/api/generate")
-async def api_generate(request: Request, current_user: User = Depends(get_current_user_optional)):
+async def api_generate(
+    request: Request, 
+    current_user: User = Depends(get_current_user_optional),
+    db: Session = Depends(get_db)
+):
     body = await request.json()
     prompt = body.get("prompt")
     generate_images = body.get("generate_images", True)
+    mode = body.get("mode", "simple")  # 'simple' or 'personalized'
     timestamp = int(time.time())
 
     if not prompt:
@@ -249,10 +260,344 @@ async def api_generate(request: Request, current_user: User = Depends(get_curren
         print(f"❌ Failed to start evaluation agent process: {e}")
     # --- END OF NEW CODE ---
 
+    # --- Save story to database ---
+    story_id = None
+    try:
+        db_story = Story(
+            user_id=current_user.id if current_user else None,
+            title=story_title,
+            mode=mode,
+            story_data=final_story
+        )
+        db.add(db_story)
+        db.commit()
+        db.refresh(db_story)
+        story_id = db_story.id
+        print(f"✅ Story saved to database with ID: {story_id}")
+    except Exception as e:
+        print(f"⚠️ Warning: Failed to save story to database: {e}")
+        db.rollback()
+        # Continue even if database save fails (for backward compatibility)
+
     # --- Final combined status ---
     status_msg = image_status or story_status
 
-    return JSONResponse({"status": status_msg, "story":final_story})
+    return JSONResponse({
+        "status": status_msg, 
+        "story": final_story,
+        "story_id": story_id  # Return story ID for chat reference
+    })
+
+
+# -------------------------
+# Chatbot endpoints
+# -------------------------
+@app.post("/api/chat")
+async def api_chat(
+    request: Request,
+    current_user: User = Depends(get_current_user_optional),
+    db: Session = Depends(get_db)
+):
+    """
+    Handle character chatbot conversations (STATELESS - no conversation history saved)
+    Request body: {story_id, character_name, user_message}
+    """
+    try:
+        body = await request.json()
+        story_id = body.get("story_id")
+        character_name = body.get("character_name")
+        user_message = body.get("user_message")
+        
+        # Validation
+        if not story_id or not character_name or not user_message:
+            raise HTTPException(
+                status_code=400, 
+                detail="Missing required fields: story_id, character_name, user_message"
+            )
+        
+        # Load story from database
+        db_story = db.query(Story).filter(Story.id == story_id).first()
+        if not db_story:
+            raise HTTPException(status_code=404, detail="Story not found")
+        
+        story_data = db_story.story_data
+        
+        # Validate character exists in story
+        characters = story_data.get("characters", [])
+        if character_name not in characters:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Character '{character_name}' not found in story. Available: {characters}"
+            )
+        
+        # Generate response using ChatbotAgent (no conversation history)
+        chatbot = ChatbotAgent(story_data, character_name)
+        character_response = chatbot.chat(user_message)
+        
+        # Return response without saving anything to database
+        return JSONResponse({
+            "response": character_response,
+            "character": character_name
+        })
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Chat error: {str(e)}")
+
+
+
+
+# -------------------------
+# Idea Workshop endpoints
+# -------------------------
+@app.post("/api/workshop/start")
+async def start_workshop(
+    request: Request,
+    current_user: User = Depends(get_current_user_optional),
+    db: Session = Depends(get_db)
+):
+    """
+    Start a new workshop session
+    Request body: {mode: 'improvement' | 'new_idea'}
+    """
+    try:
+        body = await request.json()
+        mode = body.get("mode")
+        
+        if mode not in ['improvement', 'new_idea']:
+            raise HTTPException(status_code=400, detail="Mode must be 'improvement' or 'new_idea'")
+        
+        # Create new session
+        session = WorkshopSession(
+            user_id=current_user.id if current_user else None,
+            mode=mode,
+            status='active'
+        )
+        db.add(session)
+        db.commit()
+        db.refresh(session)
+        
+        # Generate initial message based on mode
+        if mode == 'improvement':
+            initial_message = "Welcome to Story Improvement Mode! Please paste your story below (maximum 300 words)."
+        else:
+            initial_message = "Welcome to New Idea Mode! Tell me about your story idea, and I'll help you build it!"
+        
+        # Save initial assistant message
+        initial_msg = WorkshopMessage(
+            session_id=session.id,
+            role='assistant',
+            message=initial_message
+        )
+        db.add(initial_msg)
+        db.commit()
+        
+        return JSONResponse({
+            "session_id": session.id,
+            "mode": mode,
+            "initial_message": initial_message
+        })
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        traceback.print_exc()
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Error starting workshop: {str(e)}")
+
+
+@app.post("/api/workshop/chat")
+async def workshop_chat(
+    request: Request,
+    current_user: User = Depends(get_current_user_optional),
+    db: Session = Depends(get_db)
+):
+    """
+    Handle workshop conversation
+    Request body: {session_id, user_message}
+    """
+    try:
+        body = await request.json()
+        session_id = body.get("session_id")
+        user_message = body.get("user_message")
+        
+        if not session_id or not user_message:
+            raise HTTPException(status_code=400, detail="Missing session_id or user_message")
+        
+        # Load session
+        session = db.query(WorkshopSession).filter(WorkshopSession.id == session_id).first()
+        if not session:
+            raise HTTPException(status_code=404, detail="Session not found")
+        
+        # Load conversation history
+        messages = db.query(WorkshopMessage).filter(
+            WorkshopMessage.session_id == session_id
+        ).order_by(WorkshopMessage.created_at).all()
+        
+        history = [{
+            "role": msg.role,
+            "message": msg.message,
+            "metadata": msg.message_metadata or {}
+        } for msg in messages]
+        
+        # Create agent and process message
+        agent = IdeaWorkshopAgent(session.mode, history)
+        response, metadata = agent.process_message(user_message)
+        
+        # CRITICAL FIX: Save metadata on USER message too (not just assistant)
+        # This allows the next agent instance to find requirements from history
+        user_msg = WorkshopMessage(
+            session_id=session_id,
+            role='user',
+            message=user_message,
+            message_metadata=metadata  # Save extracted requirements
+        )
+        db.add(user_msg)
+        db.commit()
+        
+        # Save assistant response
+        assistant_msg = WorkshopMessage(
+            session_id=session_id,
+            role='assistant',
+            message=response,
+            message_metadata=metadata
+        )
+        db.add(assistant_msg)
+        db.commit()
+        
+        # Check if ready to generate
+        ready_to_generate = agent.should_generate_story(user_message)
+        
+        return JSONResponse({
+            "response": response,
+            "ready_to_generate": ready_to_generate,
+            "metadata": metadata
+        })
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        traceback.print_exc()
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Workshop chat error: {str(e)}")
+
+
+@app.get("/api/workshop/history/{session_id}")
+async def get_workshop_history(
+    session_id: int,
+    db: Session = Depends(get_db)
+):
+    """
+    Load full workshop conversation history
+    """
+    try:
+        # Load session
+        session = db.query(WorkshopSession).filter(WorkshopSession.id == session_id).first()
+        if not session:
+            raise HTTPException(status_code=404, detail="Session not found")
+        
+        # Load messages
+        messages = db.query(WorkshopMessage).filter(
+            WorkshopMessage.session_id == session_id
+        ).order_by(WorkshopMessage.created_at).all()
+        
+        # Load stories if any
+        stories = db.query(WorkshopStory).filter(
+            WorkshopStory.session_id == session_id
+        ).order_by(WorkshopStory.version).all()
+        
+        return JSONResponse({
+            "session_id": session_id,
+            "mode": session.mode,
+            "status": session.status,
+            "messages": [{
+                "role": msg.role,
+                "message": msg.message,
+                "metadata": msg.message_metadata,
+                "created_at": msg.created_at.isoformat() if msg.created_at else None
+            } for msg in messages],
+            "stories": [{
+                "version": story.version,
+                "story_text": story.story_text,
+                "created_at": story.created_at.isoformat() if story.created_at else None
+            } for story in stories]
+        })
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Error loading history: {str(e)}")
+
+
+@app.post("/api/workshop/generate")
+async def generate_workshop_story(
+    request: Request,
+    db: Session = Depends(get_db)
+):
+    """
+    Generate story from workshop session
+    Request body: {session_id}
+    """
+    try:
+        body = await request.json()
+        session_id = body.get("session_id")
+        
+        if not session_id:
+            raise HTTPException(status_code=400, detail="Missing session_id")
+        
+        # Load session
+        session = db.query(WorkshopSession).filter(WorkshopSession.id == session_id).first()
+        if not session:
+            raise HTTPException(status_code=404, detail="Session not found")
+        
+        # Load conversation history
+        messages = db.query(WorkshopMessage).filter(
+            WorkshopMessage.session_id == session_id
+        ).order_by(WorkshopMessage.created_at).all()
+        
+        history = [{
+            "role": msg.role,
+            "message": msg.message,
+            "metadata": msg.message_metadata or {}
+        } for msg in messages]
+        
+        # Create agent and generate story
+        agent = IdeaWorkshopAgent(session.mode, history)
+        story_text = agent.generate_story()
+        
+        # Get current version
+        existing_stories = db.query(WorkshopStory).filter(
+            WorkshopStory.session_id == session_id
+        ).order_by(WorkshopStory.version.desc()).first()
+        
+        next_version = (existing_stories.version + 1) if existing_stories else 1
+        
+        # Save generated story
+        workshop_story = WorkshopStory(
+            session_id=session_id,
+            version=next_version,
+            story_text=story_text,
+            user_story_text=agent.user_story  # For improvement mode
+        )
+        db.add(workshop_story)
+        db.commit()
+        db.refresh(workshop_story)
+        
+        return JSONResponse({
+            "story_text": story_text,
+            "version": next_version,
+            "story_id": workshop_story.id
+        })
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        traceback.print_exc()
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Story generation error: {str(e)}")
 
 
 # -------------------------

@@ -6,13 +6,14 @@ import { useAuth } from "@/contexts/AuthContext";
 import "./StoryInput.css";
 
 interface StoryInputProps {
-  onStoryGenerated: (story: any) => void;
+  onStoryGenerated: (story: any, storyId?: number) => void;
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
   onShowLogin?: () => void;
+  mode?: 'simple' | 'personalized';
 }
 
-const StoryInput: React.FC<StoryInputProps> = ({ onStoryGenerated, setLoading, setError, onShowLogin }) => {
+const StoryInput: React.FC<StoryInputProps> = ({ onStoryGenerated, setLoading, setError, onShowLogin, mode = 'simple' }) => {
   const { isAuthenticated, token } = useAuth();
   const [prompt, setPrompt] = useState<string>("");
   const [generateImages, setGenerateImages] = useState<boolean>(isAuthenticated);
@@ -24,31 +25,35 @@ const StoryInput: React.FC<StoryInputProps> = ({ onStoryGenerated, setLoading, s
       setLocalError("Please provide an idea to spark the magic!");
       return;
     }
-    
+
     // Check if user is trying to generate images without being authenticated
     if (generateImages && !isAuthenticated) {
       setShowLoginMessage(true);
       setLocalError("Please login to generate images. Guest users can only create text stories.");
       return;
     }
-    
+
     setLoading(true);
     setLocalError(null);
     setError(null);
     setShowLoginMessage(false);
-    
+
     try {
       const headers: HeadersInit = { "Content-Type": "application/json" };
       if (token) {
         headers["Authorization"] = `Bearer ${token}`;
       }
-      
+
       const res = await fetch(API_ENDPOINTS.GENERATE, {
         method: "POST",
         headers,
-        body: JSON.stringify({ prompt, generate_images: generateImages }),
+        body: JSON.stringify({
+          prompt,
+          generate_images: generateImages,
+          mode: mode  // Include mode in request
+        }),
       });
-      
+
       if (!res.ok) {
         const errorData = await res.json().catch(() => ({}));
         if (res.status === 401 && errorData.detail?.includes("login")) {
@@ -57,10 +62,10 @@ const StoryInput: React.FC<StoryInputProps> = ({ onStoryGenerated, setLoading, s
         }
         throw new Error(errorData.detail || `The magic faltered. Please try a different idea.`);
       }
-      
+
       const data = await res.json();
       if (data?.story) {
-        onStoryGenerated(data.story);
+        onStoryGenerated(data.story, data.story_id);  // Pass story_id to parent
       } else {
         throw new Error("Received a confusing scroll from the server.");
       }
@@ -73,7 +78,7 @@ const StoryInput: React.FC<StoryInputProps> = ({ onStoryGenerated, setLoading, s
       setLoading(false);
     }
   };
-  
+
   const handleImageToggle = (checked: boolean): void => {
     if (checked && !isAuthenticated) {
       setShowLoginMessage(true);
@@ -100,7 +105,7 @@ const StoryInput: React.FC<StoryInputProps> = ({ onStoryGenerated, setLoading, s
         <h2>Begin Your Adventure</h2>
         <p>Whisper an idea, and watch a world unfold.</p>
       </div>
-      
+
       <div className="input-field-container">
         <textarea
           className="main-prompt-input"
@@ -126,7 +131,7 @@ const StoryInput: React.FC<StoryInputProps> = ({ onStoryGenerated, setLoading, s
             />
             <span className={`slider ${!isAuthenticated ? 'disabled' : ''}`}></span>
           </label>
-          <span 
+          <span
             className={!isAuthenticated ? 'disabled-text' : ''}
             title={!isAuthenticated ? 'Please login first to enable image generation' : ''}
           >
@@ -142,7 +147,7 @@ const StoryInput: React.FC<StoryInputProps> = ({ onStoryGenerated, setLoading, s
           </div>
         )}
       </div>
-      
+
       <button className="generate-button" onClick={handleSubmit}>
         Weave Magic
       </button>

@@ -1,0 +1,319 @@
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.8);
+  display:flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2000;
+  animation: fadeIn 0.3s ease;
+}
+
+.modal {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 24px;
+  padding: 0;
+  max-width: 900px;
+  width: 90%;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  animation: slideUp 0.4s ease;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 30px;
+  border-bottom: 2px solid rgba(255, 255, 255, 0.2);
+}
+
+.title {
+  color: white;
+  font-size: 2rem;
+  margin: 0;
+}
+
+.closeButton {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  border: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  font-size: 1.5rem;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.closeButton:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* Mode Selection */
+.modeSelection {
+  padding: 40px;
+}
+
+.prompt {
+  text-align: center;
+  font-size: 1.3rem;
+  color: white;
+  margin-bottom: 30px;
+}
+
+.modeCards {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+}
+
+.modeCard {
+  background: white;
+  padding: 30px;
+  border-radius: 16px;
+  cursor: pointer;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  text-align: center;
+}
+
+.modeCard:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+}
+
+.modeIcon {
+  font-size: 3rem;
+  margin-bottom: 15px;
+}
+
+.modeCard h3 {
+  color: #667eea;
+  font-size: 1.5rem;
+  margin-bottom: 10px;
+}
+
+.modeCard p {
+  color: #666;
+  font-size: 1rem;
+}
+
+/* Chat Interface */
+.chatInterface {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  background: white;
+  border-radius: 0 0 24px 24px;
+  overflow: hidden;
+}
+
+.modeIndicator {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 12px 20px;
+  text-align: center;
+  font-weight: bold;
+  font-size: 1.1rem;
+}
+
+.messagesContainer {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+  max-height: 400px;
+}
+
+.message {
+  display: flex;
+  margin-bottom: 15px;
+}
+
+.userMessage {
+  justify-content: flex-end;
+}
+
+.assistantMessage {
+  justify-content: flex-start;
+}
+
+.messageBubble {
+  max-width: 70%;
+  padding: 12px 18px;
+  border-radius: 18px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
+
+.userMessage .messageBubble {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-bottom-right-radius: 4px;
+}
+
+.assistantMessage .messageBubble {
+  background: #f0f0f0;
+  color: #333;
+  border-bottom-left-radius: 4px;
+}
+
+.typing {
+  animation: blink 1.4s infinite;
+}
+
+.inputContainer {
+  padding: 20px;
+  background: #f9f9f9;
+  border-top: 2px solid #eee;
+}
+
+.wordCounter {
+  text-align: right;
+  margin-bottom: 8px;
+  font-size: 0.9rem;
+  color: #666;
+}
+
+.wordCountError {
+  color: #f44336;
+  font-weight: bold;
+}
+
+.input {
+  width: 100%;
+  padding: 12px;
+  border-radius: 12px;
+  border: 2px solid #ddd;
+  font-size: 1rem;
+  font-family: inherit;
+  resize: none;
+  margin-bottom: 10px;
+  transition: border-color 0.3s ease;
+}
+
+.input:focus {
+  outline: none;
+  border-color: #667eea;
+}
+
+.sendButton {
+  width: 100%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  padding: 12px;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.sendButton:hover:not(:disabled) {
+  transform: translateY(-2px);
+}
+
+.sendButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Story Display */
+.storyDisplay {
+  background: white;
+  padding: 30px;
+  border-radius: 0 0 24px 24px;
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+.storyHeader {
+  margin-bottom: 20px;
+}
+
+.storyHeader h3 {
+  color: #667eea;
+  font-size: 1.5rem;
+}
+
+.storyContent {
+  background: #f9f9f9;
+  padding: 20px;
+  border-radius: 12px;
+  line-height: 1.8;
+  font-size: 1.1rem;
+  color: #333;
+  white-space: pre-wrap;
+  margin-bottom: 20px;
+}
+
+.storyActions {
+  display: flex;
+  gap: 15px;
+  justify-content: center;
+}
+
+.acceptButton, .improveButton {
+  padding: 12px 30px;
+  border-radius: 25px;
+  font-size: 1rem;
+  font-weight: bold;
+  cursor: pointer;
+  border: none;
+  transition: transform 0.2s ease;
+}
+
+.acceptButton {
+  background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+  color: white;
+}
+
+.improveButton {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  color: white;
+}
+
+.acceptButton:hover, .improveButton:hover {
+  transform: scale(1.05);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(50px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 1; }
+}
+
+@media (max-width: 768px) {
+  .modal {
+    width: 95%;
+    max-height: 95vh;
+  }
+
+  .modeCards {
+    grid-template-columns: 1fr;
+  }
+
+  .messageBubble {
+    max-width: 85%;
+  }
+}
