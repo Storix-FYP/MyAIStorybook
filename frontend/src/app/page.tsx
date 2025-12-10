@@ -1,8 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Navigation, Footer } from '@/layout';
-import { LandingPage, ModeSelection, IdeaWorkshop } from '@/pages/Home';
+import { LandingPage, ModeSelection, IdeaWorkshop, WorkshopPage } from '@/pages/Home';
 import { StoryInput, StoryDisplay } from '@/pages/Story';
 import { Login, Register } from '@/pages/Auth';
 import { LoadingExperience } from '@/shared/components';
@@ -35,6 +35,15 @@ export default function Home() {
   const [showLogin, setShowLogin] = useState<boolean>(false);
   const [showRegister, setShowRegister] = useState<boolean>(false);
   const [showWorkshop, setShowWorkshop] = useState<boolean>(false);
+  const [workshopMode, setWorkshopMode] = useState<'improvement' | 'new_idea' | null>(null);
+  const [showWorkshopPage, setShowWorkshopPage] = useState<boolean>(false);
+
+  // Scroll to top when navigating to workshop page or mode selection
+  useEffect(() => {
+    if (showWorkshopPage || showModeSelection || !showLanding) {
+      window.scrollTo(0, 0);
+    }
+  }, [showWorkshopPage, showModeSelection, showLanding]);
 
   const handleStartCreating = (): void => {
     setShowLanding(false);
@@ -62,6 +71,8 @@ export default function Home() {
     setStoryId(null);
     setError(null);
     setShowLanding(true);
+    setShowWorkshopPage(false);
+    setWorkshopMode(null);
   };
 
   const handleGoHome = (): void => {
@@ -71,10 +82,25 @@ export default function Home() {
     setShowLanding(true);
     setShowModeSelection(false);
     setShowWorkshop(false);
+    setShowWorkshopPage(false);
+    setWorkshopMode(null);
   };
 
   const handleOpenWorkshop = (): void => {
     setShowWorkshop(true);
+  };
+
+  const handleWorkshopModeSelected = (mode: 'improvement' | 'new_idea'): void => {
+    setWorkshopMode(mode);
+    setShowWorkshop(false);
+    setShowLanding(false);
+    setShowWorkshopPage(true);
+  };
+
+  const handleBackFromWorkshop = (): void => {
+    setShowWorkshopPage(false);
+    setWorkshopMode(null);
+    setShowLanding(true);
   };
 
   return (
@@ -90,7 +116,17 @@ export default function Home() {
       {loading && <LoadingExperience />}
 
       <main className="main-content">
-        {showLanding && !story ? (
+        {/* Workshop Full Page */}
+        {showWorkshopPage && workshopMode ? (
+          <div className="story-input-section">
+            <div className="story-input-container" style={{ maxWidth: '900px' }}>
+              <WorkshopPage
+                mode={workshopMode}
+                onBack={handleBackFromWorkshop}
+              />
+            </div>
+          </div>
+        ) : showLanding && !story ? (
           <LandingPage
             onStartCreating={handleStartCreating}
             onOpenWorkshop={handleOpenWorkshop}
@@ -131,6 +167,7 @@ export default function Home() {
       <IdeaWorkshop
         isOpen={showWorkshop}
         onClose={() => setShowWorkshop(false)}
+        onModeSelected={handleWorkshopModeSelected}
       />
 
       {showLogin && (

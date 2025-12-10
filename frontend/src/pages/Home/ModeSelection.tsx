@@ -14,10 +14,22 @@ export const ModeSelection: React.FC<ModeSelectionProps> = ({ onSelectMode, onCl
     // Don't call onClose() here - onSelectMode handles the navigation
   };
 
+  const handleOverlayClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    // Close when clicking on overlay background, not the modal content
+    if (e.target === e.currentTarget) {
+      onClose();
+    }
+  };
+
   return (
-    <div className={styles.overlay}>
+    <div className={styles.overlay} onClick={handleOverlayClick}>
       <div className={styles.modal}>
-        <h2 className={styles.title}>✨ Choose Your Story Mode ✨</h2>
+        <div className={styles.header}>
+          <h2 className={styles.title}>✨ Choose Your Story Mode ✨</h2>
+          <button className={styles.closeButton} onClick={onClose} aria-label="Close">
+            ✕
+          </button>
+        </div>
         <p className={styles.subtitle}>How would you like to create your story?</p>
 
         <div className={styles.modeCards}>
@@ -54,10 +66,6 @@ export const ModeSelection: React.FC<ModeSelectionProps> = ({ onSelectMode, onCl
             <span className={styles.comingSoon}>(Enhanced features coming soon!)</span>
           </div>
         </div>
-
-        <button className={styles.closeButton} onClick={onClose}>
-          Cancel
-        </button>
       </div>
     </div>
   );

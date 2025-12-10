@@ -1,0 +1,25 @@
+{
+  "title": "The Boy Who Found Wonder",
+  "setting": "A mysterious forest adjacent to his backyard",
+  "characters": [
+    "Timmy",
+    "Whiskers"
+  ],
+  "scenes": [
+    {
+      "scene_number": 1,
+      "text": "One sunny afternoon, Timmy decided to explore the woods behind his house. He stepped into the whispering trees, his heart pounding with excitement and a little fear. Almost immediately, he stumbled upon a tiny, trembling creature. It was Whiskers, a baby rabbit.",
+      "image_description": "Timmy discovering Whiskers under dappled sunlight"
+    },
+    {
+      "scene_number": 2,
+      "text": "Timmy carefully picked up Whiskers and whispered soothing words into his new friend's ear. He noticed a small trail leading deeper into the woods. With Whiskers snuggled in his arms, Timmy followed the path. They discovered a hidden glade filled with vibrant flowers.",
+      "image_description": "Timmy and Whiskers walking hand-in-hand among colorful wildflowers"
+    },
+    {
+      "scene_number": 3,
+      "text": "Suddenly, a magnificent creature emerged from behind a tree - it was a unicorn! Timmy couldn't believe his eyes. The unicorn bowed its head gently towards Whiskers, who hopped happily onto its back. Then, it turned to Timmy and winked.",
+      "image_description": "A magical unicorn appearing among the trees"
+    }
+  ]
+}

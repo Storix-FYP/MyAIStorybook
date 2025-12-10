@@ -6,6 +6,7 @@ import styles from './IdeaWorkshop.module.css';
 interface IdeaWorkshopProps {
     isOpen: boolean;
     onClose: () => void;
+    onModeSelected?: (mode: 'improvement' | 'new_idea') => void;
 }
 
 interface Message {
@@ -14,7 +15,7 @@ interface Message {
     metadata?: any;
 }
 
-export const IdeaWorkshop: React.FC<IdeaWorkshopProps> = ({ isOpen, onClose }) => {
+export const IdeaWorkshop: React.FC<IdeaWorkshopProps> = ({ isOpen, onClose, onModeSelected }) => {
     const [sessionId, setSessionId] = useState<number | null>(null);
     const [mode, setMode] = useState<'improvement' | 'new_idea' | null>(null);
     const [messages, setMessages] = useState<Message[]>([]);
@@ -39,6 +40,13 @@ export const IdeaWorkshop: React.FC<IdeaWorkshopProps> = ({ isOpen, onClose }) =
     }, [userInput, mode]);
 
     const handleModeSelect = async (selectedMode: 'improvement' | 'new_idea') => {
+        // If onModeSelected callback is provided, navigate to dedicated page
+        if (onModeSelected) {
+            onModeSelected(selectedMode);
+            return;
+        }
+
+        // Fallback: Handle mode selection internally (legacy behavior)
         console.log('Mode selected:', selectedMode);
         setIsLoading(true);
         try {
@@ -175,26 +183,32 @@ export const IdeaWorkshop: React.FC<IdeaWorkshopProps> = ({ isOpen, onClose }) =
         }
     };
 
+    const handleOverlayClick = (e: React.MouseEvent<HTMLDivElement>) => {
+        // Close when clicking on overlay background, not the modal content
+        if (e.target === e.currentTarget) {
+            handleClose();
+        }
+    };
+
     if (!isOpen) return null;
 
     return (
-        <div className={styles.overlay}>
+        <div className={styles.overlay} onClick={handleOverlayClick}>
             <div className={styles.modal}>
                 <div className={styles.header}>
                     <h2 className={styles.title}>✨ Idea Workshop</h2>
-                    <button className={styles.closeButton} onClick={handleClose}>✕</button>
+                    <button className={styles.closeButton} onClick={handleClose} aria-label="Close">✕</button>
                 </div>
 
                 {!mode ? (
                     // Mode Selection Screen
                     <div className={styles.modeSelection}>
                         <p className={styles.prompt}>How would you like to start?</p>
-                        {isLoading && <p style={{ textAlign: 'center', color: '#667eea' }}>Starting workshop...</p>}
+                        {isLoading && <p className={styles.loadingText}>Starting workshop...</p>}
                         <div className={styles.modeCards}>
                             <div
-                                className={styles.modeCard}
+                                className={`${styles.modeCard} ${isLoading ? styles.disabled : ''}`}
                                 onClick={() => !isLoading && handleModeSelect('improvement')}
-                                style={{ opacity: isLoading ? 0.6 : 1, cursor: isLoading ? 'not-allowed' : 'pointer' }}
                             >
                                 <div className={styles.modeIcon}>🔧</div>
                                 <h3>Improve My Story</h3>
@@ -202,9 +216,8 @@ export const IdeaWorkshop: React.FC<IdeaWorkshopProps> = ({ isOpen, onClose }) =
                             </div>
 
                             <div
-                                className={styles.modeCard}
+                                className={`${styles.modeCard} ${isLoading ? styles.disabled : ''}`}
                                 onClick={() => !isLoading && handleModeSelect('new_idea')}
-                                style={{ opacity: isLoading ? 0.6 : 1, cursor: isLoading ? 'not-allowed' : 'pointer' }}
                             >
                                 <div className={styles.modeIcon}>💡</div>
                                 <h3>Share a New Idea</h3>

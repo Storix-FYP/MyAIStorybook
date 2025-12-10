@@ -189,8 +189,8 @@ const StoryInput: React.FC<StoryInputProps> = ({ onStoryGenerated, setLoading, s
           )}
         </div>
 
-        {/* Personalized Images Toggle */}
-        {generateImages && isAuthenticated && (
+        {/* Personalized Images Toggle - Only show in personalized mode */}
+        {mode === 'personalized' && generateImages && isAuthenticated && (
           <div className="toggle-switch">
             <label className="switch">
               <input
@@ -207,8 +207,8 @@ const StoryInput: React.FC<StoryInputProps> = ({ onStoryGenerated, setLoading, s
           </div>
         )}
 
-        {/* Photo Upload Section */}
-        {generateImages && isAuthenticated && (
+        {/* Photo Upload Section - Only show in personalized mode */}
+        {mode === 'personalized' && generateImages && isAuthenticated && (
           <div className="photo-upload-section">
             {!photoPreview ? (
               <div className="upload-area">
