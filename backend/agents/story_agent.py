@@ -9,7 +9,7 @@ class StoryAgent:
     It delegates to DirectorAgent (multi-agent pipeline).
     """
 
-    def __init__(self, llm_model: str = "llama3.1:8b-instruct-q4_K_M", writer_max_scenes: int = 3, max_retries: int = 2):
+    def __init__(self, llm_model: str = "mistral-nemo:12b", writer_max_scenes: int = 3, max_retries: int = 2):
         self.director = DirectorAgent(llm_model=llm_model, writer_max_scenes=writer_max_scenes)
         self.max_retries = max_retries
 

@@ -1,0 +1,54 @@
+{
+  "title": "The Magic within the Screen",
+  "setting": "A cozy bedroom filled with toys and books",
+  "characters": [
+    "Timmy",
+    "Sprite"
+  ],
+  "scenes": [
+    {
+      "scene_number": 1,
+      "text": "One rainy afternoon, Timmy was flipping through channels on his old TV. Suddenly, he stumbled upon a strange signal. The screen flickered and crackled with static, then it showed a tiny, glowing figure.",
+      "image_description": "Timmy leaning close to the old TV, eyes wide as a small glowing figure appears",
+      "image_path": null
+    },
+    {
+      "scene_number": 2,
+      "text": "The figure introduced itself as Sprite, a magical being from the world inside the screen. They told Timmy about their enchanting land filled with talking animals and magical adventures.",
+      "image_description": "Sprite waving at Timmy from the TV, surrounded by colorful, animated scenes",
+      "image_path": null
+    },
+    {
+      "scene_number": 3,
+      "text": "Timmy was captivated. He spent hours each day talking to Sprite, learning about their world, and making new friends through the screen. One day, Sprite invited him into their magical realm.",
+      "image_description": "Timmy reaching out his hand towards the TV as a glowing doorway appears",
+      "image_path": null
+    }
+  ],
+  "consistency_report": {
+    "per_scene": {
+      "1": {
+        "scene_number": 1,
+        "word_count": 33,
+        "length_score": 0.825,
+        "has_image": true
+      },
+      "2": {
+        "scene_number": 2,
+        "word_count": 29,
+        "length_score": 0.725,
+        "has_image": true
+      },
+      "3": {
+        "scene_number": 3,
+        "word_count": 31,
+        "length_score": 0.775,
+        "has_image": true
+      }
+    },
+    "overall": {
+      "avg_length_score": 0.775,
+      "image_coverage": 1.0
+    }
+  }
+}

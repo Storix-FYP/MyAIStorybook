@@ -71,20 +71,25 @@ class ImageAgent:
     def generate_image(self, prompt_text: str, filename: str = "output.png"):
         print(f"[ImageAgent] Generating image for prompt: '{prompt_text}'...")
     
+        # Apply content safety filter
+        from backend.utils.content_safety import enhance_prompt_for_children
+        
+        enhanced_prompt, safe_negative, is_safe = enhance_prompt_for_children(prompt_text)
+        
+        if not is_safe:
+            raise ValueError(f"Prompt rejected for child safety: {prompt_text}")
+        
+        print(f"[ImageAgent] ✅ Content safety filter applied")
+    
         # Safety truncation for CLIP
-        prompt_words = prompt_text.split()
+        prompt_words = enhanced_prompt.split()
         if len(prompt_words) > 77:
-            prompt_text = " ".join(prompt_words[:77])
+            enhanced_prompt = " ".join(prompt_words[:77])
             print(f"[ImageAgent] ⚠️ Truncated prompt to 77 tokens for CLIP compatibility.")
     
-        # Advanced prompting
-        positive_prompt = f"masterpiece, best quality, ultra-detailed, photorealistic illustration, {prompt_text}"
-        negative_prompt = (
-            "(deformed, distorted, disfigured:1.3), poorly drawn, bad anatomy, wrong anatomy, "
-            "extra limb, missing limb, floating limbs, (mutated hands and fingers:1.4), "
-            "disconnected limbs, mutation, mutated, ugly, disgusting, blurry, amputation, "
-            "BadDream, UnrealisticDream"
-        )
+        # Advanced prompting with safety enhancements
+        positive_prompt = f"masterpiece, best quality, ultra-detailed, photorealistic illustration, {enhanced_prompt}"
+        negative_prompt = safe_negative
     
         # Pass 1: txt2img
         print("[ImageAgent] Running Pass 1 (txt2img)...")

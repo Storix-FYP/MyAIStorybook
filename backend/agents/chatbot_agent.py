@@ -10,7 +10,7 @@ class ChatbotAgent:
     Maintains context of the story and conversation history
     """
 
-    def __init__(self, story_data: Dict, character_name: str, llm_model: str = "llama3.1:8b-instruct-q4_K_M"):
+    def __init__(self, story_data: Dict, character_name: str, llm_model: str = "mistral-nemo:12b"):
         """
         Initialize chatbot with story context and character
         
@@ -49,7 +49,7 @@ class ChatbotAgent:
 
     def _build_character_prompt(self, user_message: str) -> str:
         """
-        Build system prompt for character impersonation (stateless - no conversation history)
+        Build system prompt for character impersonation using ReAct framework
         
         Args:
             user_message: The current user message
@@ -67,46 +67,45 @@ class ChatbotAgent:
             scene_text = scene.get("text", "")
             story_summary += f"Scene {i}: {scene_text}\n"
         
-        # Build system instruction with enhanced edge-case handling
-        system_instruction = f"""You are {self.character_name}, a character from the children's story "{self.title}".
+        # Build ReAct prompt for character impersonation
+        system_instruction = f"""You are a character impersonation system using the ReAct (Reasoning + Acting) framework.
+
+**Your Character:** {self.character_name} from the story "{self.title}"
 
 **Story Context:**
 {story_summary}
 
-**Your Role:**
-- You ARE {self.character_name} from this story
-- Speak in first person as this character
-- Reference events from the story naturally when relevant
-- Stay true to the character's personality and experiences as shown in the story
-- Keep responses child-friendly, warm, and engaging (ages 7-10)
-- Be kind, patient, and encouraging
-- Keep responses concise (2-4 sentences maximum)
+**Your Task:** Respond to the child's message AS {self.character_name}.
 
-**CRITICAL RULES - ALWAYS FOLLOW:**
-1. NEVER break character or mention you are an AI or language model
-2. If asked about topics unrelated to the story, politely redirect the conversation back to your adventure
-3. If you don't know something, admit it naturally as the character would
-4. For inappropriate questions, gently decline and suggest talking about the story instead
-5. For math/science/real-world questions, acknowledge you don't specialize in that but can talk about the story
-6. NEVER provide personal information or advice outside the story context
+**Available Response Strategies:**
+1. in_character_answer - Answer their question staying fully in character
+2. story_redirect - Politely redirect off-topic questions back to the story
+3. gentle_decline - Refuse inappropriate/impossible questions warmly
 
-**Example Responses for Off-Topic Questions:**
-- Math: "I'm not very good with numbers! But I am good at adventures. Want to hear about mine?"
-- Real world: "I live in {self.setting}, so I don't know about that. Let me tell you about my world instead!"
-- Breaking character: "I'm {self.character_name}, and I love sharing my story with you! What would you like to know?"
-- Inappropriate: "That's not something I can talk about. How about we discuss my adventure instead?"
+**Guidelines:**
+- Keep responses 2-4 sentences maximum
+- Use first person ("I", "my")
+- Reference story events naturally
+- Stay child-friendly (ages 7-10)
+- NEVER break character or mention being an AI
 
-**Current Question from Child:**
-{user_message}
+**Child's Message:** "{user_message}"
 
-**Your Response as {self.character_name}:**
-"""
+**Instructions:**
+Use this EXACT format:
+Thought: [Analyze the question and decide how to respond]
+Response Strategy: [ONE of: in_character_answer, story_redirect, gentle_decline]
+Response: [Your actual response as {self.character_name}]
+
+Begin!
+
+Thought:"""
         
         return system_instruction
 
     def chat(self, user_message: str) -> str:
         """
-        Generate character response to user message (STATELESS - no conversation history)
+        Generate character response to user message using ReAct reasoning
         
         Args:
             user_message: The child's current message
@@ -114,18 +113,49 @@ class ChatbotAgent:
         Returns:
             Character's response as a string
         """
-        # Build prompt with ONLY story context and current message (no history)
+        # Build prompt with ReAct format
         prompt = self._build_character_prompt(user_message)
         
         # Get response from Ollama
-        response = self._ask_ollama(prompt)
+        ollama_output = self._ask_ollama(prompt)
         
-        # Clean up response (remove character name if LLM added it)
-        response = response.strip()
-        if response.startswith(f"{self.character_name}:"):
-            response = response[len(f"{self.character_name}:"):].strip()
+        # Parse ReAct output to extract final response
+        response = self._parse_chatbot_react(ollama_output)
         
         return response
+    
+    def _parse_chatbot_react(self, output: str) -> str:
+        """
+        Parse ReAct output from chatbot to extract final response.
+        Expects format: Thought: ... Response Strategy: ... Response: ...
+        """
+        try:
+            # Find the Response section
+            response_marker = output.lower().find("response:")
+            if response_marker == -1:
+                # Fallback: try to find any response-like content
+                lines = output.strip().split('\n')
+                for line in reversed(lines):  # Check from bottom up
+                    if line.strip() and not line.lower().startswith(('thought:', 'response strategy:')):
+                        return line.strip()
+                return output.strip()  # Return whole output as fallback
+            
+            # Extract everything after "Response:"
+            response_text = output[response_marker + len("response:"):].strip()
+            
+            # Clean up (remove character name prefix if LLM added it)
+            if response_text.startswith(f"{self.character_name}:"):
+                response_text = response_text[len(f"{self.character_name}:"):].strip()
+            
+            # Take first paragraph (in case LLM added extra text)
+            response_text = response_text.split('\n\n')[0].strip()
+            
+            return response_text if response_text else output.strip()
+            
+        except Exception as e:
+            print(f"[ChatbotAgent] ReAct parsing error: {e}")
+            # Return the whole output if parsing fails
+            return output.strip()
 
 
 # Test the agent if run directly

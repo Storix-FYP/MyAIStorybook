@@ -17,6 +17,9 @@ const StoryInput: React.FC<StoryInputProps> = ({ onStoryGenerated, setLoading, s
   const { isAuthenticated, token } = useAuth();
   const [prompt, setPrompt] = useState<string>("");
   const [generateImages, setGenerateImages] = useState<boolean>(isAuthenticated);
+  const [usePersonalizedImages, setUsePersonalizedImages] = useState<boolean>(false);
+  const [userPhoto, setUserPhoto] = useState<string | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [localError, setLocalError] = useState<string | null>(null);
   const [showLoginMessage, setShowLoginMessage] = useState<boolean>(false);
 
@@ -44,12 +47,20 @@ const StoryInput: React.FC<StoryInputProps> = ({ onStoryGenerated, setLoading, s
         headers["Authorization"] = `Bearer ${token}`;
       }
 
+      // Debug logging
+      console.log('🎭 Personalized Images Debug:');
+      console.log('  - usePersonalizedImages:', usePersonalizedImages);
+      console.log('  - hasUserPhoto:', userPhoto !== null);
+      console.log('  - photoDataLength:', userPhoto?.length || 0);
+
       const res = await fetch(API_ENDPOINTS.GENERATE, {
         method: "POST",
         headers,
         body: JSON.stringify({
           prompt,
           generate_images: generateImages,
+          use_personalized_images: usePersonalizedImages && userPhoto !== null,
+          user_photo: userPhoto,  // Base64 photo data
           mode: mode  // Include mode in request
         }),
       });
@@ -99,6 +110,42 @@ const StoryInput: React.FC<StoryInputProps> = ({ onStoryGenerated, setLoading, s
     }
   };
 
+  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>): void => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      setLocalError('Please upload an image file (JPEG or PNG)');
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      setLocalError('Image too large. Please upload an image smaller than 5MB.');
+      return;
+    }
+
+    // Read file and convert to base64
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const base64Data = event.target?.result as string;
+      setUserPhoto(base64Data);
+      setPhotoPreview(base64Data);
+      setLocalError(null);
+    };
+    reader.onerror = () => {
+      setLocalError('Failed to read the image file');
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleRemovePhoto = (): void => {
+    setUserPhoto(null);
+    setPhotoPreview(null);
+    setUsePersonalizedImages(false);
+  };
+
   return (
     <div className="story-input-wrapper">
       <div className="story-input-header">
@@ -141,6 +188,59 @@ const StoryInput: React.FC<StoryInputProps> = ({ onStoryGenerated, setLoading, s
             <div className="illustrate-tooltip">Please login first</div>
           )}
         </div>
+
+        {/* Personalized Images Toggle */}
+        {generateImages && isAuthenticated && (
+          <div className="toggle-switch">
+            <label className="switch">
+              <input
+                type="checkbox"
+                checked={usePersonalizedImages}
+                onChange={(e) => setUsePersonalizedImages(e.target.checked)}
+                disabled={!userPhoto}
+              />
+              <span className={`slider ${!userPhoto ? 'disabled' : ''}`}></span>
+            </label>
+            <span className={!userPhoto ? 'disabled-text' : ''}>
+              Use My Photo 🎭
+            </span>
+          </div>
+        )}
+
+        {/* Photo Upload Section */}
+        {generateImages && isAuthenticated && (
+          <div className="photo-upload-section">
+            {!photoPreview ? (
+              <div className="upload-area">
+                <label htmlFor="photo-upload" className="upload-label">
+                  <span className="upload-icon">📸</span>
+                  <span>Upload Your Photo</span>
+                  <input
+                    id="photo-upload"
+                    type="file"
+                    accept="image/jpeg,image/png,image/jpg"
+                    onChange={handlePhotoUpload}
+                    style={{ display: 'none' }}
+                  />
+                </label>
+                <p className="upload-hint">Clear frontal photo works best</p>
+              </div>
+            ) : (
+              <div className="photo-preview-container">
+                <img src={photoPreview} alt="Your photo" className="photo-preview" />
+                <button
+                  type="button"
+                  className="remove-photo-btn"
+                  onClick={handleRemovePhoto}
+                  title="Remove photo"
+                >
+                  ✕
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
         {showLoginMessage && (
           <div className="login-prompt">
             <p>Please <button type="button" className="login-link" onClick={onShowLogin}>login</button> to enable image generation</p>

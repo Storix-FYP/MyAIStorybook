@@ -10,7 +10,7 @@ class IdeaWorkshopAgent:
     Maintains conversation context and asks structured questions
     """
 
-    def __init__(self, mode: str, conversation_history: List[Dict], llm_model: str = "llama3.1:8b-instruct-q4_K_M"):
+    def __init__(self, mode: str, conversation_history: List[Dict], llm_model: str = "mistral-nemo:12b"):
         """
         Initialize workshop agent
         
@@ -27,6 +27,18 @@ class IdeaWorkshopAgent:
         self.collected_requirements = {}
         self.user_story = None  # For improvement mode
         self.last_question_field = None  # Track which field we just asked about
+        
+        # Define questions mapping for state restoration
+        self.required_fields_questions = {
+            'genre': "What type or genre of story do you want? (e.g., adventure, fantasy, mystery, etc.)",
+            'characters': "What characters should be included in your story?",
+            'setting': "What theme or world should the story take place in?",
+            'beginning': "What kind of beginning do you prefer for your story?",
+            'climax': "What type of climax should the story have?",
+            'ending': "What ending do you want for your story?",
+            'scenes': "Are there any specific scenes or moments you'd like to include?",
+            'moral': "Is there a moral or lesson you'd like the story to convey?"
+        }
         
         # Extract from conversation history
         self._extract_requirements_from_history()
@@ -100,6 +112,19 @@ class IdeaWorkshopAgent:
                 self.collected_requirements.update(metadata['requirements'])
                 print(f"[IdeaWorkshopAgent] Loaded requirements from {msg.get('role')} message: {list(metadata['requirements'].keys())}")
 
+        # Restore last_question_field from the last assistant message
+        if self.conversation_history:
+            last_msg = self.conversation_history[-1]
+            if last_msg.get('role') == 'assistant':
+                last_text = last_msg.get('message', '').strip()
+                # Check if this text matches any of our questions
+                for field, question in self.required_fields_questions.items():
+                    # Check for partial match since there might be "I'll decide..." prefixes
+                    if question in last_text:
+                        self.last_question_field = field
+                        print(f"[IdeaWorkshopAgent] Restored last_question_field: {field}")
+                        break
+
     def get_next_question(self) -> Optional[str]:
         """
         Determine the next question to ask based on mode and collected requirements
@@ -143,16 +168,10 @@ class IdeaWorkshopAgent:
 
     def _get_next_new_idea_question(self) -> Optional[str]:
         """Get next question for new idea mode (smart questioning - skip provided details)"""
-        required_fields = {
-            'genre': "What type or genre of story do you want? (e.g., adventure, fantasy, mystery, etc.)",
-            'characters': "What characters should be included in your story?",
-            'setting': "What theme or world should the story take place in?",
-            'beginning': "What kind of beginning do you prefer for your story?",
-            'climax': "What type of climax should the story have?",
-            'ending': "What ending do you want for your story?",
-            'scenes': "Are there any specific scenes or moments you'd like to include?",
-            'moral': "Is there a moral or lesson you'd like the story to convey?"
-        }
+        # Use the shared mapping
+        required_fields = self.required_fields_questions
+        
+        # Check which fields are missing or empty (but not intentionally skipped)
         
         # Check which fields are missing or empty (but not intentionally skipped)
         for field, question in required_fields.items():
@@ -288,7 +307,7 @@ class IdeaWorkshopAgent:
         value = analysis.get('value')
         feedback = analysis.get('feedback')
         
-        print(f"[IdeaWorkshopAgent] Analysis Result: Action={action}, Value='{value}'")
+        print(f"[IdeaWorkshopAgent] Analysis Result: Action={action}, Value='{value}', Feedback='{feedback}'")
 
         # 3. Handle Actions
         
@@ -299,14 +318,40 @@ class IdeaWorkshopAgent:
                 self.collected_requirements[current_field] = value
                 print(f"[IdeaWorkshopAgent] Saved '{value}' to {current_field}")
             else:
-                # If no specific question was pending (rare), try to infer field from value or just ignore
-                # For now, we'll assume the LLM extracted it correctly if it returned save_value
-                pass 
+                # Fallback: If current_field is None (e.g. state lost), try to save to the next missing field
+                next_field = self._get_next_missing_field()
+                if next_field:
+                    self.collected_requirements[next_field] = value
+                    print(f"[IdeaWorkshopAgent] Fallback: Saved '{value}' to inferred field {next_field}")
+                else:
+                    print(f"[IdeaWorkshopAgent] Warning: Could not save '{value}' - no current or missing field found") 
                 
             metadata['requirements'] = self.collected_requirements.copy()
             next_q = self.get_next_question()
             if next_q:
                 return next_q, metadata
+            else:
+                return self._generate_confirmation(), metadata
+
+        # CASE A.2: SAVE MULTIPLE (Full Story Extraction)
+        elif action == 'save_multiple':
+            if isinstance(value, dict):
+                print(f"[IdeaWorkshopAgent] Processing multi-field update: {list(value.keys())}")
+                for k, v in value.items():
+                    # Normalize key to lowercase just in case
+                    k = k.lower()
+                    if k in self.required_fields_questions:
+                        self.collected_requirements[k] = v
+                        print(f"[IdeaWorkshopAgent] Multi-save: '{v}' to {k}")
+            
+            metadata['requirements'] = self.collected_requirements.copy()
+            next_q = self.get_next_question()
+            if next_q:
+                # If we extracted a lot, acknowledge it
+                extracted_count = len(value) if isinstance(value, dict) else 0
+                if extracted_count > 2:
+                    return f"Wow, that's a great start! I've noted down all those details. {next_q}", metadata
+                return f"Got it. {next_q}", metadata
             else:
                 return self._generate_confirmation(), metadata
 
@@ -325,10 +370,14 @@ class IdeaWorkshopAgent:
 
         # CASE C: AUTO-FILL
         elif action == 'auto_fill':
-            if current_field:
-                auto_value = self._generate_auto_fill_value(current_field)
-                self.collected_requirements[current_field] = auto_value
-                print(f"[IdeaWorkshopAgent] Auto-filled {current_field} with '{auto_value}'")
+            # CRITICAL FIX: current_field might be outdated or None
+            # Get the NEXT missing field that needs auto-filling
+            field_to_fill = current_field if current_field else self._get_next_missing_field()
+            
+            if field_to_fill:
+                auto_value = self._generate_auto_fill_value(field_to_fill)
+                self.collected_requirements[field_to_fill] = auto_value
+                print(f"[IdeaWorkshopAgent] Auto-filled {field_to_fill} with '{auto_value}'")
                 
                 metadata['requirements'] = self.collected_requirements.copy()
                 next_q = self.get_next_question()
@@ -336,6 +385,9 @@ class IdeaWorkshopAgent:
                     return f"I'll decide that for you! Let's go with: {auto_value}. {next_q}", metadata
                 else:
                     return self._generate_confirmation(), metadata
+            else:
+                # No field to auto-fill (all filled already)
+                return self._generate_confirmation(), metadata
 
         # CASE D: GENERATE REQUEST (Premature or Valid)
         elif action == 'generate_request':
@@ -357,92 +409,168 @@ class IdeaWorkshopAgent:
 
     def _analyze_input_with_llm(self, user_message: str, current_field: str, collected_data: Dict) -> Dict:
         """
-        Unified Input Analyzer.
+        Unified Input Analyzer using ReAct (Reasoning + Acting) framework.
         Returns JSON: { "action": "...", "value": "...", "feedback": "..." }
         """
         print(f"[IdeaWorkshopAgent] Analyzing input: '{user_message}' for field: '{current_field}'")
         
-        context_str = ", ".join([f"{k}: {v}" for k, v in collected_data.items() if v and v != "__SKIP__"])
+        field_description = current_field if current_field else "this story element"
         
-        prompt = f"""You are the brain of a story workshop agent. Your job is to analyze the user's response to a specific question about their story.
+        context_str = ", ".join([f"{k}: {v}" for k, v in collected_data.items() if v and v != "__SKIP__"])
+        collected_json = json.dumps(collected_data, indent=2) if collected_data else "{}"
+        
+        prompt = f"""You are an intelligent Story Workshop Assistant using the ReAct (Reasoning + Acting) framework.
+
+**Available Actions:**
+1. save_value - Save user's answer to current field (SHORT ANSWERS & STORIES VALID!)
+2. save_multiple - Extract MULTIPLE fields from a detailed description
+3. skip - User wants to skip this field
+4. auto_fill - User wants YOU to decide
+5. generate_request - User wants to generate story NOW
+6. reject - ONLY for gibberish/URLs (BE LENIENT!)
+
+**Story Fields:** genre, characters, setting, beginning, climax, ending, scenes, moral
 
 **Current Context:**
-- We are asking about: **{current_field if current_field else "General Story Idea"}**
-- Already known: {context_str}
+- Current Question Field: {current_field or "None (initial message)"}
+- Already Collected: {context_str or "nothing yet"}
 
-**User's Message:**
-"{user_message}"
+**User Input:** "{user_message}"
 
-**Your Task:**
-Classify the user's intent and return a JSON object with `action`, `value`, and `feedback`.
+**Instructions:**
+Use this EXACT format:
+Thought: [Analyze user's intent and what fields can be extracted]
+Action: [ONE of: save_value, save_multiple, skip, auto_fill, generate_request, reject]
+Action Input: [JSON object with action details]
 
-**Possible Actions:**
-1. `save_value`: User provided a valid answer.
-   - `value`: The extracted answer.
-   - **Rule**: If answer is long (>30 words), SUMMARIZE it to <20 words.
-   - **Rule**: If answer is short, keep it as is.
-   
-2. `skip`: User wants to skip this question.
-   - Keywords: "skip", "leave it", "no preference", "pass", "ignore", "none", "move to next", "next question".
-   
-3. `auto_fill`: User wants YOU to decide.
-   - Keywords: "you choose", "you decide", "random", "surprise me", "anything", "whatever fits", "auto select", "pick for me", "select any".
-   
-4. `generate_request`: User wants to stop planning and generate the story NOW.
-   - Keywords: "generate story", "create it", "start writing", "make the story", "done".
-   
-5. `reject`: Input is gibberish, nonsense, or completely off-topic.
-   - `feedback`: A polite message asking for clarification or guiding them back to the question.
-   - Examples: "+-09Dsgfc", "dhfjsdh", "...", "what is 2+2".
+**Action Input Formats:**
+- save_value: {{"value": "extracted text"}}
+- save_multiple: {{"genre": "...", "characters": "...", "setting": "..."}} (extract ALL possible fields)
+- skip: {{}}
+- auto_fill: {{}}
+- generate_request: {{}}
+- reject: {{"feedback": "message to user"}}
 
-**Few-Shot Examples:**
+**Guidelines:**
+- BE LENIENT: "cat and donkey" is VALID, "fantasy" is VALID
+- Narrative sentences are VALID: "once upon a time..." is VALID
+- If user provides FULL STORY, use save_multiple
+- Auto-fill keywords: "choose yourself", "you decide", "pick for me"
+- If UNSURE, use save_value (don't reject!)
 
-Input: "A brave knight named Arthur" (Field: characters)
-Output: {{ "action": "save_value", "value": "A brave knight named Arthur", "feedback": "" }}
+Begin!
 
-Input: "leave it" (Field: ending)
-Output: {{ "action": "skip", "value": "", "feedback": "" }}
-
-Input: "move to next question" (Field: genre)
-Output: {{ "action": "skip", "value": "", "feedback": "" }}
-
-Input: "choose genre yourself" (Field: genre)
-Output: {{ "action": "auto_fill", "value": "", "feedback": "" }}
-
-Input: "auto select genre for now" (Field: genre)
-Output: {{ "action": "auto_fill", "value": "", "feedback": "" }}
-
-Input: "select any genre you like" (Field: genre)
-Output: {{ "action": "auto_fill", "value": "", "feedback": "" }}
-
-Input: "you decide please" (Field: setting)
-Output: {{ "action": "auto_fill", "value": "", "feedback": "" }}
-
-Input: "Generate the story now!" (Field: climax)
-Output: {{ "action": "generate_request", "value": "", "feedback": "" }}
-
-Input: "sdklfjsdklf" (Field: moral)
-Output: {{ "action": "reject", "value": "", "feedback": "I didn't catch that. Could you tell me about the moral of the story, or say 'skip'?" }}
-
-Input: [Long paragraph about a dragon fight...] (Field: climax)
-Output: {{ "action": "save_value", "value": "An epic battle with a dragon where the hero wins", "feedback": "" }}
-
-**Respond ONLY with valid JSON.**
-JSON:"""
+Thought:"""
 
         try:
             response = self._ask_ollama(prompt)
-            # clean response
-            start = response.find('{')
-            end = response.rfind('}')
-            if start != -1 and end != -1:
-                json_str = response[start:end+1]
-                return json.loads(json_str)
+            print(f"[IdeaWorkshopAgent] ReAct Response:\n{response[:300]}...")  # Log first 300 chars
+            
+            # Parse ReAct output
+            return self._parse_react_output(response, field_description)
+            
         except Exception as e:
-            print(f"[IdeaWorkshopAgent] Analysis failed: {e}")
-        
-        # Fallback for failure
-        return {"action": "reject", "value": "", "feedback": "I'm having trouble processing that. Could you try again?"}
+            print(f"[IdeaWorkshopAgent] Error in ReAct analysis: {e}")
+            return {"action": "reject", "value": "", "feedback": "I had trouble understanding. Could you rephrase?"}
+    
+    def _parse_react_output(self, response: str, field_description: str) -> Dict:
+        """
+        Parse ReAct format output into action dictionary.
+        Expects format: Thought: ... Action: ... Action Input: {...}
+        """
+        try:
+            # Extract Action
+            action_match = response.lower().find("action:")
+            if action_match == -1:
+                raise ValueError("No Action found in response")
+            
+            # Extract the action name
+            action_line = response[action_match:].split('\n')[0]
+            action = None
+            for possible_action in ['save_multiple', 'save_value', 'auto_fill', 'generate_request', 'skip', 'reject']:
+                if possible_action in action_line.lower():
+                    action = possible_action
+                    break
+            
+            if not action:
+                raise ValueError(f"Could not identify action in: {action_line}")
+            
+            # Extract Action Input JSON
+            input_start = response.find("action input:", action_match)
+            if input_start == -1:
+                input_start = response.find("action input", action_match)
+            
+            if input_start != -1:
+                # Remove markdown code blocks if present
+                input_section = response[input_start:]
+                input_section = input_section.replace('```json', '').replace('```', '')
+                
+                # Find JSON in the Action Input section
+                json_start = input_section.find('{')
+                if json_start != -1:
+                    # Find matching closing brace using brace counting
+                    brace_count = 0
+                    json_end = -1
+                    for i in range(json_start, len(input_section)):
+                        if input_section[i] == '{':
+                            brace_count += 1
+                        elif input_section[i] == '}':
+                            brace_count -= 1
+                            if brace_count == 0:
+                                json_end = i
+                                break
+                    
+                    if json_end != -1:
+                        json_str = input_section[json_start:json_end+1]
+                        try:
+                            action_input = json.loads(json_str)
+                        except json.JSONDecodeError:
+                            print(f"[IdeaWorkshopAgent] JSON parse error: {json_str}")
+                            action_input = {}
+                    else:
+                        action_input = {}
+                else:
+                    action_input = {}
+            else:
+                action_input = {}
+            
+            # Debug logging
+            print(f"[IdeaWorkshopAgent] Parsed Action: {action}, Input: {action_input}")
+            
+            # Build return dict based on action type
+            if action == "save_value":
+                return {
+                    "action": "save_value",
+                    "value": action_input.get("value", ""),
+                    "feedback": ""
+                }
+            elif action == "save_multiple":
+                return {
+                    "action": "save_multiple",
+                    "value": action_input,  # Keep the whole dict
+                    "feedback": ""
+                }
+            elif action == "skip":
+                return {"action": "skip", "value": "", "feedback": ""}
+            elif action == "auto_fill":
+                return {"action": "auto_fill", "value": "", "feedback": ""}
+            elif action == "generate_request":
+                return {"action": "generate_request", "value": "", "feedback": ""}
+            elif action == "reject":
+                feedback = action_input.get("feedback", f"I didn't catch that. Could you tell me about {field_description}, or say 'skip'?")
+                return {"action": "reject", "value": "", "feedback": feedback}
+            else:
+                raise ValueError(f"Unknown action: {action}")
+                
+        except Exception as e:
+            print(f"[IdeaWorkshopAgent] ReAct parsing error: {e}")
+            print(f"[IdeaWorkshopAgent] Raw response: {response}")
+            # Fallback to save_value if we can't parse (lenient)
+            return {
+                "action": "save_value",
+                "value": user_message,  # Use raw input
+                "feedback": ""
+            }
 
     def _generate_confirmation(self) -> str:
         """Generate confirmation message before story generation"""
@@ -573,8 +701,63 @@ Brief summary:"""
         print(f"[IdeaWorkshopAgent] Summarized to: {summary}")
         return summary
 
+    def _review_metadata_consistency(self):
+        """
+        Review collected requirements for consistency and alignment.
+        Uses LLM to adjust fields that clash (e.g. genre vs setting).
+        """
+        print("[IdeaWorkshopAgent] Reviewing metadata for consistency...")
+        
+        # Prepare context
+        requirements_json = json.dumps(self.collected_requirements, indent=2)
+        
+        prompt = f"""You are a Story Logic Editor. Your job is to ensure the story requirements are consistent.
+
+**Current Requirements:**
+{requirements_json}
+
+**Instructions:**
+1. Check if all fields align with the main Genre and Theme.
+2. If there are contradictions (e.g. Genre="Horror" but Setting="Happy Candy Land"), adjust the conflicting field to match the Genre.
+3. If fields are vague (e.g. "something cool"), make them specific and fitting.
+4. DO NOT change fields that are already specific and consistent.
+5. Return the CLEANED JSON object.
+
+**Output:** JSON ONLY."""
+
+        response = self._ask_ollama(prompt)
+        
+        try:
+            # Extract JSON from response
+            start = response.find('{')
+            end = response.rfind('}') + 1
+            if start != -1 and end != -1:
+                json_str = response[start:end]
+                aligned_requirements = json.loads(json_str)
+                
+                # Update our requirements with the aligned ones
+                changes = []
+                for k, v in aligned_requirements.items():
+                    old_v = self.collected_requirements.get(k)
+                    if old_v != v:
+                        changes.append(f"{k}: '{old_v}' -> '{v}'")
+                        self.collected_requirements[k] = v
+                
+                if changes:
+                    print(f"[IdeaWorkshopAgent] Consistency Check Applied Changes:\n" + "\n".join(changes))
+                else:
+                    print("[IdeaWorkshopAgent] Consistency Check Passed (No changes needed).")
+            else:
+                print("[IdeaWorkshopAgent] Warning: Could not parse consistency check JSON.")
+        except Exception as e:
+            print(f"[IdeaWorkshopAgent] Error in consistency check: {e}")
+
     def _generate_new_story(self) -> str:
         """Generate new story from collected requirements"""
+        
+        # Step 1: Review and Align Metadata
+        self._review_metadata_consistency()
+        
         requirements_text = "\n".join([
             f"- {key}: {value}" for key, value in self.collected_requirements.items()
         ])

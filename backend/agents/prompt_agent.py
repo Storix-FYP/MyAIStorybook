@@ -3,7 +3,7 @@ import json
 import subprocess
 
 class PromptAgent:
-    def __init__(self, model="llama3.1:8b-instruct-q4_K_M"):
+    def __init__(self, model="mistral-nemo:12b"):
         self.model = model
 
     def _ask_ollama(self, prompt: str) -> str:

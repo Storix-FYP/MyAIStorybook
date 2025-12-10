@@ -8,14 +8,14 @@ from backend.models.story_schema import Story
 class WriterAgent:
     """
     WriterAgent
-    - Calls Ollama (llama3.1:8b-instruct-q4_K_M) to produce a structured story JSON.
+    - Calls Ollama (mistral-nemo:12b) to produce a structured story JSON.
     - Ensures short, visual `image_description` prompts for compatibility with CLIP (≤77 tokens).
     - Validates with Story pydantic model.
     """
 
     def __init__(
         self,
-        llm_model: str = "llama3.1:8b-instruct-q4_K_M",
+        llm_model: str = "mistral-nemo:12b",
         max_retries: int = 2,
         max_scenes: Optional[int] = 3,
     ):

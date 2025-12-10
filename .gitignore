@@ -1,153 +1,152 @@
-# MyAIStorybook - Git Ignore Rules
-# Only push: backend/, frontend/, start_all.bat, README.md, .gitignore
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+*.log
+local_settings.py
+instance/
+.webassets-cache
+.scrapy
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.nox/
+.hypothesis/
+.pytype/
+cython_debug/
 
-# ===========================================
-# IGNORE EVERYTHING BY DEFAULT
-# ===========================================
-*
+# Virtual Environments
+venv/
+ENV/
+env/
+.venv
 
-# ===========================================
-# ALLOW SPECIFIC FILES AND DIRECTORIES
-# ===========================================
-
-# Main project files
-!README.md
-!start_all.bat
-!.gitignore
-
-# Backend directory (entire backend folder)
-!backend/
-!backend/**
-
-# Frontend directory (entire frontend folder)  
-!frontend/
-!frontend/**
-
-# ===========================================
-# IGNORE SPECIFIC FILES WITHIN ALLOWED DIRECTORIES
-# ===========================================
-
-# Backend - Ignore virtual environment and cache
-backend/venv/
-backend/__pycache__/
-backend/**/__pycache__/
-backend/**/*.pyc
-backend/**/*.pyo
-backend/**/*.pyd
-backend/**/*.so
-backend/**/.pytest_cache/
-
-# Backend - Ignore generated files
-backend/generated/
-backend/**/generated/
-backend/**/*.log
-backend/**/.env
-backend/**/.env.local
-backend/**/.env.*.local
-
-# Backend - Ignore model files (too large for git)
-backend/**/*.safetensors
-backend/**/*.bin
-backend/**/*.pt
-backend/**/*.pth
-backend/**/models/
-backend/**/pretrained/
-
-# Frontend - Ignore node_modules and build files
-frontend/node_modules/
-frontend/.next/
-frontend/out/
-frontend/build/
-frontend/dist/
-
-# Frontend - Ignore cache and logs
-frontend/.cache/
-frontend/.parcel-cache/
-frontend/**/*.log
-frontend/**/.env.local
-frontend/**/.env.development.local
-frontend/**/.env.test.local
-frontend/**/.env.production.local
-
-# Frontend - Ignore IDE files
-frontend/.vscode/
-frontend/.idea/
-frontend/**/.DS_Store
-frontend/**/Thumbs.db
-
-# ===========================================
-# IGNORE SYSTEM FILES
-# ===========================================
-
-# OS generated files
-.DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
-Thumbs.db
-
-# IDE files
+# IDEs
 .vscode/
 .idea/
 *.swp
 *.swo
 *~
+.DS_Store
+
+# Node.js / Next.js
+node_modules/
+.next/
+out/
+.cache/
+*.tsbuildinfo
+next-env.d.ts
+.vercel
+.turbo
+
+# Environment Variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+*.env
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+DATABASE_URL
+
+# Generated Content
+generated/images/*.png
+generated/images/*.jpg
+generated/stories/*.json
+generated/pdfs/*.pdf
+# Keep the directories but ignore contents
+!generated/images/.gitkeep
+!generated/stories/.gitkeep
+!generated/pdfs/.gitkeep
+
+# AI Models & Checkpoints (LARGE FILES)
+*.safetensors
+*.ckpt
+*.bin
+*.pth
+*.pt
+*.onnx
+backend/pretrained/
+backend/models/
+backend/ip_adapter_checkpoints/
+backend/controlnet_ipadapter/
+backend/ip_adapter/
+
+# Stable Diffusion WebUI (if in project)
+stable-diffusion-webui/
+sd-webui-controlnet/
+IP-Adapter/
+
+# Logs
+*.log
+logs/
+*.out
+
+# OS
+Thumbs.db
+.DS_Store
+desktop.ini
 
 # Temporary files
 *.tmp
 *.temp
-*.log
-
-# ===========================================
-# IGNORE DOCUMENTATION AND DIAGRAMS (if not needed)
-# ===========================================
-
-# Uncomment these if you don't want to push documentation
-# document/
-# diagrams/
-# memory-bank/
-
-# ===========================================
-# IGNORE LARGE FILES AND GENERATED CONTENT
-# ===========================================
-
-# Large model files
-*.safetensors
-*.bin
-*.pt
-*.pth
-*.h5
-*.pkl
-
-# Generated content
-generated/
-output/
-temp/
-cache/
-
-# ===========================================
-# IGNORE SENSITIVE FILES
-# ===========================================
-
-# Environment files
-.env
-.env.local
-.env.*.local
-.env.production
-.env.development
-
-# API keys and secrets
-secrets.json
-config.json
-credentials.json
-
-# ===========================================
-# IGNORE BACKUP FILES
-# ===========================================
-
 *.bak
-*.backup
-*.old
-*.orig
+*.swp
+*~
+
+# Memory bank (if sensitive)
+memory_bank/
+
+# Documentation artifacts (optional)
+*.pdf
+!README.pdf
+
+# Test files (but allow backend/tests/ folder)
+test_*.py
+*_test.py
+!backend/tests/**
+.pytest_cache/
+# Allow coverage files in tests folder
+.coverage
+!backend/tests/.coverage
+htmlcov/
+!backend/tests/coverage_html/
+
+# Jupyter Notebooks
+.ipynb_checkpoints/
+*.ipynb
+
+# Package manager
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Build outputs
+*.exe
+*.dll
+*.so
+*.dylib

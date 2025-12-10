@@ -8,18 +8,46 @@ import traceback
 import torch
 import subprocess
 import sys
-from fastapi import FastAPI, Request, HTTPException, status, Depends
+from fastapi import FastAPI, Request, HTTPException, status, Depends, UploadFile, File
 from fastapi.responses import JSONResponse, FileResponse, HTMLResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from backend.agents.editor_agent import export_pdf
+from PIL import Image as PILImage
 
 # --- Import Agents ---
 from backend.agents.prompt_agent import PromptAgent
 from backend.agents.story_agent import StoryAgent
 from backend.agents.image_agent import ImageAgent
 from backend.agents.chatbot_agent import ChatbotAgent
-from backend.agents.idea_workshop_agent import IdeaWorkshopAgent
+
+# Feature flag for LangChain Workshop Agent
+USE_LANGCHAIN_WORKSHOP = True  # Set to False to use original implementation
+
+if USE_LANGCHAIN_WORKSHOP:
+    try:
+        from backend.agents.idea_workshop_agent_langchain import IdeaWorkshopAgentLangChain as IdeaWorkshopAgent
+        print("✅ Using LangChain Workshop Agent (Advanced Conversation Rules)")
+    except ImportError as e:
+        print(f"⚠️ LangChain Workshop Agent not available, falling back to original: {e}")
+        from backend.agents.idea_workshop_agent import IdeaWorkshopAgent
+else:
+    from backend.agents.idea_workshop_agent import IdeaWorkshopAgent
+
+# Personalized Image Agent using WebUI Local API (Perfect Results)
+try:
+    from backend.agents.personalized_image_agent_webui_api import PersonalizedImageAgentWebUIAPI as PersonalizedImageAgent
+    PERSONALIZED_AGENT_AVAILABLE = True
+    print("✅ Using WebUI Local API - Perfect Results (requires WebUI running)")
+except ImportError as e:
+    print(f"⚠️  WebUI API agent not available: {e}")
+    print("⚠️  Falling back to standalone IP-Adapter")
+    try:
+        from backend.agents.personalized_image_agent import PersonalizedImageAgent
+        PERSONALIZED_AGENT_AVAILABLE = True
+        print("✅ Using Standalone IP-Adapter")
+    except ImportError:
+        PERSONALIZED_AGENT_AVAILABLE = False
 # ReviewerAgent is now only called inside DirectorAgent
 # from backend.agents.reviewer_agent import ReviewerAgent
 
@@ -78,6 +106,16 @@ def save_agent_output(agent_name: str, title: str, timestamp: int, data: dict):
 # FastAPI app setup
 # -------------------------
 app = FastAPI(title="Storybook FYP - Unified Pipeline")
+
+# Clear GPU cache on startup (simple approach)
+try:
+    if torch.cuda.is_available():
+        print("🧹 Clearing GPU cache on startup...")
+        torch.cuda.empty_cache()
+        torch.cuda.synchronize()
+        print("✅ GPU cache cleared")
+except Exception as e:
+    print(f"⚠️ Could not clear GPU cache: {e}")
 
 app.add_middleware(
     CORSMiddleware,
@@ -144,6 +182,8 @@ async def api_generate(
     body = await request.json()
     prompt = body.get("prompt")
     generate_images = body.get("generate_images", True)
+    use_personalized = body.get("use_personalized_images", False)
+    user_photo_data = body.get("user_photo")  # Base64 encoded image
     mode = body.get("mode", "simple")  # 'simple' or 'personalized'
     timestamp = int(time.time())
 
@@ -195,22 +235,83 @@ async def api_generate(
     if generate_images:
         try:
             print("🖼 Starting image generation...")
-            image_agent = ImageAgent()
-            for scene in final_story.get("scenes", []):
-                description = scene.get("image_description") or scene.get("text", "")
-                words = description.split()
-                if len(words) > 70:
-                    description = " ".join(words[:70])
-                    print(f"[Safety] ⚠️ Truncated long image prompt for scene {scene.get('scene_number', '?')}")
+            
+            # Pause Ollama to free GPU memory for faster image generation
+            from backend.utils.ollama_manager import OllamaManager
+            ollama_was_running = OllamaManager.pause_ollama()
+            
+            try:
+                # Determine which image agent to use
+                use_personal_agent = (
+                    use_personalized and 
+                    user_photo_data and 
+                    PERSONALIZED_AGENT_AVAILABLE
+                )
                 
-                scene_number = scene.get("scene_number", 0)
-                filename = f"{sanitize_filename(story_title)}_{timestamp}_scene_{scene_number}.png"
+                if use_personal_agent:
+                    print("🎭 Using PersonalizedImageAgent with user photo...")
+                    
+                    # Decode base64 image
+                    import base64
+                    import io
+                    try:
+                        photo_bytes = base64.b64decode(user_photo_data.split(',')[1] if ',' in user_photo_data else user_photo_data)
+                        user_photo = PILImage.open(io.BytesIO(photo_bytes)).convert("RGB")
+                        
+                        # Initialize PersonalizedImageAgent
+                        image_agent = PersonalizedImageAgent()
+                        image_agent.set_user_photo(user_photo)
+                        
+                        # Generate personalized images
+                        for scene in final_story.get("scenes", []):
+                            description = scene.get("image_description") or scene.get("text", "")
+                            words = description.split()
+                            if len(words) > 70:
+                                description = " ".join(words[:70])
+                                print(f"[Safety] ⚠️ Truncated long image prompt for scene {scene.get('scene_number', '?')}")
+                            
+                            scene_number = scene.get("scene_number", 0)
+                            filename = f"{sanitize_filename(story_title)}_{timestamp}_scene_{scene_number}.png"
+                            
+                            print(f"Generating personalized image for scene {scene_number}...")
+                            image_path = image_agent.generate_personalized_image(
+                                prompt_text=description, 
+                                filename=filename
+                            )
+                            scene["image_path"] = image_path
+                        
+                        image_status = "Personalized images generated successfully! 🎭✅"
+                        
+                    except Exception as e:
+                        print(f"❌ Personalized generation failed: {e}")
+                        print("Falling back to standard image generation...")
+                        use_personal_agent = False
                 
-                print(f"Generating image for scene {scene_number}...")
-                image_path = image_agent.generate_image(prompt_text=description, filename=filename)
-                scene["image_path"] = image_path
+                if not use_personal_agent:
+                    # Standard image generation
+                    print("🖼 Using standard ImageAgent...")
+                    image_agent = ImageAgent()
+                    for scene in final_story.get("scenes", []):
+                        description = scene.get("image_description") or scene.get("text", "")
+                        words = description.split()
+                        if len(words) > 70:
+                            description = " ".join(words[:70])
+                            print(f"[Safety] ⚠️ Truncated long image prompt for scene {scene.get('scene_number', '?')}")
+                        
+                        scene_number = scene.get("scene_number", 0)
+                        filename = f"{sanitize_filename(story_title)}_{timestamp}_scene_{scene_number}.png"
+                        
+                        print(f"Generating image for scene {scene_number}...")
+                        image_path = image_agent.generate_image(prompt_text=description, filename=filename)
+                        scene["image_path"] = image_path
 
-            image_status = "Images generated successfully. ✅"
+                    image_status = "Images generated successfully. ✅"
+            
+            finally:
+                # Resume Ollama after image generation
+                if ollama_was_running:
+                    OllamaManager.resume_ollama()
+                
         except Exception as e:
             traceback.print_exc()
             image_status = f"❌ Image generation failed: {e}"
@@ -281,6 +382,16 @@ async def api_generate(
 
     # --- Final combined status ---
     status_msg = image_status or story_status
+
+    # Clear GPU cache before returning
+    try:
+        import torch
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+            torch.cuda.synchronize()
+            print("🧹 GPU cache cleared after story generation")
+    except Exception as e:
+        print(f"⚠️ Could not clear GPU cache: {e}")
 
     return JSONResponse({
         "status": status_msg, 

@@ -8,7 +8,7 @@ from PIL import Image, ImageDraw, ImageFont
 
 # --- CONFIGURATION ---
 #MODEL_NAME = 'dolphin-mistral:8b'
-MODEL_NAME = 'llama3.1:8b-instruct-q4_K_M'
+MODEL_NAME = "mistral-nemo:12b"
 # Ensure the path is relative from the project root where main.py runs
 EVALUATIONS_DIR = os.path.join("generated", "evaluations")
 
@@ -157,6 +157,16 @@ def main():
     output_image_path = os.path.join(EVALUATIONS_DIR, f"{base_name}_evaluation.png")
     
     save_evaluation_as_image(evaluation, title, output_image_path)
+    
+    # Clear GPU cache after evaluation completes
+    try:
+        import torch
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+            torch.cuda.synchronize()
+            print("[EvaluationAgent] 🧹 GPU cache cleared after evaluation")
+    except Exception as e:
+        print(f"[EvaluationAgent] ⚠️ Could not clear GPU cache: {e}")
 
 if __name__ == "__main__":
     main()

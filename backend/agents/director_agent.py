@@ -13,7 +13,7 @@ class DirectorAgent:
       PromptAgent -> WriterAgent -> (optional ImageAgent) -> ReviewerAgent -> EditorAgent
     """
 
-    def __init__(self, llm_model: str = "llama3.1:8b-instruct-q4_K_M", writer_max_scenes: int = 3):
+    def __init__(self, llm_model: str = "mistral-nemo:12b", writer_max_scenes: int = 3):
         self.prompt_agent = PromptAgent(model=llm_model)
         self.writer = WriterAgent(llm_model=llm_model, max_retries=2, max_scenes=writer_max_scenes)
         self.reviewer = ReviewerAgent()
