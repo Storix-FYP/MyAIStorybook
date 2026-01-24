@@ -1,0 +1,54 @@
+{
+  "title": "The Enchanted Woods Adventure",
+  "setting": "Enchanted Woods",
+  "characters": [
+    "Timmy",
+    "Whiskers the Owl"
+  ],
+  "scenes": [
+    {
+      "scene_number": 1,
+      "text": "One sunny morning, Timmy decided to explore the enchanted woods. He packed his backpack with a sandwich and a flashlight. As he entered the woods, the trees whispered secrets in the wind.",
+      "image_description": "Timmy excitedly entering the woods, sunlight filtering through tall trees",
+      "image_path": null
+    },
+    {
+      "scene_number": 2,
+      "text": "Deep into the woods, Timmy met Whiskers the Owl. They became friends, and Whiskers offered to guide him. Together they discovered a glowing mushroom circle, which Whiskers said was where the fairies played at night.",
+      "image_description": "Timmy and Whiskers standing by glowing mushrooms",
+      "image_path": null
+    },
+    {
+      "scene_number": 3,
+      "text": "As they continued their journey, Timmy noticed his sandwich was gone. He felt a pang of hunger but also laughter as he saw Whiskers trying to hide his hoot with the empty wrapper. They shared a laugh before returning home.",
+      "image_description": "Timmy laughing with Whiskers, who has an empty sandwich wrapper",
+      "image_path": null
+    }
+  ],
+  "consistency_report": {
+    "per_scene": {
+      "1": {
+        "scene_number": 1,
+        "word_count": 32,
+        "length_score": 0.8,
+        "has_image": true
+      },
+      "2": {
+        "scene_number": 2,
+        "word_count": 35,
+        "length_score": 0.875,
+        "has_image": true
+      },
+      "3": {
+        "scene_number": 3,
+        "word_count": 40,
+        "length_score": 1.0,
+        "has_image": true
+      }
+    },
+    "overall": {
+      "avg_length_score": 0.892,
+      "image_coverage": 1.0
+    }
+  }
+}

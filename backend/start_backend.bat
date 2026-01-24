@@ -25,7 +25,7 @@ call venv\Scripts\activate
 :: Update the connection string below with your PostgreSQL credentials
 if "%DATABASE_URL%"=="" (
     echo Setting DATABASE_URL environment variable...
-    set DATABASE_URL=postgresql://postgres:355440@localhost:5432/myaistorybook
+    set DATABASE_URL=postgresql://postgres:12345@localhost:5432/myaistorybook
     echo   -> DATABASE_URL set to: postgresql://postgres:***@localhost:5432/myaistorybook
 ) else (
     echo DATABASE_URL already set, using existing value...

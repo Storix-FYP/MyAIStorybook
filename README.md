@@ -1,207 +1,250 @@
-# 📖 Storybook-FYP
+# 📖 MyAIStorybook
 
-**AI-powered storybook generator** with a **FastAPI backend** + **Next.js frontend**.  
-It generates children's stories, reviews them, and illustrates scenes using **Stable Diffusion**.
+**AI-powered children's storybook generator** with personalized character images using facial recognition.  
+Built with **FastAPI backend** + **Next.js frontend** + **Stable Diffusion WebUI** for professional-quality illustrations.
+
+---
+
+## ✨ Key Features
+
+- 🎨 **Personalized Stories** - Upload your photo and become the story's main character
+- 🤖 **AI Story Generation** - Powered by Ollama (Llama 3.1)
+- 🖼️ **Professional Image Generation** - Uses Stable Diffusion WebUI with IP-Adapter FaceID Plus v2
+- 🛡️ **Child-Safe Content** - Automatic content filtering for age-appropriate stories and images
+- 📱 **Modern UI** - Responsive Next.js frontend with dark mode
+- 🔐 **User Authentication** - Secure login and story management
+- 💬 **Interactive Chatbot** - Chat with story characters
+- 🎭 **Idea Workshop** - Brainstorm story ideas with AI assistance
 
 ---
 
 ## 📂 Project Structure
 
-storybook-fyp/
-
-│── backend/ # FastAPI backend
-
-│     ├── main.py # FastAPI entrypoint
-
-│     ├── agents/ # AI agents (story, image, review, etc.)
-  
-│     ├── models/ # Pydantic schemas
-   
-│     └── requirements.txt # Backend dependencies
-
+```
+MyAIStorybook/
+├── backend/                    # FastAPI backend
+│   ├── main.py                # API entrypoint
+│   ├── agents/                # AI agents
+│   │   ├── writer_agent.py   # Story generation
+│   │   ├── image_agent.py    # Standard image generation
+│   │   ├── personalized_image_agent_webui_api.py  # Personalized images
+│   │   ├── chatbot_agent.py  # Character chatbot
+│   │   └── idea_workshop_agent.py  # Story ideation
+│   ├── utils/                 # Utilities
+│   │   ├── content_safety.py # Child-safe content filtering
+│   │   └── ollama_manager.py # GPU memory management
+│   ├── auth/                  # Authentication system
+│   └── requirements.txt       # Python dependencies
 │
-
-│── generated/
-
-│ ├── images/ # Generated images
-
-│ ├── stories/ # Generated stories
-
-|
-
-│── frontend/ # Next.js frontend
-
-│ ├── public/ # Static assets
-
-│ ├── src/ # Next.js app directory & components
-
-│ └── package.json # Frontend dependencies
-
+├── frontend/                   # Next.js frontend
+│   ├── src/
+│   │   ├── app/              # Next.js 14 app directory
+│   │   ├── components/       # React components
+│   │   └── contexts/         # React contexts
+│   └── package.json          # Node dependencies
 │
-
-└── README.md # Documentation & setup guide
-
-
+├── generated/                  # Generated content
+│   ├── images/               # Story illustrations
+│   ├── stories/              # Story JSON files
+│   └── pdfs/                 # Exported PDFs
+│
+├── start_all.bat              # Start all services
+└── README.md                  # This file
+```
 
 ---
 
-## 🧑‍💻 Git Workflow (Team Collaboration)
+## 🚀 Quick Start
 
-This project is worked on by multiple contributors. To avoid conflicts, **follow this workflow**:
+### Prerequisites
 
-### 1️⃣ Clone the Repository (First Time Only)
+1. **Python 3.10+** - [Download](https://www.python.org/downloads/)
+2. **Node.js 18+** - [Download](https://nodejs.org/)
+3. **CUDA-capable GPU** - NVIDIA GPU with 8GB+ VRAM recommended
+4. **Ollama** - [Download](https://ollama.com/)
+5. **Stable Diffusion WebUI** - Already included in project
+
+### Installation
+
+1. **Clone the repository**
 ```bash
 git clone https://github.com/glassesart14-alt/MyAIStorybook.git
 cd MyAIStorybook
 ```
 
-### 2️⃣ Always Create Your Own Branch
+2. **Install Ollama model**
 ```bash
-git checkout -b my-branch-name
-```
-👉 Example branch names:
-
-* wahab-frontend
-* mujahid-backend
-* ahmed-ai-agent
-
-### 3️⃣ Make Changes & Commit
-```bash
-git add .
-git commit -m "Meaningful message about what you changed"
+ollama pull llama3.1:8b-instruct-q8_0
 ```
 
-### 4️⃣ Push Your Branch to GitHub
+3. **Start everything** (Recommended)
 ```bash
-git push -u origin my-branch-name
+start_all.bat
 ```
 
-### 5️⃣ Pull Latest Code Before Working (VERY IMPORTANT)
-```bash
-git checkout main
-git pull origin main
-git checkout my-branch-name
-git merge main
-```
+This will:
+- Start Stable Diffusion WebUI (port 7860)
+- Start Backend API (port 8000)
+- Start Frontend (port 3000)
 
-### 6️⃣ Creating a Pull Request (PR)
-1. Push your branch:
-```bash
-git push origin my-branch-name
-```
+**Access the app at:** http://localhost:3000
 
-2. Go to GitHub → Your branch → New Pull Request
-3. Ask teammates for review
-4. Once approved, merge into main
+---
 
-✅ Golden Rule:
-* Never push directly to main
-* Always use branches + PRs
+## 🎯 Running Individual Services
 
-## To run the Whole project:
-
-Open terminal as Administrator and run:
-```bash
-.\start_all.bat
-```
-This automaticaly installs all necessary packages.
-
-## 🚀 Run Backend Only (FastAPI)
-
-Open terminal as Administrator and run:
+### Backend Only
 ```bash
 cd backend
-.\start_backend.bat
+start_backend.bat
 ```
-This automatically installs requirements.txt in a virtual environment (venv).
+Backend runs at: http://127.0.0.1:8000  
+API docs at: http://127.0.0.1:8000/docs
 
-👉 Backend runs at: http://127.0.0.1:8000
-
-## 🎨 Run Frontend Only (Next.js)
-
-Open terminal as Administrator and run:
+### Frontend Only
 ```bash
 cd frontend
-.\start_frontend.bat
+start_frontend.bat
 ```
-This automatically installs the necessary packages.
+Frontend runs at: http://localhost:3000
 
-👉 Frontend runs at: http://localhost:3000
-
-## 🤖 AI Model Setup
-
-Model Link: https://civitai.com/models/4384/dreamshaper
-
-Using a pre-downloaded **.safetensors** model:
-
-Place your model here:
+### WebUI Only
 ```bash
-backend/models/pretrained/dreamshaper_8.safetensors
+cd C:\Users\wahab\Downloads\FYP\storybook-fyp\stable-diffusion-webui
+webui-user.bat
+```
+WebUI runs at: http://127.0.0.1:7860
+
+---
+
+## 🤖 AI Models Setup
+
+### Stable Diffusion Model
+
+**Model:** Realistic Vision V4.0  
+**Location:** `stable-diffusion-webui/models/Stable-diffusion/`
+
+Download from: [Civitai - Realistic Vision](https://civitai.com/models/4201/realistic-vision-v40)
+
+### IP-Adapter Models
+
+**Required files in WebUI:**
+- `stable-diffusion-webui/extensions/sd-webui-controlnet/models/ip-adapter-faceid-plusv2_sd15.bin`
+- `stable-diffusion-webui/models/Lora/ip-adapter-faceid-plusv2_sd15_lora.safetensors`
+
+Download from: [IP-Adapter FaceID Plus v2](https://huggingface.co/h94/IP-Adapter-FaceID)
+
+### Ollama Setup
+
+1. **Install Ollama:** [Download here](https://ollama.com/)
+2. **Pull the model:**
+```bash
+ollama pull llama3.1:8b-instruct-q8_0
 ```
 
-Update **image_agent.py**:
+3. **Test it:**
 ```bash
-self.pipe = StableDiffusionPipeline.from_single_file(
-    "backend/models/pretrained/dreamshaper_8.safetensors",
-    torch_dtype=dtype,
-    safety_checker=None
-)
+ollama run llama3.1:8b-instruct-q8_0 "Tell me a short story"
 ```
 
-## 🦙 Ollama Setup 
-1. Install Ollama → Download here
-2. Pull llama3.1:8b model:
-```bash
-ollama pull llama3.1:8b-instruct-q4_K_M 
+---
+
+## 🛠️ Configuration
+
+### Environment Variables
+
+Create `backend/.env`:
+```env
+DATABASE_URL=postgresql://user:password@localhost/storybook
+OLLAMA_MODEL=llama3.1:8b-instruct-q8_0
+WEBUI_URL=http://127.0.0.1:7860
 ```
 
-Test on CMD:
-```bash
-ollama run llama3.1:8b-instruct-q4_K_M  "Tell me a short story about a robot and a dog"
+### WebUI Settings
+
+Edit `stable-diffusion-webui/webui-user.bat`:
+```batch
+set COMMANDLINE_ARGS=--api --nowebui --skip-torch-cuda-test
 ```
 
-## ⚠️ Common Issues
+---
 
-* Branch conflicts → Always git pull origin main before pushing.
-* Next.js not found → Run npm install -g next.
-* CUDA errors → Ensure PyTorch matches your CUDA version.
-* Model not loading → Check .safetensors file is in backend/models/pretrained/.
+## 🎨 Features in Detail
 
-## 📌 Git Cheatsheet (Quick Reference)
+### 1. Personalized Image Generation
+- Upload your photo
+- AI detects your face using InsightFace
+- Generates story scenes with your face
+- Uses IP-Adapter FaceID Plus v2 for accurate facial likeness
+
+### 2. Content Safety
+- Automatic filtering of inappropriate prompts
+- Child-safe negative prompts
+- Blocks violence, explicit content, deformities
+- Age-appropriate story themes
+
+### 3. GPU Memory Management
+- Automatically pauses Ollama during image generation
+- Clears GPU cache for optimal performance
+- Resumes Ollama after images are generated
+- 5-10x faster image generation
+
+### 4. Story Pipeline
+```
+User Input → Prompt Agent → Writer Agent → Reviewer Agent → 
+Editor Agent → Image Generation → PDF Export
+```
+
+
+
+## 🐛 Troubleshooting
+
+### WebUI not starting
+- Check if port 7860 is available
+- Ensure CUDA is installed correctly
+- Run `webui-user.bat` manually to see errors
+
+### Backend errors
+- Verify virtual environment is activated
+- Check `backend/requirements.txt` is installed
+- Ensure Ollama is running
+
+### Frontend issues
+- Run `npm install` in frontend folder
+- Clear Next.js cache: `rm -rf .next`
+- Check Node.js version: `node --version`
+
+### Image generation slow
+- Ensure Ollama is being paused (check backend console)
+- Verify GPU is being used (check Task Manager)
+- Close other GPU-intensive applications
+
+### Poor facial likeness
+- Use a clear, front-facing photo
+- Ensure face is well-lit
+- Photo should be 512x512 or larger
+- Only one face should be visible
+
+---
+
+## 🧑‍💻 Git Workflow
+
+### Create a Branch
 ```bash
-# Clone repo (first time only)
-git clone https://github.com/glassesart14-alt/MyAIStorybook.git
-cd MyAIStorybook
+git checkout -b feature/my-feature
+```
 
-# Create new branch
-git checkout -b my-feature
-
-# Stage and commit changes
+### Make Changes
+```bash
 git add .
-git commit -m "Added new feature"
+git commit -m "Add new feature"
+git push origin feature/my-feature
+```
 
-# Push your branch
-git push -u origin my-feature
-
-# Switch to main & update
+### Update from Main
+```bash
 git checkout main
 git pull origin main
-
-# Merge latest main into your branch
-git checkout my-feature
+git checkout feature/my-feature
 git merge main
-
-# Push after merge
-git push origin my-feature
 ```
-
-
-
-
-
-
-
-
-
-
-

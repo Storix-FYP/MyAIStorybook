@@ -6,7 +6,12 @@ import '@/styles/globals.css';
 export const metadata: Metadata = {
   title: 'MyAIStorybook - AI-Powered Story Generator',
   description: 'Generate illustrated children\'s stories using AI',
-  viewport: 'width=device-width, initial-scale=1, maximum-scale=5',
+};
+
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 5,
 };
 
 export default function RootLayout({

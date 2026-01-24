@@ -1,0 +1,54 @@
+{
+  "title": "The Magical Film Reel",
+  "setting": "A cozy attic on a stormy night",
+  "characters": [
+    "Timmy",
+    "Glitterwing the Fairy"
+  ],
+  "scenes": [
+    {
+      "scene_number": 1,
+      "text": "Timmy discovered an old film reel tucked away in his attic. He decided to watch it one stormy evening, just as lightning lit up the sky outside. As he watched, the film suddenly shimmered with magic.",
+      "image_description": "A boy watching a glowing film reel amidst cobwebs and dust",
+      "image_path": null
+    },
+    {
+      "scene_number": 2,
+      "text": "To his amazement, Timmy found himself transported into the magical world of the film. He met Glitterwing, a friendly fairy who was delighted to have a new friend. Together, they flew over enchanted forests and sparkling streams.",
+      "image_description": "Timmy and Glitterwing flying over a lush, glowing forest",
+      "image_path": null
+    },
+    {
+      "scene_number": 3,
+      "text": "But as the storm outside grew stronger, Timmy realized he had to return home. With a sad goodbye, he promised Glitterwing that he would find a way back to their magical world again someday.",
+      "image_description": "A boy saying farewell to a fairy amidst swirling winds",
+      "image_path": null
+    }
+  ],
+  "consistency_report": {
+    "per_scene": {
+      "1": {
+        "scene_number": 1,
+        "word_count": 36,
+        "length_score": 0.9,
+        "has_image": true
+      },
+      "2": {
+        "scene_number": 2,
+        "word_count": 37,
+        "length_score": 0.925,
+        "has_image": true
+      },
+      "3": {
+        "scene_number": 3,
+        "word_count": 34,
+        "length_score": 0.85,
+        "has_image": true
+      }
+    },
+    "overall": {
+      "avg_length_score": 0.892,
+      "image_coverage": 1.0
+    }
+  }
+}

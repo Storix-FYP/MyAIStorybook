@@ -1,0 +1,25 @@
+{
+  "title": "The Enchanted Woods",
+  "setting": "A mystical forest with towering trees and glowing flowers.",
+  "characters": [
+    "Timmy",
+    "Glowie"
+  ],
+  "scenes": [
+    {
+      "scene_number": 1,
+      "text": "One sunny afternoon, Timmy wandered into the woods. He had heard stories of magical creatures but never believed them... until now. A soft glow caught his eye, leading him deeper into the forest than he'd ever gone before.",
+      "image_description": "Timmy following a glowing light path through dense trees"
+    },
+    {
+      "scene_number": 2,
+      "text": "Suddenly, Timmy stumbled upon a tiny creature with glittering wings and luminescent skin. It was Glowie, the guardian of the Enchanted Woods! Glowie smiled at Timmy, inviting him to explore their hidden world together.",
+      "image_description": "Timmy meeting Glowie under a canopy of sparkling plants"
+    },
+    {
+      "scene_number": 3,
+      "text": "Together they flew over whispering streams, played tag with friendly fairies, and even had a picnic with giant mushrooms. Timmy's heart was filled with wonder and new friendship as he waved goodbye to Glowie, promising to keep their secret safe.",
+      "image_description": "Timmy and Glowie laughing during a magical picnic"
+    }
+  ]
+}
