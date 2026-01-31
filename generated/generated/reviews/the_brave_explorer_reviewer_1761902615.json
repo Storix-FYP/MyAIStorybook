@@ -1,0 +1,55 @@
+{
+  "title": "The Brave Explorer",
+  "setting": "A mystical forest filled with towering trees, sparkling streams, and hidden clearings",
+  "characters": [
+    "Eryndor",
+    "Lila",
+    "Thorne"
+  ],
+  "scenes": [
+    {
+      "scene_number": 1,
+      "text": "Eryndor had always dreamed of exploring the mysterious forest that lay just beyond his village. With a backpack full of supplies and a heart full of courage, he set off into the unknown. The trees grew taller and closer together here, casting dappled shadows on the forest floor. Eryndor wandered deeper, his senses on high alert for any sign of danger. Suddenly, he stumbled upon a hidden clearing and gasped in wonder. In the center of the clearing stood an ancient tree, its branches twisted and gnarled with age.",
+      "image_description": "A young boy stands before an ancient, gnarled tree in a sun-dappled forest clearing",
+      "image_path": null
+    },
+    {
+      "scene_number": 2,
+      "text": "Eryndor approached the ancient tree cautiously, feeling its rough bark beneath his hand. As he reached out to touch it, a figure emerged from behind the trunk - a girl with wild curly hair and a mischievous grin. She introduced herself as Lila, a forest dweller who had been watching Eryndor from afar. Together, they explored the clearing and discovered hidden streams and secret glades. Thorne, a gentle giant of a bear, appeared from behind a nearby bush, his eyes shining with curiosity. The three of them laughed and played together, forging an unbreakable bond.",
+      "image_description": "A boy, a girl, and a large bear play together in a sunlit forest clearing surrounded by flowers",
+      "image_path": null
+    },
+    {
+      "scene_number": 3,
+      "text": "As the days passed, Eryndor, Lila, and Thorne faced many challenges together - raging rivers to cross, steep mountains to climb, and treacherous paths to navigate. But with each obstacle overcome, their friendship grew stronger. They discovered hidden caves filled with glittering crystals, and even encountered a wise old owl who offered them sage advice. In the end, it was not the dangers they faced that mattered most, but the memories they made along the way.",
+      "image_description": "Three friends - a boy, a girl, and a bear - stand together on a windswept mountain peak, looking out",
+      "image_path": null
+    }
+  ],
+  "consistency_report": {
+    "per_scene": {
+      "1": {
+        "scene_number": 1,
+        "word_count": 89,
+        "length_score": 1.0,
+        "has_image": true
+      },
+      "2": {
+        "scene_number": 2,
+        "word_count": 94,
+        "length_score": 1.0,
+        "has_image": true
+      },
+      "3": {
+        "scene_number": 3,
+        "word_count": 75,
+        "length_score": 1.0,
+        "has_image": true
+      }
+    },
+    "overall": {
+      "avg_length_score": 1.0,
+      "image_coverage": 1.0
+    }
+  }
+}

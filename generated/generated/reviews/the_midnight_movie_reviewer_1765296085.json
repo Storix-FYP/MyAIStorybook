@@ -1,0 +1,54 @@
+{
+  "title": "The Midnight Movie",
+  "setting": "A cozy living room on a stormy night",
+  "characters": [
+    "Tim",
+    "Ginger the Cat"
+  ],
+  "scenes": [
+    {
+      "scene_number": 1,
+      "text": "Tim was enjoying his favorite movie, 'Adventures of Captain Silver', snuggled up with his cat Ginger. As the clock on the wall struck twelve, he noticed something strange.",
+      "image_description": "Boy and cat watching TV, as lightning flickers outside",
+      "image_path": null
+    },
+    {
+      "scene_number": 2,
+      "text": "'You're not supposed to talk back to us!' said Captain Silver from the screen. Tim gasped, but Ginger just blinked in surprise. 'Why did you do that?' asked Tim.",
+      "image_description": "Movie characters speaking to boy onscreen",
+      "image_path": null
+    },
+    {
+      "scene_number": 3,
+      "text": "'We're bored, Tim,' confessed the movie characters. 'You're the first person who's watched us in ages. Could we come out and play?' Tim smiled widely.",
+      "image_description": "Tim smiling at TV screen",
+      "image_path": null
+    }
+  ],
+  "consistency_report": {
+    "per_scene": {
+      "1": {
+        "scene_number": 1,
+        "word_count": 28,
+        "length_score": 0.7,
+        "has_image": true
+      },
+      "2": {
+        "scene_number": 2,
+        "word_count": 30,
+        "length_score": 0.75,
+        "has_image": true
+      },
+      "3": {
+        "scene_number": 3,
+        "word_count": 28,
+        "length_score": 0.7,
+        "has_image": true
+      }
+    },
+    "overall": {
+      "avg_length_score": 0.717,
+      "image_coverage": 1.0
+    }
+  }
+}

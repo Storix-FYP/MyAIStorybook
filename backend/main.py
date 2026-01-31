@@ -20,6 +20,7 @@ from backend.agents.prompt_agent import PromptAgent
 from backend.agents.story_agent import StoryAgent
 from backend.agents.image_agent import ImageAgent
 from backend.agents.chatbot_agent import ChatbotAgent
+from backend.utils.tts_manager import get_tts_manager
 
 # Feature flag for LangChain Workshop Agent
 USE_LANGCHAIN_WORKSHOP = True  # Set to False to use original implementation
@@ -130,9 +131,11 @@ BASE_DIR = os.path.dirname(__file__)
 GENERATED_DIR = os.path.join(BASE_DIR, "..", "generated")
 IMAGES_DIR = os.path.join(GENERATED_DIR, "images")
 STORIES_DIR = os.path.join(GENERATED_DIR, "stories")
+AUDIO_DIR = os.path.join(GENERATED_DIR, "audio")
 
 os.makedirs(IMAGES_DIR, exist_ok=True)
 os.makedirs(STORIES_DIR, exist_ok=True)
+os.makedirs(AUDIO_DIR, exist_ok=True)
 
 # Serve generated static files
 app.mount("/generated", StaticFiles(directory=GENERATED_DIR), name="generated")
@@ -779,6 +782,102 @@ async def get_story_detail(
     except Exception as e:
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Error retrieving story: {str(e)}")
+
+
+@app.get("/api/stories/{story_id}/download")
+async def download_story_pdf(
+    story_id: int,
+    current_user: User = Depends(get_current_user_optional),
+    db: Session = Depends(get_db)
+):
+    """
+    Generate and download the PDF for a specific story.
+    """
+    try:
+        story = db.query(Story).filter(Story.id == story_id).first()
+        
+        if not story:
+            raise HTTPException(status_code=404, detail="Story not found")
+            
+        # Optional: Check ownership
+        if story.user_id and (not current_user or story.user_id != current_user.id):
+             raise HTTPException(status_code=403, detail="You do not have permission to download this story")
+        
+        # Regenerate PDF to ensure it has the latest styling/content
+        story_data = story.story_data
+        safe_title = sanitize_filename(story.title or "untitled_story")
+        timestamp = int(time.time())
+        pdf_filename = f"{safe_title}_{timestamp}.pdf"
+        
+        pdf_path = export_pdf(story_data, pdf_filename)
+        
+        if not os.path.exists(pdf_path):
+            raise HTTPException(status_code=500, detail="Failed to generate PDF")
+            
+        return FileResponse(
+            path=pdf_path,
+            filename=pdf_filename,
+            media_type="application/pdf"
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Error downloading PDF: {str(e)}")
+
+
+# -------------------------
+# TTS endpoints
+# -------------------------
+@app.get("/api/tts/{story_id}/{scene_number}")
+async def api_tts(
+    story_id: int,
+    scene_number: int,
+    voice: str = "female",
+    db: Session = Depends(get_db)
+):
+    """
+    Generate or get cached audio for a specific scene
+    """
+    try:
+        # Load story from database
+        story = db.query(Story).filter(Story.id == story_id).first()
+        if not story:
+            raise HTTPException(status_code=404, detail="Story not found")
+            
+        story_data = story.story_data
+        scenes = story_data.get("scenes", [])
+        
+        # Find the requested scene
+        target_scene = None
+        for scene in scenes:
+            if scene.get("scene_number") == scene_number:
+                target_scene = scene
+                break
+                
+        if not target_scene:
+            raise HTTPException(status_code=404, detail=f"Scene {scene_number} not found in story")
+            
+        text = target_scene.get("text", "")
+        if not text:
+            raise HTTPException(status_code=400, detail="Scene has no text to synthesize")
+            
+        # Generate audio
+        tts_manager = get_tts_manager()
+        audio_url = tts_manager.generate_audio(text, story_id, scene_number, voice)
+        
+        return JSONResponse({
+            "story_id": story_id,
+            "scene_number": scene_number,
+            "voice": voice,
+            "audio_url": audio_url
+        })
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"TTS error: {str(e)}")
 
 
 # -------------------------

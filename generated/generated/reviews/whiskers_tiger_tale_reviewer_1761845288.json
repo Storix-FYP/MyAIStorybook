@@ -1,0 +1,54 @@
+{
+  "title": "Whisker's Tiger Tale",
+  "setting": "A colorful backyard jungle",
+  "characters": [
+    "Whisker",
+    "Mama Cat"
+  ],
+  "scenes": [
+    {
+      "scene_number": 1,
+      "text": "Whisker, a curious cat, thought he had tiger stripes on his fur. He felt the thrill of adventure and wanted to explore the jungle. With a swish of his tail, he leaped over a leaf pile and into a hidden cave. Mama Cat called after him, 'Be careful, Whisker!' but he was too excited to listen. The sun shone brightly overhead as Whisker ventured deeper into the underbrush. Leaves rustled beneath his paws as he padded through the dense foliage.",
+      "image_description": "A small cat with a determined expression jumps over a leaf pile",
+      "image_path": null
+    },
+    {
+      "scene_number": 2,
+      "text": "Whisker chased after butterflies, feeling like a mighty tiger stalking its prey. He climbed a tree, using his claws to dig into the bark. The wind rustled through the branches above, making Whisker's whiskers twitch with excitement. As he reached the top, he spotted a family of robins nesting in a nearby bush. They chirped and flapped their wings, but Whisker just smiled, feeling proud of his jungle skills. Mama Cat watched from below, worried that her little cat was getting too far away.",
+      "image_description": "A small cat perched on a tree branch, surrounded by birds",
+      "image_path": null
+    },
+    {
+      "scene_number": 3,
+      "text": "Just as Whisker thought he'd discovered the ultimate jungle thrill, he stumbled upon a hidden clearing. In the center stood an ancient oak tree, its trunk gnarled and twisted with age. A gentle breeze whispered through the leaves, creating a soothing melody that calmed Whisker's adventurous spirit. He curled up at the base of the tree, feeling the warmth of the sun seep into his fur. As he drifted off to sleep, Mama Cat found him, smiled, and said, 'You may not be a tiger, but you're my brave little explorer.'",
+      "image_description": "A small cat naps at the base of an ancient oak tree",
+      "image_path": null
+    }
+  ],
+  "consistency_report": {
+    "per_scene": {
+      "1": {
+        "scene_number": 1,
+        "word_count": 80,
+        "length_score": 1.0,
+        "has_image": true
+      },
+      "2": {
+        "scene_number": 2,
+        "word_count": 85,
+        "length_score": 1.0,
+        "has_image": true
+      },
+      "3": {
+        "scene_number": 3,
+        "word_count": 94,
+        "length_score": 1.0,
+        "has_image": true
+      }
+    },
+    "overall": {
+      "avg_length_score": 1.0,
+      "image_coverage": 1.0
+    }
+  }
+}
