@@ -24,7 +24,7 @@ networkx==3.3
 numpy==2.1.2
 ollama==0.5.3
 omegaconf==2.3.0
-packaging==25.0
+packaging<26.0.0
 pillow==11.0.0
 psutil==7.1.0
 pydantic==2.11.9
@@ -72,5 +72,12 @@ pytest-asyncio==0.23.0
 langchain
 langchain-community
 piper-tts
+pathvalidate  # Required by piper-tts
 onnxruntime
 
+# Speech-to-Text (Offline)
+openai-whisper
+
+# Story & Image Evaluation
+sentence-transformers  # Text coherence analysis
+textstat  # Readability metrics

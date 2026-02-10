@@ -2,45 +2,6 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 
-// Type definitions for Web Speech API
-interface SpeechRecognitionEvent {
-    resultIndex: number;
-    results: SpeechRecognitionResultList;
-}
-
-interface SpeechRecognitionErrorEvent {
-    error: string;
-    message?: string;
-}
-
-interface SpeechRecognition extends EventTarget {
-    continuous: boolean;
-    interimResults: boolean;
-    lang: string;
-    start: () => void;
-    stop: () => void;
-    abort: () => void;
-    onresult: ((event: SpeechRecognitionEvent) => void) | null;
-    onerror: ((event: SpeechRecognitionErrorEvent) => void) | null;
-    onend: (() => void) | null;
-    onstart: (() => void) | null;
-}
-
-interface SpeechRecognitionConstructor {
-    new(): SpeechRecognition;
-}
-
-// Check for browser support
-const getSpeechRecognition = (): SpeechRecognitionConstructor | null => {
-    if (typeof window === 'undefined') return null;
-
-    return (
-        (window as any).SpeechRecognition ||
-        (window as any).webkitSpeechRecognition ||
-        null
-    );
-};
-
 interface UseSpeechToTextOptions {
     language?: string;
     continuous?: boolean;
@@ -71,113 +32,201 @@ export const useSpeechToText = (options: UseSpeechToTextOptions = {}): UseSpeech
     const [error, setError] = useState<string | null>(null);
     const [isSupported, setIsSupported] = useState(false);
 
-    const recognitionRef = useRef<SpeechRecognition | null>(null);
+    const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+    const audioChunksRef = useRef<Blob[]>([]);
+    const streamRef = useRef<MediaStream | null>(null);
+    const audioContextRef = useRef<AudioContext | null>(null);
+    const analyserRef = useRef<AnalyserNode | null>(null);
+    const silenceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+    // Silence detection config
+    const SILENCE_THRESHOLD = 0.02; // Volume threshold for silence (increased sensitivity)
+    const SILENCE_DURATION = 2000; // Stop after 2 seconds of silence
 
     // Check browser support on mount
     useEffect(() => {
-        const SpeechRecognitionClass = getSpeechRecognition();
-        setIsSupported(SpeechRecognitionClass !== null);
+        const hasMediaDevices = typeof window !== 'undefined' &&
+            typeof navigator !== 'undefined' &&
+            !!navigator.mediaDevices &&
+            typeof navigator.mediaDevices.getUserMedia === 'function';
+        setIsSupported(hasMediaDevices);
     }, []);
 
     // Cleanup on unmount
     useEffect(() => {
         return () => {
-            if (recognitionRef.current) {
-                recognitionRef.current.abort();
+            if (streamRef.current) {
+                streamRef.current.getTracks().forEach(track => track.stop());
+            }
+            if (audioContextRef.current) {
+                audioContextRef.current.close();
+            }
+            if (silenceTimeoutRef.current) {
+                clearTimeout(silenceTimeoutRef.current);
             }
         };
     }, []);
 
-    const startListening = useCallback(() => {
-        const SpeechRecognitionClass = getSpeechRecognition();
+    const sendAudioToWhisper = async (audioBlob: Blob) => {
+        try {
+            const formData = new FormData();
+            formData.append('audio', audioBlob, 'recording.webm');
+            formData.append('language', language.split('-')[0]);
 
-        if (!SpeechRecognitionClass) {
+            const response = await fetch('http://localhost:8000/api/stt', {
+                method: 'POST',
+                body: formData
+            });
+
+            if (!response.ok) {
+                throw new Error('STT request failed');
+            }
+
+            const result = await response.json();
+            const newText = result.text;
+
+            if (newText) {
+                const updated = continuous ? `${transcript} ${newText}`.trim() : newText;
+                setTranscript(updated);
+
+                if (onTranscript) {
+                    onTranscript(updated);
+                }
+            }
+
+        } catch (err) {
+            console.error('Whisper transcription error:', err);
+            setError('Failed to transcribe audio');
+        }
+    };
+
+    const monitorAudioLevel = useCallback(() => {
+        if (!analyserRef.current) return;
+
+        const analyser = analyserRef.current;
+        const dataArray = new Uint8Array(analyser.frequencyBinCount);
+        let frameId: number;
+
+        const checkAudioLevel = () => {
+            // Check if recorder is still active
+            if (!analyserRef.current || !mediaRecorderRef.current || mediaRecorderRef.current.state === 'inactive') {
+                return;
+            }
+
+            analyser.getByteFrequencyData(dataArray);
+
+            const average = dataArray.reduce((a, b) => a + b) / dataArray.length / 255;
+
+            console.log('[STT] Audio level:', average.toFixed(3)); // Debug log
+
+            if (average < SILENCE_THRESHOLD) {
+                if (!silenceTimeoutRef.current) {
+                    console.log('[STT] Silence detected, waiting...');
+                    silenceTimeoutRef.current = setTimeout(() => {
+                        console.log('[STT] Auto-stopping after silence');
+                        if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+                            mediaRecorderRef.current.stop();
+                            setIsListening(false);
+                        }
+                    }, SILENCE_DURATION);
+                }
+            } else {
+                if (silenceTimeoutRef.current) {
+                    console.log('[STT] Sound detected, continuing...');
+                    clearTimeout(silenceTimeoutRef.current);
+                    silenceTimeoutRef.current = null;
+                }
+            }
+
+            frameId = requestAnimationFrame(checkAudioLevel);
+        };
+
+        checkAudioLevel();
+
+        // Return cleanup function
+        return () => {
+            if (frameId) {
+                cancelAnimationFrame(frameId);
+            }
+        };
+    }, []);
+
+    const startListening = useCallback(async () => {
+        if (!navigator.mediaDevices) {
             setError('Speech recognition is not supported in this browser');
             return;
         }
 
-        setError(null);
-        setTranscript('');
-        setInterimTranscript('');
-
-        const recognition = new SpeechRecognitionClass();
-        recognitionRef.current = recognition;
-
-        recognition.continuous = continuous;
-        recognition.interimResults = true;
-        recognition.lang = language;
-
-        recognition.onstart = () => {
-            setIsListening(true);
-        };
-
-        recognition.onresult = (event: SpeechRecognitionEvent) => {
-            let finalTranscript = '';
-            let interim = '';
-
-            for (let i = event.resultIndex; i < event.results.length; i++) {
-                const result = event.results[i];
-                if (result.isFinal) {
-                    finalTranscript += result[0].transcript;
-                } else {
-                    interim += result[0].transcript;
-                }
-            }
-
-            setInterimTranscript(interim);
-
-            if (finalTranscript) {
-                setTranscript((prev) => prev + finalTranscript);
-                if (onTranscript) {
-                    onTranscript(finalTranscript);
-                }
-            }
-        };
-
-        recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
-            console.error('Speech recognition error:', event.error);
-
-            switch (event.error) {
-                case 'not-allowed':
-                    setError('Microphone permission denied. Please allow microphone access.');
-                    break;
-                case 'no-speech':
-                    setError('No speech detected. Please try again.');
-                    break;
-                case 'audio-capture':
-                    setError('No microphone found. Please connect a microphone.');
-                    break;
-                case 'network':
-                    setError('Network error. Please check your connection.');
-                    break;
-                default:
-                    setError(`Error: ${event.error}`);
-            }
-
-            setIsListening(false);
-            setInterimTranscript('');
-        };
-
-        recognition.onend = () => {
-            setIsListening(false);
-            setInterimTranscript('');
-        };
-
         try {
-            recognition.start();
+            setError(null);
+            if (!continuous) {
+                setTranscript('');
+            }
+            setInterimTranscript('Listening...');
+
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            streamRef.current = stream;
+
+            const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+            audioContextRef.current = audioContext;
+
+            const source = audioContext.createMediaStreamSource(stream);
+            const analyser = audioContext.createAnalyser();
+            analyser.fftSize = 2048;
+            analyserRef.current = analyser;
+
+            source.connect(analyser);
+
+            const mediaRecorder = new MediaRecorder(stream);
+            mediaRecorderRef.current = mediaRecorder;
+            audioChunksRef.current = [];
+
+            mediaRecorder.ondataavailable = (event) => {
+                if (event.data.size > 0) {
+                    audioChunksRef.current.push(event.data);
+                }
+            };
+
+            mediaRecorder.onstop = async () => {
+                setInterimTranscript('Processing...');
+
+                const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+                await sendAudioToWhisper(audioBlob);
+
+                setInterimTranscript('');
+                audioChunksRef.current = [];
+
+                if (streamRef.current) {
+                    streamRef.current.getTracks().forEach(track => track.stop());
+                    streamRef.current = null;
+                }
+                if (audioContextRef.current) {
+                    audioContextRef.current.close();
+                    audioContextRef.current = null;
+                }
+                if (silenceTimeoutRef.current) {
+                    clearTimeout(silenceTimeoutRef.current);
+                    silenceTimeoutRef.current = null;
+                }
+            };
+
+            mediaRecorder.start();
+            setIsListening(true);
+
+            monitorAudioLevel();
+
         } catch (err) {
-            console.error('Failed to start speech recognition:', err);
-            setError('Failed to start speech recognition');
+            console.error('Error starting recording:', err);
+            setError('Failed to access microphone');
             setIsListening(false);
             setInterimTranscript('');
         }
-    }, [language, continuous, onTranscript]);
+    }, [continuous, language, onTranscript, transcript, monitorAudioLevel]);
 
     const stopListening = useCallback(() => {
-        if (recognitionRef.current) {
-            recognitionRef.current.stop();
+        if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+            mediaRecorderRef.current.stop();
             setIsListening(false);
-            setInterimTranscript('');
         }
     }, []);
 

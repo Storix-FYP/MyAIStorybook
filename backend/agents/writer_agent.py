@@ -36,6 +36,16 @@ class WriterAgent:
         return proc.stdout.decode("utf-8").strip()
 
     def _build_system_prompt(self, max_scenes: int, genre: str) -> str:
+        # Define story structure based on page count
+        if max_scenes == 3:
+            structure = "Scene 1: Beginning (introduction), Scene 2: Climax (main conflict/action), Scene 3: Ending (resolution)"
+        elif max_scenes == 4:
+            structure = "Scene 1: Beginning (introduction), Scene 2: Rising Action, Scene 3: Climax (peak conflict), Scene 4: Ending (resolution)"
+        elif max_scenes == 5:
+            structure = "Scene 1: Beginning (introduction), Scene 2: Rising Action, Scene 3: Climax (peak conflict), Scene 4: Falling Action, Scene 5: Ending (resolution)"
+        else:  # 6 pages
+            structure = "Scene 1: Beginning (introduction), Scene 2: Rising Action, Scene 3: Building Tension, Scene 4: Climax (peak conflict), Scene 5: Falling Action, Scene 6: Ending (resolution)"
+        
         return f"""
 You are a professional children's story writer and illustrator prompt designer.
 
@@ -58,6 +68,13 @@ Generate a COMPLETE story as a **VALID JSON object** using the following schema:
 Rules:
 - **GENRE**: Write the story in the **{genre}** genre. Make sure the tone, themes, and style match this genre.
 - Limit scenes to EXACTLY {max_scenes} scenes (one scene per page).
+- **STORY STRUCTURE** (CRITICAL): Follow this exact structure for {max_scenes} pages:
+  {structure}
+  
+- **Beginning**: Introduce characters, setting, and initial situation
+- **Climax**: The most exciting/important moment with the main conflict or challenge
+- **Ending**: Resolve the story with a satisfying conclusion
+
 - **IMPORTANT**: Each scene's "text" MUST be a FULL PAGE of content - at least 8-12 sentences long (150-200 words per scene). Include rich descriptions, character emotions, dialogue, and engaging storytelling. Make each page feel complete and immersive for children ages 7-10.
 - Each scene's "image_description" must be a **single short descriptive phrase (max 15 words)** focusing on visual elements only:
   ✅ Describe what should appear visually (characters, actions, setting, emotions, colors).

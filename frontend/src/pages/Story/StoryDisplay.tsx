@@ -64,6 +64,14 @@ const StoryDisplay: React.FC<StoryDisplayProps> = ({ story, storyId, onReset }) 
   const [isDownloading, setIsDownloading] = useState<boolean>(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
+  // Reset to cover page when story changes
+  useEffect(() => {
+    setPage(0);
+    setPrevPage(0);
+    setIsFlipping(false);
+    setFlipDirection(null);
+  }, [storyId]);
+
   const scenes = story.scenes || [];
   const totalPages = scenes.length;
 

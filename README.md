@@ -63,6 +63,11 @@ MyAIStorybook/
 3. **CUDA-capable GPU** - NVIDIA GPU with 8GB+ VRAM recommended
 4. **Ollama** - [Download](https://ollama.com/)
 5. **Stable Diffusion WebUI** - Already included in project
+6. **FFmpeg** - Required for Speech-to-Text functionality
+   - Windows: `winget install ffmpeg`
+   - macOS: `brew install ffmpeg`
+   - Linux: `sudo apt install ffmpeg`
+
 
 ### Installation
 
@@ -77,7 +82,13 @@ cd MyAIStorybook
 ollama pull llama3.1:8b-instruct-q8_0
 ```
 
-3. **Start everything** (Recommended)
+3. **Download TTS voice models**
+```bash
+cd backend
+download_tts_models.bat
+```
+
+4. **Start everything** (Recommended)
 ```bash
 start_all.bat
 ```

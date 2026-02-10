@@ -14,7 +14,7 @@ class TTSManager:
     def __init__(self):
         # Resolve absolute paths relative to project root
         project_root = os.getcwd()
-        self.models_dir = os.path.join(project_root, "backend", "models", "tts")
+        self.models_dir = os.path.join(project_root, "backend", "pretrained", "tts")
         
         # Voice mapping: name -> filename (without extension)
         self.voices = {
