@@ -117,7 +117,9 @@ class EvaluationManager:
                     text=[text],
                     images=image,
                     return_tensors="pt",
-                    padding=True
+                    padding=True,
+                    truncation=True,
+                    max_length=77  # CLIP's hard token limit
                 )
                 
                 outputs = self.clip_model(**inputs)
@@ -357,11 +359,17 @@ class EvaluationManager:
         
         scenes = story_dict.get("scenes", [])
         texts = [scene.get("text", "") for scene in scenes]
+        # Use image_description for CLIP (short prompts, fits 77 token limit);
+        # fall back to truncated scene text if not available
+        clip_texts = [
+            scene.get("image_description") or scene.get("text", "")[:300]
+            for scene in scenes
+        ]
         full_text = " ".join(texts)
         
-        # 1. Image-Text Similarity
+        # 1. Image-Text Similarity (use short image_description for CLIP)
         print("🔍 Evaluating image-text alignment...")
-        image_text_scores = self.evaluate_image_text_similarity(image_paths, texts)
+        image_text_scores = self.evaluate_image_text_similarity(image_paths, clip_texts)
         
         # 2. Visual Consistency
         print("🎨 Evaluating visual consistency...")

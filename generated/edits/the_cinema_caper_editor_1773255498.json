@@ -1,0 +1,73 @@
+{
+  "title": "The Cinema Caper",
+  "setting": "An ordinary movie theater and the fantastical world inside the sci-fi film onscreen",
+  "characters": [
+    "Max",
+    "Lily"
+  ],
+  "scenes": [
+    {
+      "scene_number": 1,
+      "text": "One Friday night, Max and his best friend Lily rushed to their favorite movie theater. They were excited for the new sci-fi film, 'Adventures in Nebula-5'. As the lights dimmed and the opening credits rolled, they settled into their popcorn-filled seats. Suddenly, the screen flickered, and instead of the usual black background, a swirling vortex appeared. Max's eyes widened as a robot arm reached out from the screen and grabbed his 3D glasses. Before he could blink, Lily pulled him into the vortex, and they were sucked into the movie!",
+      "image_description": "Max and Lily watching in shock as they're pulled into the swirling vortex onscreen",
+      "image_path": null
+    },
+    {
+      "scene_number": 2,
+      "text": "They found themselves standing in a futuristic cityscape from the film. Hovercars zoomed overhead, and holographic billboards flashed around them. Max remembered this place; it was where the hero of 'Adventures in Nebula-5', Captain Cosmos, had his spaceship headquarters. Max and Lily looked at each other, wondering what to do next. Suddenly, they heard a familiar theme song blasting from nearby. They followed the sound to find Captain Cosmos himself practicing his dance moves. Seeing the kids, he smiled and said, 'New recruits! Just in time – we've got a mission to save Nebula-5!'",
+      "image_description": "Captain Cosmos dancing with Max and Lily in the futuristic cityscape",
+      "image_path": null
+    },
+    {
+      "scene_number": 3,
+      "text": "Max and Lily joined Captain Cosmos on his spaceship, the Nebula-Naut. They zoomed through space, avoiding asteroids and battling robot drones. The climax of their adventure arrived when they reached the evil Lord Zeta's fortress. Surrounded by countless alien minions, Max felt a shiver run down his spine. But Lily stepped forward, her eyes determined. 'We can do this,' she said. 'Together!' Inspired by her courage, Max found the strength to help Captain Cosmos battle Lord Zeta and his minions.",
+      "image_description": "Max, Lily, and Captain Cosmos facing off against Lord Zeta's alien minions",
+      "image_path": null
+    },
+    {
+      "scene_number": 4,
+      "text": "With their newfound heroics, Max and Lily helped Captain Cosmos defeat Lord Zeta. As the evil lord surrendered, the fortress began to crumble around them. 'Quick, grab those crystals!' shouted Captain Cosmos, pointing to glowing blue rocks that powered the fortress. Max and Lily worked together to snatch as many crystals as they could before being pulled back into the vortex. They tumbled out of it, landing safely in their theater seats. The movie had ended, and everyone was clapping. Max looked at Lily, grinning from ear to ear. 'That was the best movie ever!' he said.",
+      "image_description": "Max and Lily cheering as they're pulled back into the movie theater",
+      "image_path": null
+    }
+  ],
+  "consistency_report": {
+    "per_scene": {
+      "1": {
+        "scene_number": 1,
+        "word_count": 94,
+        "length_score": 1.0,
+        "has_image": true
+      },
+      "2": {
+        "scene_number": 2,
+        "word_count": 96,
+        "length_score": 1.0,
+        "has_image": true
+      },
+      "3": {
+        "scene_number": 3,
+        "word_count": 82,
+        "length_score": 1.0,
+        "has_image": true
+      },
+      "4": {
+        "scene_number": 4,
+        "word_count": 97,
+        "length_score": 1.0,
+        "has_image": true
+      }
+    },
+    "overall": {
+      "avg_length_score": 1.0,
+      "image_coverage": 1.0
+    }
+  },
+  "meta": {
+    "edited_at": "2026-03-11T19:01:05.965026Z",
+    "editor_version": "0.6",
+    "prompt_type": "short",
+    "enhanced_prompt": "A boy watching a movie with his friends when the screen suddenly comes to life, pulling them into an adventure inside the film."
+  },
+  "finalized": true
+}

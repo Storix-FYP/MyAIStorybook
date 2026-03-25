@@ -347,7 +347,8 @@ async def api_generate(
     # --- Step 6: Save final story JSON ---
     save_agent_output("story", story_title, timestamp, final_story)
 
-    # --- Step 7: Save final story JSON ---
+    # --- Step 7: Save final story JSON (inject mode for evaluation agent) ---
+    final_story["mode"] = mode  # Used by evaluation_agent.py to determine character consistency checks
     STORIES_DIR = os.path.join(GENERATED_DIR, "stories")
     os.makedirs(STORIES_DIR, exist_ok=True)
     story_file = os.path.join(STORIES_DIR, f"{safe_title}_{timestamp}.json")
@@ -396,7 +397,6 @@ async def api_generate(
         import torch
         if torch.cuda.is_available():
             torch.cuda.empty_cache()
-            torch.cuda.synchronize()
             print("🧹 GPU cache cleared after story generation")
     except Exception as e:
         print(f"⚠️ Could not clear GPU cache: {e}")

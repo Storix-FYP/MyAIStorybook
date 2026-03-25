@@ -29,14 +29,12 @@ def main():
         with open(json_file_path, 'r', encoding='utf-8') as f:
             story_dict = json.load(f)
         
-        # Determine mode
-        # Simple heuristic: see if 'personalized' is in any image path
-        mode = "simple"
-        for scene in story_dict.get("scenes", []):
-            img_path = scene.get("image_path", "")
-            if img_path and "personalized" in img_path.lower():
-                mode = "personalized"
-                break
+        # Read mode directly from the story JSON (set by main.py from the request)
+        # Fall back to checking image paths as secondary signal
+        mode = story_dict.get("mode", "simple")
+        if mode not in ("simple", "personalized"):
+            mode = "simple"
+        print(f"[EvaluationAgent] Story mode: {mode}")
         
         # Get image paths
         image_paths = []
