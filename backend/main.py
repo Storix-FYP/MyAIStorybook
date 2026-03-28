@@ -20,6 +20,8 @@ from backend.agents.prompt_agent import PromptAgent
 from backend.agents.story_agent import StoryAgent
 from backend.agents.image_agent import ImageAgent
 from backend.agents.chatbot_agent import ChatbotAgent
+from backend.utils.tts_manager import get_tts_manager
+from backend.utils.evaluation_manager import get_evaluation_manager
 
 # Feature flag for LangChain Workshop Agent
 USE_LANGCHAIN_WORKSHOP = True  # Set to False to use original implementation
@@ -54,7 +56,7 @@ except ImportError as e:
 # --- Import Auth ---
 from backend.auth.routes import router as auth_router
 from backend.auth.database import engine, Base, get_db
-from backend.auth.dependencies import get_current_user_optional
+from backend.auth.dependencies import get_current_user_optional, get_current_user
 from backend.auth.models import User
 from backend.auth.db_models import Story, ChatConversation, ChatMessage, WorkshopSession, WorkshopMessage, WorkshopStory
 from sqlalchemy.orm import Session
@@ -130,9 +132,11 @@ BASE_DIR = os.path.dirname(__file__)
 GENERATED_DIR = os.path.join(BASE_DIR, "..", "generated")
 IMAGES_DIR = os.path.join(GENERATED_DIR, "images")
 STORIES_DIR = os.path.join(GENERATED_DIR, "stories")
+AUDIO_DIR = os.path.join(GENERATED_DIR, "audio")
 
 os.makedirs(IMAGES_DIR, exist_ok=True)
 os.makedirs(STORIES_DIR, exist_ok=True)
+os.makedirs(AUDIO_DIR, exist_ok=True)
 
 # Serve generated static files
 app.mount("/generated", StaticFiles(directory=GENERATED_DIR), name="generated")
@@ -185,7 +189,14 @@ async def api_generate(
     use_personalized = body.get("use_personalized_images", False)
     user_photo_data = body.get("user_photo")  # Base64 encoded image
     mode = body.get("mode", "simple")  # 'simple' or 'personalized'
+    genre = body.get("genre", "Fantasy")  # Story genre
+    num_pages = body.get("num_pages", 3)  # Number of pages/scenes (1-5)
     timestamp = int(time.time())
+
+    # Validate num_pages (cap at 6)
+    if not isinstance(num_pages, int) or num_pages < 3:
+        num_pages = 3
+    num_pages = min(num_pages, 6)  # Cap at 6 pages
 
     if not prompt:
         raise HTTPException(status_code=400, detail="Missing 'prompt' in request body.")
@@ -203,7 +214,9 @@ async def api_generate(
     prompt_data = {
         "original_prompt": prompt,
         "prompt_type": prompt_type,
-        "enhanced_prompt": processed_prompt
+        "enhanced_prompt": processed_prompt,
+        "genre": genre,
+        "num_pages": num_pages
     }
     save_agent_output("prompt", f"prompt_{timestamp}", timestamp, prompt_data)
 
@@ -214,7 +227,7 @@ async def api_generate(
         )
 
     # --- Step 2: StoryAgent (runs the full Writer -> Reviewer -> Editor pipeline) ---
-    story_agent = StoryAgent(writer_max_scenes=3)
+    story_agent = StoryAgent(writer_max_scenes=num_pages, genre=genre)
     try:
         # result now contains 'story', 'outputs', and 'status'
         result, story_status = story_agent.generate_story(processed_prompt, generate_images=False)
@@ -334,32 +347,14 @@ async def api_generate(
     # --- Step 6: Save final story JSON ---
     save_agent_output("story", story_title, timestamp, final_story)
 
-    # --- Step 7: Save final story JSON ---
+    # --- Step 7: Save final story JSON (inject mode for evaluation agent) ---
+    final_story["mode"] = mode  # Used by evaluation_agent.py to determine character consistency checks
     STORIES_DIR = os.path.join(GENERATED_DIR, "stories")
     os.makedirs(STORIES_DIR, exist_ok=True)
     story_file = os.path.join(STORIES_DIR, f"{safe_title}_{timestamp}.json")
     with open(story_file, "w", encoding="utf-8") as f:
         json.dump(final_story, f, indent=2, ensure_ascii=False)
     print(f"✅ Story saved successfully at {story_file}")
-
-    # -----------------------------------------------------------------
-    # --- NEW: TRIGGER EVALUATION AGENT IN THE BACKGROUND ---
-    # -----------------------------------------------------------------
-    try:
-        # Define the path to the new evaluation agent script
-        evaluator_script_path = os.path.join(BASE_DIR, "agents", "evaluation_agent.py")
-        
-        if os.path.exists(evaluator_script_path):
-            print(f"🚀 Kicking off background evaluation for {os.path.basename(story_file)}...")
-            # Use sys.executable to run with the same Python interpreter
-            command = [sys.executable, evaluator_script_path, story_file]
-            # Use Popen for a non-blocking call, so the API can respond immediately
-            subprocess.Popen(command)
-        else:
-            print(f"⚠ Warning: Evaluation agent script not found at {evaluator_script_path}")
-    except Exception as e:
-        print(f"❌ Failed to start evaluation agent process: {e}")
-    # --- END OF NEW CODE ---
 
     # --- Save story to database ---
     story_id = None
@@ -378,7 +373,21 @@ async def api_generate(
     except Exception as e:
         print(f"⚠️ Warning: Failed to save story to database: {e}")
         db.rollback()
-        # Continue even if database save fails (for backward compatibility)
+
+    # -----------------------------------------------------------------
+    # --- TRIGGER EVALUATION AGENT IN THE BACKGROUND ---
+    # -----------------------------------------------------------------
+    try:
+        evaluator_script_path = os.path.join(BASE_DIR, "agents", "evaluation_agent.py")
+        if os.path.exists(evaluator_script_path):
+            print(f"🚀 Kicking off background evaluation for Story ID {story_id}...")
+            # Pass story_file and story_id to the evaluator
+            command = [sys.executable, evaluator_script_path, story_file, str(story_id or 0)]
+            subprocess.Popen(command)
+        else:
+            print(f"⚠ Warning: Evaluation agent script not found at {evaluator_script_path}")
+    except Exception as e:
+        print(f"❌ Failed to start evaluation agent process: {e}")
 
     # --- Final combined status ---
     status_msg = image_status or story_status
@@ -388,7 +397,6 @@ async def api_generate(
         import torch
         if torch.cuda.is_available():
             torch.cuda.empty_cache()
-            torch.cuda.synchronize()
             print("🧹 GPU cache cleared after story generation")
     except Exception as e:
         print(f"⚠️ Could not clear GPU cache: {e}")
@@ -399,6 +407,78 @@ async def api_generate(
         "story_id": story_id  # Return story ID for chat reference
     })
 
+
+# -------------------------
+# Evaluation endpoints
+# -------------------------
+@app.post("/api/stories/{story_id}/evaluate")
+async def evaluate_story(
+    story_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Evaluate an existing story manually.
+    """
+    # Fetch story from DB
+    db_story = db.query(Story).filter(Story.id == story_id).first()
+    if not db_story:
+        raise HTTPException(status_code=404, detail="Story not found")
+        
+    # Check ownership
+    if db_story.user_id != current_user.id:
+        raise HTTPException(status_code=403, detail="You do not have permission to evaluate this story")
+        
+    story_data = db_story.story_data
+    
+    # Get image paths from story_data
+    image_paths = []
+    for scene in story_data.get("scenes", []):
+        img_url = scene.get("image_url")
+        if img_url and img_url.startswith("/generated/images/"):
+            filename = img_url.split("/")[-1]
+            img_path = os.path.join(IMAGES_DIR, filename)
+            if os.path.exists(img_path):
+                image_paths.append(img_path)
+    
+    # Run evaluation
+    try:
+        eval_manager = get_evaluation_manager()
+        results = eval_manager.evaluate_story(
+            story_id=story_id,
+            story_dict=story_data,
+            image_paths=image_paths,
+            mode=db_story.mode or "simple"
+        )
+        return results
+    except Exception as e:
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Evaluation failed: {e}")
+
+@app.get("/api/stories/{story_id}/evaluation")
+async def get_story_evaluation(
+    story_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Get existing evaluation results for a story.
+    """
+    # Fetch story from DB to check permission
+    db_story = db.query(Story).filter(Story.id == story_id).first()
+    if not db_story:
+        raise HTTPException(status_code=404, detail="Story not found")
+        
+    if db_story.user_id != current_user.id:
+        raise HTTPException(status_code=403, detail="You do not have permission to view this evaluation")
+        
+    # Check if evaluation file exists
+    eval_file = os.path.join(GENERATED_DIR, "evaluations", f"story_{story_id}_evaluation.json")
+    if not os.path.exists(eval_file):
+        raise HTTPException(status_code=404, detail="Evaluation not found for this story")
+        
+    with open(eval_file, "r", encoding="utf-8") as f:
+        return json.load(f)
 
 # -------------------------
 # Chatbot endpoints
@@ -709,6 +789,311 @@ async def generate_workshop_story(
         traceback.print_exc()
         db.rollback()
         raise HTTPException(status_code=500, detail=f"Story generation error: {str(e)}")
+
+
+# -------------------------
+# Workshop Library endpoints  (separate from Simple/Personalized story library)
+# -------------------------
+
+@app.post("/api/workshop/save")
+async def save_workshop_story(
+    request: Request,
+    current_user: User = Depends(get_current_user_optional),
+    db: Session = Depends(get_db)
+):
+    """
+    Mark a generated workshop story as 'loved' by the user.
+    Request body: { story_id, story_text, mode, session_id }
+    """
+    try:
+        body = await request.json()
+        story_id = body.get("story_id")
+        story_text = body.get("story_text", "")
+        mode = body.get("mode", "new_idea")
+        session_id = body.get("session_id")
+
+        print(f"[Workshop Save] story_id={story_id}, session_id={session_id}, user={current_user.id if current_user else 'guest'}, mode={mode}")
+
+        # Generate a short title from the first non-empty line
+        first_line = next((line.strip() for line in story_text.split("\n") if line.strip()), "Workshop Story")
+        title = first_line[:60] + ("..." if len(first_line) > 60 else "")
+
+        ws = None
+
+        # 1. Look up by story_id (the row created by /api/workshop/generate)
+        if story_id:
+            ws = db.query(WorkshopStory).filter(WorkshopStory.id == story_id).first()
+            print(f"[Workshop Save] Found by story_id: {ws is not None}")
+
+        # 2. Fallback: find the latest story for this session
+        if ws is None and session_id:
+            ws = db.query(WorkshopStory).filter(
+                WorkshopStory.session_id == session_id
+            ).order_by(WorkshopStory.created_at.desc()).first()
+            print(f"[Workshop Save] Found by session_id fallback: {ws is not None}")
+
+        if ws is not None:
+            ws.saved_by_user = True
+            ws.user_id = current_user.id if current_user else None
+            ws.title = title
+            ws.mode = mode
+            db.commit()
+            db.refresh(ws)
+            print(f"[Workshop Save] Saved successfully. library_id={ws.id}")
+            return JSONResponse({"saved": True, "library_id": ws.id, "title": title})
+
+        # 3. Last resort: create a brand new row only if we have a valid session
+        if session_id:
+            session = db.query(WorkshopSession).filter(WorkshopSession.id == session_id).first()
+            if session:
+                ws = WorkshopStory(
+                    session_id=session_id,
+                    user_id=current_user.id if current_user else None,
+                    version=1,
+                    story_text=story_text,
+                    title=title,
+                    mode=mode,
+                    saved_by_user=True
+                )
+                db.add(ws)
+                db.commit()
+                db.refresh(ws)
+                print(f"[Workshop Save] Created new row. library_id={ws.id}")
+                return JSONResponse({"saved": True, "library_id": ws.id, "title": title})
+
+        print("[Workshop Save] ERROR: Could not find or create a WorkshopStory row.")
+        raise HTTPException(status_code=400, detail="Could not save story: session or story not found.")
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        traceback.print_exc()
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Error saving workshop story: {str(e)}")
+
+
+@app.get("/api/workshop/saved")
+async def list_saved_workshop_stories(
+    current_user: User = Depends(get_current_user_optional),
+    db: Session = Depends(get_db)
+):
+    """
+    List workshop library stories for the current user (saved_by_user=True only).
+    Completely separate from /api/stories.
+    """
+    if not current_user:
+        return JSONResponse([])
+    try:
+        saved = db.query(WorkshopStory).filter(
+            WorkshopStory.user_id == current_user.id,
+            WorkshopStory.saved_by_user.is_(True)
+        ).order_by(WorkshopStory.created_at.desc()).all()
+
+        print(f"[Workshop Saved] user={current_user.id}, found {len(saved)} stories")
+
+        return JSONResponse([{
+            "id": s.id,
+            "title": s.title or "Untitled Workshop Story",
+            "mode": s.mode or "workshop",
+            "story_text": s.story_text,
+            "created_at": s.created_at.isoformat() if s.created_at else None
+        } for s in saved])
+    except Exception as e:
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Error listing workshop library: {str(e)}")
+
+
+# -------------------------
+# Story History endpoints
+# -------------------------
+@app.get("/api/stories")
+async def list_stories(
+    current_user: User = Depends(get_current_user_optional),
+    db: Session = Depends(get_db)
+):
+    """
+    List all stories for the current user
+    """
+    if not current_user:
+        return JSONResponse([])
+    
+    try:
+        stories = db.query(Story).filter(Story.user_id == current_user.id).order_by(Story.created_at.desc()).all()
+        
+        return JSONResponse([{
+            "id": s.id,
+            "title": s.title,
+            "mode": s.mode,
+            "created_at": s.created_at.isoformat() if s.created_at else None
+        } for s in stories])
+    except Exception as e:
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Error listing stories: {str(e)}")
+
+
+@app.get("/api/stories/{story_id}")
+async def get_story_detail(
+    story_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Get full story data for a specific story
+    """
+    try:
+        story = db.query(Story).filter(Story.id == story_id).first()
+        
+        if not story:
+            raise HTTPException(status_code=404, detail="Story not found")
+            
+        # Require authentication and verify ownership
+        if story.user_id != current_user.id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You do not have permission to view this story"
+            )
+        
+        return JSONResponse({
+            "id": story.id,
+            "title": story.title,
+            "mode": story.mode,
+            "story_data": story.story_data,
+            "created_at": story.created_at.isoformat() if story.created_at else None
+        })
+    except HTTPException:
+        raise
+    except Exception as e:
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Error retrieving story: {str(e)}")
+
+
+@app.get("/api/stories/{story_id}/download")
+async def download_story_pdf(
+    story_id: int,
+    current_user: User = Depends(get_current_user_optional),
+    db: Session = Depends(get_db)
+):
+    """
+    Generate and download the PDF for a specific story.
+    """
+    try:
+        story = db.query(Story).filter(Story.id == story_id).first()
+        
+        if not story:
+            raise HTTPException(status_code=404, detail="Story not found")
+            
+        # Optional: Check ownership
+        if story.user_id and (not current_user or story.user_id != current_user.id):
+             raise HTTPException(status_code=403, detail="You do not have permission to download this story")
+        
+        # Regenerate PDF to ensure it has the latest styling/content
+        story_data = story.story_data
+        safe_title = sanitize_filename(story.title or "untitled_story")
+        timestamp = int(time.time())
+        pdf_filename = f"{safe_title}_{timestamp}.pdf"
+        
+        pdf_path = export_pdf(story_data, pdf_filename)
+        
+        if not os.path.exists(pdf_path):
+            raise HTTPException(status_code=500, detail="Failed to generate PDF")
+            
+        return FileResponse(
+            path=pdf_path,
+            filename=pdf_filename,
+            media_type="application/pdf"
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Error downloading PDF: {str(e)}")
+
+
+# -------------------------
+# TTS endpoints
+# -------------------------
+@app.get("/api/tts/{story_id}/{scene_number}")
+async def api_tts(
+    story_id: int,
+    scene_number: int,
+    voice: str = "female",
+    db: Session = Depends(get_db)
+):
+    """
+    Generate or get cached audio for a specific scene
+    """
+    try:
+        # Load story from database
+        story = db.query(Story).filter(Story.id == story_id).first()
+        if not story:
+            raise HTTPException(status_code=404, detail="Story not found")
+            
+        story_data = story.story_data
+        scenes = story_data.get("scenes", [])
+        
+        # Find the requested scene
+        target_scene = None
+        for scene in scenes:
+            if scene.get("scene_number") == scene_number:
+                target_scene = scene
+                break
+                
+        if not target_scene:
+            raise HTTPException(status_code=404, detail=f"Scene {scene_number} not found in story")
+            
+        text = target_scene.get("text", "")
+        if not text:
+            raise HTTPException(status_code=400, detail="Scene has no text to synthesize")
+            
+        # Generate audio
+        tts_manager = get_tts_manager()
+        audio_url = tts_manager.generate_audio(text, story_id, scene_number, voice)
+        
+        return JSONResponse({
+            "story_id": story_id,
+            "scene_number": scene_number,
+            "voice": voice,
+            "audio_url": audio_url
+        })
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"TTS error: {str(e)}")
+
+
+# -------------------------
+# STT (Speech-to-Text) endpoint
+# -------------------------
+@app.post("/api/stt")
+async def api_stt(
+    audio: UploadFile = File(...),
+    language: str = "en"
+):
+    """
+    Transcribe audio to text using Whisper (offline)
+    Accepts: audio file (wav, mp3, webm, etc.)
+    Returns: {"text": "transcribed text", "language": "en"}
+    """
+    try:
+        from backend.utils.stt_manager import get_stt_manager
+        
+        # Read audio bytes
+        audio_bytes = await audio.read()
+        
+        # Get STT manager and transcribe
+        stt_manager = get_stt_manager()
+        result = stt_manager.transcribe_audio_bytes(audio_bytes, language)
+        
+        return JSONResponse({
+            "text": result["text"],
+            "language": result["language"]
+        })
+        
+    except Exception as e:
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"STT error: {str(e)}")
 
 
 # -------------------------

@@ -163,6 +163,11 @@
     align-items: flex-end;
 }
 
+.inputWrapper {
+    flex: 1;
+    position: relative;
+}
+
 .input {
     flex: 1;
     padding: 12px 18px;
@@ -206,6 +211,12 @@
     opacity: 0.5;
     cursor: not-allowed;
     transform: none;
+}
+
+.voiceButton {
+    position: absolute;
+    right: 10px;
+    bottom: 10px;
 }
 
 @media (max-width: 768px) {

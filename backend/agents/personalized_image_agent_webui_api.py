@@ -121,22 +121,13 @@ class PersonalizedImageAgentWebUIAPI:
         # Load LoRA via API before generation
         self._load_lora()
         
-        # Apply content safety filter (minimal to preserve IP-Adapter effect)
-        from backend.utils.content_safety import ContentSafetyFilter
-        
-        filtered_prompt, is_safe, warning = ContentSafetyFilter.filter_prompt(prompt_text)
-        
-        if not is_safe:
-            raise ValueError(f"Prompt rejected for child safety: {prompt_text}")
-        
         # Prepare prompt with LoRA - keep it simple for better facial likeness
-        positive_prompt = f"<lora:{self.lora_name}:1.0> {filtered_prompt}, best quality, high quality"
+        positive_prompt = f"<lora:{self.lora_name}:1.0> {prompt_text}, best quality, high quality"
         
-        # Use child-safe negative prompt but not overwhelming
-        extra_safety = (warning == "extra_safety")
-        negative_prompt = ContentSafetyFilter.get_child_safe_negative_prompt(extra_safety)
+        # Simple negative prompt for quality
+        negative_prompt = "bad quality, worst quality, blurry, deformed, disfigured"
         
-        print(f"[WebUI API] ✅ Content safety filter applied")
+        print(f"[WebUI API] ✅ Prompt prepared")
         
         # Convert image to base64
         image_b64 = self._image_to_base64(self.user_photo)

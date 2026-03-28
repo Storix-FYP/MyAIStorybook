@@ -9,8 +9,8 @@ class StoryAgent:
     It delegates to DirectorAgent (multi-agent pipeline).
     """
 
-    def __init__(self, llm_model: str = "mistral-nemo:12b", writer_max_scenes: int = 3, max_retries: int = 2):
-        self.director = DirectorAgent(llm_model=llm_model, writer_max_scenes=writer_max_scenes)
+    def __init__(self, llm_model: str = "mistral-nemo:12b", writer_max_scenes: int = 3, max_retries: int = 2, genre: str = "Fantasy"):
+        self.director = DirectorAgent(llm_model=llm_model, writer_max_scenes=writer_max_scenes, genre=genre)
         self.max_retries = max_retries
 
     def generate_story(self, prompt: str, generate_images: bool = False) -> Tuple[Dict[str, Any], str]:

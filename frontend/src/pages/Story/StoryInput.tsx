@@ -3,6 +3,8 @@
 import React, { useState } from "react";
 import { API_ENDPOINTS } from "@/utils/constants";
 import { useAuth } from "@/contexts/AuthContext";
+import { useSpeechToText } from "@/hooks/useSpeechToText";
+import { VoiceInputButton } from "@/shared/components/VoiceInputButton";
 import "./StoryInput.css";
 
 interface StoryInputProps {
@@ -22,6 +24,47 @@ const StoryInput: React.FC<StoryInputProps> = ({ onStoryGenerated, setLoading, s
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [localError, setLocalError] = useState<string | null>(null);
   const [showLoginMessage, setShowLoginMessage] = useState<boolean>(false);
+
+  // Genre and page count state
+  const [genre, setGenre] = useState<string>("Fantasy");
+  const [numPages, setNumPages] = useState<number>(3);
+
+  // Genre options
+  const genreOptions = [
+    "Fantasy",
+    "Adventure",
+    "Mystery",
+    "Sci-Fi",
+    "Fairy Tale",
+    "Animal",
+    "Educational",
+    "Humor"
+  ];
+
+  // Page count options (3-6)
+  const pageOptions = [3, 4, 5, 6];
+
+  // Speech-to-text hook
+  const {
+    isListening,
+    isSupported,
+    interimTranscript,
+    startListening,
+    stopListening,
+  } = useSpeechToText({
+    onTranscript: (transcript) => {
+      setPrompt((prev) => prev + (prev ? ' ' : '') + transcript);
+      setLocalError(null);
+    }
+  });
+
+  const handleVoiceToggle = () => {
+    if (isListening) {
+      stopListening();
+    } else {
+      startListening();
+    }
+  };
 
   const handleSubmit = async (): Promise<void> => {
     if (!prompt.trim()) {
@@ -61,7 +104,9 @@ const StoryInput: React.FC<StoryInputProps> = ({ onStoryGenerated, setLoading, s
           generate_images: generateImages,
           use_personalized_images: usePersonalizedImages && userPhoto !== null,
           user_photo: userPhoto,  // Base64 photo data
-          mode: mode  // Include mode in request
+          mode: mode,  // Include mode in request
+          genre: genre,  // Story genre
+          num_pages: numPages  // Number of pages (1-5)
         }),
       });
 
@@ -157,7 +202,7 @@ const StoryInput: React.FC<StoryInputProps> = ({ onStoryGenerated, setLoading, s
         <textarea
           className="main-prompt-input"
           placeholder="A cat who learns to sail the seas..."
-          value={prompt}
+          value={isListening ? prompt + (prompt && interimTranscript ? ' ' : '') + interimTranscript : prompt}
           onChange={(e) => {
             setPrompt(e.target.value);
             setLocalError(null);
@@ -165,6 +210,42 @@ const StoryInput: React.FC<StoryInputProps> = ({ onStoryGenerated, setLoading, s
           onKeyPress={handleKeyPress}
           rows={3}
         />
+        <VoiceInputButton
+          isListening={isListening}
+          isSupported={isSupported}
+          onClick={handleVoiceToggle}
+        />
+      </div>
+
+      {/* Genre and Page Count Selection */}
+      <div className="story-options">
+        <div className="option-group">
+          <label htmlFor="genre-select">Genre</label>
+          <select
+            id="genre-select"
+            className="option-select"
+            value={genre}
+            onChange={(e) => setGenre(e.target.value)}
+          >
+            {genreOptions.map((g) => (
+              <option key={g} value={g}>{g}</option>
+            ))}
+          </select>
+        </div>
+
+        <div className="option-group">
+          <label htmlFor="pages-select">Pages</label>
+          <select
+            id="pages-select"
+            className="option-select"
+            value={numPages}
+            onChange={(e) => setNumPages(parseInt(e.target.value))}
+          >
+            {pageOptions.map((p) => (
+              <option key={p} value={p}>{p} {p === 1 ? 'page' : 'pages'}</option>
+            ))}
+          </select>
+        </div>
       </div>
 
       <div className="input-controls">
@@ -189,8 +270,8 @@ const StoryInput: React.FC<StoryInputProps> = ({ onStoryGenerated, setLoading, s
           )}
         </div>
 
-        {/* Personalized Images Toggle */}
-        {generateImages && isAuthenticated && (
+        {/* Personalized Images Toggle - Only show in personalized mode */}
+        {mode === 'personalized' && generateImages && isAuthenticated && (
           <div className="toggle-switch">
             <label className="switch">
               <input
@@ -207,8 +288,8 @@ const StoryInput: React.FC<StoryInputProps> = ({ onStoryGenerated, setLoading, s
           </div>
         )}
 
-        {/* Photo Upload Section */}
-        {generateImages && isAuthenticated && (
+        {/* Photo Upload Section - Only show in personalized mode */}
+        {mode === 'personalized' && generateImages && isAuthenticated && (
           <div className="photo-upload-section">
             {!photoPreview ? (
               <div className="upload-area">

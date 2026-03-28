@@ -1,6 +1,8 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
+import { useSpeechToText } from '@/hooks/useSpeechToText';
+import { VoiceInputButton } from '@/shared/components/VoiceInputButton';
 import styles from './Chatbot.module.css';
 
 interface ChatbotProps {
@@ -19,6 +21,27 @@ export const Chatbot: React.FC<ChatbotProps> = ({ storyId, storyData }) => {
     const [userInput, setUserInput] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
+
+    // Speech-to-text hook
+    const {
+        isListening,
+        isSupported,
+        interimTranscript,
+        startListening,
+        stopListening,
+    } = useSpeechToText({
+        onTranscript: (transcript) => {
+            setUserInput((prev) => prev + (prev ? ' ' : '') + transcript);
+        }
+    });
+
+    const handleVoiceToggle = () => {
+        if (isListening) {
+            stopListening();
+        } else {
+            startListening();
+        }
+    };
 
     const characters = storyData?.characters || [];
 
@@ -153,15 +176,24 @@ export const Chatbot: React.FC<ChatbotProps> = ({ storyId, storyData }) => {
                     </div>
 
                     <div className={styles.inputContainer}>
-                        <textarea
-                            className={styles.input}
-                            value={userInput}
-                            onChange={(e) => setUserInput(e.target.value)}
-                            onKeyPress={handleKeyPress}
-                            placeholder={`Say something to ${selectedCharacter}...`}
-                            rows={2}
-                            disabled={isLoading}
-                        />
+                        <div className={styles.inputWrapper}>
+                            <textarea
+                                className={styles.input}
+                                value={isListening ? userInput + (userInput && interimTranscript ? ' ' : '') + interimTranscript : userInput}
+                                onChange={(e) => setUserInput(e.target.value)}
+                                onKeyPress={handleKeyPress}
+                                placeholder={`Say something to ${selectedCharacter}...`}
+                                rows={2}
+                                disabled={isLoading}
+                            />
+                            <VoiceInputButton
+                                isListening={isListening}
+                                isSupported={isSupported}
+                                onClick={handleVoiceToggle}
+                                disabled={isLoading}
+                                className={styles.voiceButton}
+                            />
+                        </div>
                         <button
                             className={styles.sendButton}
                             onClick={handleSendMessage}

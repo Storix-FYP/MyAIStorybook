@@ -94,6 +94,13 @@ class IdeaWorkshopAgentLangChain:
         
         context_str = ", ".join(context_items)
 
+        # Extract the last assistant message to give the LLM conversational context
+        last_assistant_message = ""
+        for msg in reversed(self.memory.messages):
+            if msg.get('role') == 'assistant':
+                last_assistant_message = msg.get('content', '')
+                break
+
         # =================================================================================
         # MODE 1: CONFIRMATION PHASE (All fields collected)
         # =================================================================================
@@ -103,6 +110,11 @@ Status: ALL STORY FIELDS HAVE BEEN COLLECTED.
 Current Context: {context_str}
 
 **YOUR GOAL**: Wait for the user to either CONFIRM (to generate) or REQUEST CHANGES.
+
+**INPUT VALIDATION RULES**:
+If the user's input is a greeting ("hi", "hello"), gibberish ("asdfgh"), math ("9+9"), only numbers, symbols, or a URL — it is INVALID.
+For INVALID input → respond ONLY with: "I have all your details. If you want any changes in the field, tell me, otherwise write 'generate story'."
+Do NOT save or confirm anything for invalid input.
 
 **LOGIC RULES:**
 
@@ -174,25 +186,51 @@ Status: COLLECTING DETAILS.
 Missing Fields: {target_fields}
 Collected So Far: {context_str}
 
-**GOAL**: Collect the missing information.
+**GOAL**: Collect the missing information from the user.
+
+**SUGGESTION CONFIRMATION RULE (Highest Priority — check this FIRST):**
+Look at the "Previous Assistant Message" below.
+If that message presented a generated/suggested value for the current field AND asked the user whether it's acceptable
+(e.g. "Here's one: '...' Does that work for you?", "How about '...'?", "I've chosen '...' for you. Is that okay?"),
+AND the user's current input is an affirmative reply such as:
+"yes", "yeah", "yep", "ok", "okay", "sure", "fine", "that works", "looks good", "great", "perfect", "sounds good", "go ahead", "that's fine", "i like it", "accepted", "correct", "right", "good"
+→ Extract the suggested VALUE from the previous assistant message and use `save_field` to save it.
+→ Do NOT mark this as invalid. Do NOT ask the question again.
+
+**Previous Assistant Message**: "{last_assistant_message}"
+
+**INPUT VALIDATION RULES (Apply AFTER the confirmation check above):**
+Before saving a value, you MUST validate whether the user's input is a genuine, meaningful answer to the question being asked.
+A response is INVALID if it is any of the following:
+- A greeting or social filler (e.g. "hi", "hello", "hey", "how are you", "good morning", "what's up")
+- Only numbers or a math expression (e.g. "9+9=?", "123-123", "42", "100")
+- Only symbols or special characters (e.g. "@@##", "!!??", "---", "***")
+- A URL or web address (e.g. "http://...", "www.example.com")
+- Random letters with no meaning (e.g. "asdfgh", "qwerty", "asa45sjsa")
+- Completely off-topic question unrelated to story creation (e.g. "what is 2+2", "who won the world cup")
+- For the VERY FIRST field (no fields collected yet): a response shorter than 3 meaningful words is ALSO invalid.
+If the input is INVALID → use `invalid_input` action, include the SAME question in the response.
+If the input IS a valid story-related answer (even a single word like "horror" or "fantasy" or character names like "john and jack") → save it.
 
 **INSTRUCTIONS**:
 1. **Focus**: Ask for **{next_field}**.
    - Question: "{question}"
 2. **Update Mode**: If user was asked to provide multiple things (e.g. chars and theme), and provided one, ensure you ASK for the remaining one ({target_fields}).
    - Example: "You still haven't provided the updated theme. Please give the new theme."
-3. **Auto-Fill**: "pick yourself", "random" -> `auto_fill_field`
-4. **Skip**: "skip", "pass" -> `skip_field`
-5. **Save**: If user provides value -> `save_field`.
-6. **Multi-Save**: If user provides multiple values -> `save_multiple`.
+3. **Auto-Fill**: "pick yourself", "random" → `auto_fill_field`
+4. **Skip**: "skip", "pass" → `skip_field`
+5. **Save**: If user provides a valid answer → `save_field`.
+6. **Multi-Save**: If user provides multiple valid values → `save_multiple`.
+7. **Invalid Input**: If input fails validation rules above → `invalid_input`.
 
 **User Input**: "{user_message}"
 
 **Available Actions**:
-- `save_field`: {{ "action": "save_field", "field": "{next_field}", "value": "...", "response": "..." }}
+- `save_field`: {{ "action": "save_field", "field": "{next_field}", "value": "...", "response": "Confirmed.\n\n<next question or completion message>" }}
 - `save_multiple`: {{ "action": "save_multiple", "detected_fields": {{ "field": "val" }}, "response": "..." }}
 - `auto_fill_field`: {{ "action": "auto_fill_field", "field": "{next_field}", "response": "..." }}
 - `skip_field`: {{ "action": "skip_field", "field": "{next_field}", "response": "..." }}
+- `invalid_input`: {{ "action": "invalid_input", "response": "<friendly explanation of why it was invalid + repeat the EXACT same question>" }}
 
 Respond with VALID JSON only.
 """
@@ -478,6 +516,10 @@ Respond with VALID JSON only.
                     # Just passing through the response "Which field?"
                     pass
                 
+                elif action == 'invalid_input':
+                    # User gave invalid/nonsensical input — just return the re-ask response, save nothing
+                    pass
+
                 elif action == 'generate_story':
                      # The decision to generate is now explicit from the LLM
                      # Double check if everything is actually ready?
@@ -560,4 +602,4 @@ IMPORTANT: The story must be approximately 300 words long.
         # Call LLM to generate story
         story = self.llm.invoke(story_prompt)
         
-        return f"{story}\n\n(Note: Story generated with approx 300 words limit as per system constraints.)"
+        return story

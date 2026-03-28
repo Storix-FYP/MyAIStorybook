@@ -1,11 +1,14 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { useSpeechToText } from '@/hooks/useSpeechToText';
+import { VoiceInputButton } from '@/shared/components/VoiceInputButton';
 import styles from './IdeaWorkshop.module.css';
 
 interface IdeaWorkshopProps {
     isOpen: boolean;
     onClose: () => void;
+    onModeSelected?: (mode: 'improvement' | 'new_idea') => void;
 }
 
 interface Message {
@@ -14,7 +17,7 @@ interface Message {
     metadata?: any;
 }
 
-export const IdeaWorkshop: React.FC<IdeaWorkshopProps> = ({ isOpen, onClose }) => {
+export const IdeaWorkshop: React.FC<IdeaWorkshopProps> = ({ isOpen, onClose, onModeSelected }) => {
     const [sessionId, setSessionId] = useState<number | null>(null);
     const [mode, setMode] = useState<'improvement' | 'new_idea' | null>(null);
     const [messages, setMessages] = useState<Message[]>([]);
@@ -25,11 +28,41 @@ export const IdeaWorkshop: React.FC<IdeaWorkshopProps> = ({ isOpen, onClose }) =
     const [storyVersion, setStoryVersion] = useState(1);
     const [wordCount, setWordCount] = useState(0);
     const messagesEndRef = useRef<HTMLDivElement>(null);
+    const messagesContainerRef = useRef<HTMLDivElement>(null);
 
-    // Auto-scroll to bottom
+    // Speech-to-text hook
+    const {
+        isListening,
+        isSupported,
+        interimTranscript,
+        startListening,
+        stopListening,
+    } = useSpeechToText({
+        onTranscript: (transcript) => {
+            setUserInput((prev) => prev + (prev ? ' ' : '') + transcript);
+        }
+    });
+
+    const handleVoiceToggle = () => {
+        if (isListening) {
+            stopListening();
+        } else {
+            startListening();
+        }
+    };
+
+    // Scroll only the messages container (not the page)
+    const scrollMessagesToBottom = useCallback(() => {
+        const container = messagesContainerRef.current;
+        if (container) {
+            container.scrollTop = container.scrollHeight;
+        }
+    }, []);
+
+    // Scroll messages container to bottom whenever messages update
     useEffect(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }, [messages]);
+        scrollMessagesToBottom();
+    }, [messages, scrollMessagesToBottom]);
 
     // Word count for improvement mode
     useEffect(() => {
@@ -39,6 +72,13 @@ export const IdeaWorkshop: React.FC<IdeaWorkshopProps> = ({ isOpen, onClose }) =
     }, [userInput, mode]);
 
     const handleModeSelect = async (selectedMode: 'improvement' | 'new_idea') => {
+        // If onModeSelected callback is provided, navigate to dedicated page
+        if (onModeSelected) {
+            onModeSelected(selectedMode);
+            return;
+        }
+
+        // Fallback: Handle mode selection internally (legacy behavior)
         console.log('Mode selected:', selectedMode);
         setIsLoading(true);
         try {
@@ -75,10 +115,33 @@ export const IdeaWorkshop: React.FC<IdeaWorkshopProps> = ({ isOpen, onClose }) =
         }
     };
 
+    // Detect if the user explicitly wants to generate the story
+    const isGenerateIntent = (text: string): boolean => {
+        const lower = text.toLowerCase().trim();
+        const patterns = [
+            'generate story', 'generate the story', 'create story', 'create the story',
+            'generate now', 'create now', 'make the story', 'make story',
+            'build the story', 'build story', 'write the story', 'write story',
+            'yes, generate', 'yes generate', 'go ahead', 'generate it',
+            'create it', 'yes, create', 'yes create', 'proceed', 'generate please',
+        ];
+        return patterns.some(p => lower.includes(p));
+    };
+
     const handleSendMessage = async () => {
         if (!userInput.trim() || !sessionId || isLoading) return;
 
         const message = userInput.trim();
+
+        // If all fields are collected AND the user explicitly asks to generate, trigger story generation
+        if (readyToGenerate && isGenerateIntent(message)) {
+            setUserInput('');
+            setMessages(prev => [...prev, { role: 'user', message }]);
+            handleGenerateStory();
+            return;
+        }
+
+        // Otherwise always continue the conversation normally
         setUserInput('');
         setIsLoading(true);
 
@@ -167,34 +230,36 @@ export const IdeaWorkshop: React.FC<IdeaWorkshopProps> = ({ isOpen, onClose }) =
     const handleKeyPress = (e: React.KeyboardEvent) => {
         if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
-            if (readyToGenerate) {
-                handleGenerateStory();
-            } else {
-                handleSendMessage();
-            }
+            handleSendMessage();
+        }
+    };
+
+    const handleOverlayClick = (e: React.MouseEvent<HTMLDivElement>) => {
+        // Close when clicking on overlay background, not the modal content
+        if (e.target === e.currentTarget) {
+            handleClose();
         }
     };
 
     if (!isOpen) return null;
 
     return (
-        <div className={styles.overlay}>
+        <div className={styles.overlay} onClick={handleOverlayClick}>
             <div className={styles.modal}>
                 <div className={styles.header}>
                     <h2 className={styles.title}>✨ Idea Workshop</h2>
-                    <button className={styles.closeButton} onClick={handleClose}>✕</button>
+                    <button className={styles.closeButton} onClick={handleClose} aria-label="Close">✕</button>
                 </div>
 
                 {!mode ? (
                     // Mode Selection Screen
                     <div className={styles.modeSelection}>
                         <p className={styles.prompt}>How would you like to start?</p>
-                        {isLoading && <p style={{ textAlign: 'center', color: '#667eea' }}>Starting workshop...</p>}
+                        {isLoading && <p className={styles.loadingText}>Starting workshop...</p>}
                         <div className={styles.modeCards}>
                             <div
-                                className={styles.modeCard}
+                                className={`${styles.modeCard} ${isLoading ? styles.disabled : ''}`}
                                 onClick={() => !isLoading && handleModeSelect('improvement')}
-                                style={{ opacity: isLoading ? 0.6 : 1, cursor: isLoading ? 'not-allowed' : 'pointer' }}
                             >
                                 <div className={styles.modeIcon}>🔧</div>
                                 <h3>Improve My Story</h3>
@@ -202,9 +267,8 @@ export const IdeaWorkshop: React.FC<IdeaWorkshopProps> = ({ isOpen, onClose }) =
                             </div>
 
                             <div
-                                className={styles.modeCard}
+                                className={`${styles.modeCard} ${isLoading ? styles.disabled : ''}`}
                                 onClick={() => !isLoading && handleModeSelect('new_idea')}
-                                style={{ opacity: isLoading ? 0.6 : 1, cursor: isLoading ? 'not-allowed' : 'pointer' }}
                             >
                                 <div className={styles.modeIcon}>💡</div>
                                 <h3>Share a New Idea</h3>
@@ -245,7 +309,7 @@ export const IdeaWorkshop: React.FC<IdeaWorkshopProps> = ({ isOpen, onClose }) =
                             {mode === 'improvement' ? '🔧 Improvement Mode' : '💡 New Idea Mode'}
                         </div>
 
-                        <div className={styles.messagesContainer}>
+                        <div className={styles.messagesContainer} ref={messagesContainerRef}>
                             {messages.map((msg, index) => (
                                 <div
                                     key={index}
@@ -275,21 +339,30 @@ export const IdeaWorkshop: React.FC<IdeaWorkshopProps> = ({ isOpen, onClose }) =
                                     </span>
                                 </div>
                             )}
-                            <textarea
-                                className={styles.input}
-                                value={userInput}
-                                onChange={(e) => setUserInput(e.target.value)}
-                                onKeyPress={handleKeyPress}
-                                placeholder={readyToGenerate ? "Type 'generate' to create the story..." : "Type your message..."}
-                                rows={3}
-                                disabled={isLoading}
-                            />
+                            <div className={styles.inputWrapper}>
+                                <textarea
+                                    className={styles.input}
+                                    value={isListening ? userInput + (userInput && interimTranscript ? ' ' : '') + interimTranscript : userInput}
+                                    onChange={(e) => setUserInput(e.target.value)}
+                                    onKeyPress={handleKeyPress}
+                                    placeholder={readyToGenerate ? "Type 'generate' to create the story..." : "Type your message..."}
+                                    rows={3}
+                                    disabled={isLoading}
+                                />
+                                <VoiceInputButton
+                                    isListening={isListening}
+                                    isSupported={isSupported}
+                                    onClick={handleVoiceToggle}
+                                    disabled={isLoading}
+                                    className={styles.voiceButton}
+                                />
+                            </div>
                             <button
                                 className={styles.sendButton}
-                                onClick={readyToGenerate ? handleGenerateStory : handleSendMessage}
+                                onClick={handleSendMessage}
                                 disabled={!userInput.trim() || isLoading || (mode === 'improvement' && wordCount > 300)}
                             >
-                                {readyToGenerate ? '✨ Generate Story' : 'Send'}
+                                {readyToGenerate ? '✨ Send Message' : 'Send'}
                             </button>
                         </div>
                     </div>

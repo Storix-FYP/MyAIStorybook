@@ -216,13 +216,38 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStartCreating, onOpenWorksh
               </div>
             </div>
             <div className="about-visual">
-              <div className="tech-stack">
-                <div className="tech-item">FastAPI</div>
-                <div className="tech-item">React</div>
-                <div className="tech-item">Ollama</div>
-                <div className="tech-item">Stable Diffusion</div>
-                <div className="tech-item">Python</div>
-                <div className="tech-item">AI Agents</div>
+              <h3 className="tech-title">Powered By</h3>
+              <div className="tech-grid">
+                <div className="tech-card">
+                  <div className="tech-icon">⚡</div>
+                  <div className="tech-name">FastAPI</div>
+                  <div className="tech-desc">Lightning-fast backend</div>
+                </div>
+                <div className="tech-card">
+                  <div className="tech-icon">⚛️</div>
+                  <div className="tech-name">React</div>
+                  <div className="tech-desc">Modern UI framework</div>
+                </div>
+                <div className="tech-card">
+                  <div className="tech-icon">🦙</div>
+                  <div className="tech-name">Ollama</div>
+                  <div className="tech-desc">Local AI models</div>
+                </div>
+                <div className="tech-card">
+                  <div className="tech-icon">🎨</div>
+                  <div className="tech-name">Stable Diffusion</div>
+                  <div className="tech-desc">AI image generation</div>
+                </div>
+                <div className="tech-card">
+                  <div className="tech-icon">🐍</div>
+                  <div className="tech-name">Python</div>
+                  <div className="tech-desc">AI orchestration</div>
+                </div>
+                <div className="tech-card">
+                  <div className="tech-icon">🤖</div>
+                  <div className="tech-name">AI Agents</div>
+                  <div className="tech-desc">Multi-agent system</div>
+                </div>
               </div>
             </div>
           </div>
@@ -237,22 +262,23 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStartCreating, onOpenWorksh
             <p className="cta-description">
               Join thousands of users who have already discovered the magic of AI-powered storytelling.
             </p>
-            <button
-              className="cta-button"
-              onClick={onStartCreating}
-            >
-              Start Creating Now
-              <svg className="button-icon" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z" />
-              </svg>
-            </button>
-            <button
-              className="cta-button secondary"
-              onClick={onOpenWorkshop}
-              style={{ marginLeft: '15px', background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' }}
-            >
-              Throw Your Ideas ✨
-            </button>
+            <div className="cta-buttons">
+              <button
+                className="cta-button primary"
+                onClick={onStartCreating}
+              >
+                Start Creating Now
+                <svg className="button-icon" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z" />
+                </svg>
+              </button>
+              <button
+                className="cta-button secondary"
+                onClick={onOpenWorkshop}
+              >
+                Throw Your Ideas ✨
+              </button>
+            </div>
           </div>
         </div>
       </section>

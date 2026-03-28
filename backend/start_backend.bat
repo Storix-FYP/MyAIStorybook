@@ -1,11 +1,11 @@
 @echo off
 echo =================================
-echo  Setting up & Starting Backend
+echo  Setting up ^& Starting Backend
 echo =================================
 
 :: 1. Check for Virtual Environment and install dependencies if needed.
 echo Checking for virtual environment...
-IF NOT EXIST venv\Scripts\activate (
+IF NOT EXIST venv\Scripts\activate.bat (
     echo   -> Virtual environment not found. Creating it now...
     python -m venv venv
     echo   -> venv created successfully.
