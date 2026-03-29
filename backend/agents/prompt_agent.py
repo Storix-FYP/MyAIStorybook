@@ -13,6 +13,9 @@ class PromptAgent:
             input=prompt.encode("utf-8"),
             capture_output=True,
         )
+        if result.returncode != 0:
+            err = result.stderr.decode("utf-8").strip()
+            raise RuntimeError(f"Ollama failed with error: {err}")
         return result.stdout.decode("utf-8").strip()
 
     def process_prompt(self, user_prompt: str):

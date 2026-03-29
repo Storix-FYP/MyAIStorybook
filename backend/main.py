@@ -208,6 +208,32 @@ async def api_generate(
             detail="Please login to generate images. Guest users can only create text stories."
         )
 
+    # --- Memory Clearance: Auto-clear VRAM before text generation ---
+    print("🧹 Preparing memory for text generation...")
+    try:
+        import requests
+        # Attempt to unload WebUI checkpoints from VRAM to make room for Ollama
+        for port in [7860, 7861]:
+            try:
+                requests.post(f"http://127.0.0.1:{port}/sdapi/v1/unload-checkpoint", timeout=2)
+                print(f"🧹 Successfully requested WebUI (port {port}) to unload models from VRAM")
+            except:
+                pass
+    except Exception as e:
+        print(f"⚠️ Could not unload WebUI models: {e}")
+        
+    try:
+        import torch
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+            torch.cuda.synchronize()
+            print("🧹 Cleared PyTorch GPU cache before text generation")
+    except Exception:
+        pass
+
+    import gc
+    gc.collect()
+
     # --- Step 1: PromptAgent ---
     prompt_agent = PromptAgent()
     processed_prompt, prompt_type = prompt_agent.process_prompt(prompt)
@@ -252,6 +278,20 @@ async def api_generate(
             # Pause Ollama to free GPU memory for faster image generation
             from backend.utils.ollama_manager import OllamaManager
             ollama_was_running = OllamaManager.pause_ollama()
+            
+            # --- Memory Clearance: Auto-reload VRAM for Image Generation ---
+            print("🧹 Preparing memory for image generation by reloading WebUI models...")
+            try:
+                import requests
+                for port in [7860, 7861]:
+                    try:
+                        # Timeout 30s as reloading checkpoint from RAM to VRAM takes some time
+                        requests.post(f"http://127.0.0.1:{port}/sdapi/v1/reload-checkpoint", timeout=30)
+                        print(f"🧹 Successfully requested WebUI (port {port}) to reload models into VRAM")
+                    except:
+                        pass
+            except Exception as e:
+                print(f"⚠️ Could not reload WebUI models: {e}")
             
             try:
                 # Determine which image agent to use

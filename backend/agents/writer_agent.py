@@ -33,6 +33,9 @@ class WriterAgent:
             capture_output=True,
             check=False,
         )
+        if proc.returncode != 0:
+            err = proc.stderr.decode("utf-8").strip()
+            raise RuntimeError(f"Ollama failed with error: {err}")
         return proc.stdout.decode("utf-8").strip()
 
     def _build_system_prompt(self, max_scenes: int, genre: str) -> str:
