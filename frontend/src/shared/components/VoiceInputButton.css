@@ -179,6 +179,27 @@
   }
 }
 
+/* ========== HOLD HINT ========== */
+.hold-hint {
+  position: absolute;
+  bottom: -18px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 9px;
+  font-weight: 600;
+  color: rgba(102, 126, 234, 0.7);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.voice-input-button:hover .hold-hint {
+  opacity: 1;
+}
+
 /* ========== RESPONSIVE ========== */
 @media (max-width: 768px) {
   .voice-input-button {

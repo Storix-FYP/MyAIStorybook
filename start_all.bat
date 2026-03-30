@@ -5,10 +5,10 @@ echo ========================================
 echo.
 
 :: Step 1: Start WebUI
-::echo [1/3] Starting Stable Diffusion WebUI...
-::start "Stable Diffusion WebUI" cmd /k "cd /d C:\Users\wahab\Downloads\FYP\storybook-fyp\stable-diffusion-webui && webui-user.bat"
-::echo WebUI starting... waiting 10 seconds for initialization
-::timeout /t 10 /nobreak
+echo [1/3] Starting Stable Diffusion WebUI...
+start "Stable Diffusion WebUI" cmd /k "cd /d C:\Users\ahmed\Desktop\Tools\stable-diffusion-webui && webui-user.bat"
+echo WebUI starting... waiting 10 seconds for initialization
+timeout /t 10 /nobreak
 
 :: Step 2: Start Backend
 echo.

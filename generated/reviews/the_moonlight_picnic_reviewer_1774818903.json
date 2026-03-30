@@ -1,0 +1,54 @@
+{
+  "title": "The Moonlight Picnic",
+  "setting": "A crater on the moon",
+  "characters": [
+    "Captain Luna",
+    "LunaBot"
+  ],
+  "scenes": [
+    {
+      "scene_number": 1,
+      "text": "After many moons of exploring, Captain Luna finally took a well-deserved break. She sat down on the edge of a crater, her spacesuit rustling softly like crinkly wrapping paper. The Earth shone brightly in the distance, its familiar blue glow making her heart ache for home. She took a crisp apple from her pack and bit into it, the juice bursting forth like tiny fireworks. Just then, LunaBot, Captain Luna's faithful companion, rolled up beside her, its camera lens blinking curiously.",
+      "image_description": "Captain Luna taking a bite of an apple while gazing at Earth, reflected in her helmet",
+      "image_path": null
+    },
+    {
+      "scene_number": 2,
+      "text": "Suddenly, something unexpected happened. A tiny, glowing creature floated out from the depths of the crater, its bioluminescent body pulsing with light. It was unlike anything Captain Luna had ever seen! 'LunaBot,' she gasped, 'we're not alone!' The little robot beeped excitedly and began to scan the creature. But as it did, the creature started to glow brighter and brighter, threatening to overwhelm them both.",
+      "image_description": "Captain Luna and LunaBot confronting a glowing alien creature",
+      "image_path": null
+    },
+    {
+      "scene_number": 3,
+      "text": "Remembering her training, Captain Luna quickly shielded her eyes and commanded LunaBot to stop scanning. To their surprise, the creature's glow began to dim. It floated closer to them, its light pulsing gently like a heartbeat. Captain Luna reached out a gloved hand, and the creature gently touched it, leaving behind a warm, tingling sensation. 'I think we've just made first contact,' she whispered in awe.",
+      "image_description": "Captain Luna and LunaBot greeting the alien creature with open arms",
+      "image_path": null
+    }
+  ],
+  "consistency_report": {
+    "per_scene": {
+      "1": {
+        "scene_number": 1,
+        "word_count": 83,
+        "length_score": 1.0,
+        "has_image": true
+      },
+      "2": {
+        "scene_number": 2,
+        "word_count": 66,
+        "length_score": 1.0,
+        "has_image": true
+      },
+      "3": {
+        "scene_number": 3,
+        "word_count": 68,
+        "length_score": 1.0,
+        "has_image": true
+      }
+    },
+    "overall": {
+      "avg_length_score": 1.0,
+      "image_coverage": 1.0
+    }
+  }
+}

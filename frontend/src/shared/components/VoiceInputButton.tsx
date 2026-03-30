@@ -1,12 +1,13 @@
 'use client';
 
-import React from 'react';
+import React, { useCallback, useRef } from 'react';
 import './VoiceInputButton.css';
 
 interface VoiceInputButtonProps {
     isListening: boolean;
     isSupported: boolean;
-    onClick: () => void;
+    onHoldStart: () => void;
+    onHoldEnd: () => void;
     disabled?: boolean;
     className?: string;
 }
@@ -14,23 +15,58 @@ interface VoiceInputButtonProps {
 export const VoiceInputButton: React.FC<VoiceInputButtonProps> = ({
     isListening,
     isSupported,
-    onClick,
+    onHoldStart,
+    onHoldEnd,
     disabled = false,
     className = ''
 }) => {
+    const isHoldingRef = useRef(false);
+
     // Don't render if speech recognition is not supported
     if (!isSupported) {
         return null;
     }
 
+    const handlePointerDown = (e: React.PointerEvent) => {
+        e.preventDefault();
+        if (disabled) return;
+        isHoldingRef.current = true;
+        onHoldStart();
+    };
+
+    const handlePointerUp = (e: React.PointerEvent) => {
+        e.preventDefault();
+        if (!isHoldingRef.current) return;
+        isHoldingRef.current = false;
+        onHoldEnd();
+    };
+
+    const handlePointerLeave = (e: React.PointerEvent) => {
+        // If user drags pointer away from button while holding, stop recording
+        if (isHoldingRef.current) {
+            isHoldingRef.current = false;
+            onHoldEnd();
+        }
+    };
+
+    // Prevent context menu on long press (mobile)
+    const handleContextMenu = (e: React.MouseEvent) => {
+        e.preventDefault();
+    };
+
     return (
         <button
             type="button"
             className={`voice-input-button ${isListening ? 'listening' : ''} ${className}`}
-            onClick={onClick}
+            onPointerDown={handlePointerDown}
+            onPointerUp={handlePointerUp}
+            onPointerLeave={handlePointerLeave}
+            onPointerCancel={handlePointerUp}
+            onContextMenu={handleContextMenu}
             disabled={disabled}
-            title={isListening ? 'Click to stop recording' : 'Click to speak'}
-            aria-label={isListening ? 'Stop voice input' : 'Start voice input'}
+            title={isListening ? 'Release to stop' : 'Hold to speak'}
+            aria-label={isListening ? 'Release to stop recording' : 'Hold to speak'}
+            style={{ touchAction: 'none', userSelect: 'none' }}
         >
             {/* Sound wave animation rings (visible when recording) */}
             {isListening && (
@@ -66,6 +102,11 @@ export const VoiceInputButton: React.FC<VoiceInputButtonProps> = ({
                     <span className="bar"></span>
                     <span className="bar"></span>
                 </div>
+            )}
+
+            {/* Hold hint text */}
+            {!isListening && (
+                <span className="hold-hint">Hold</span>
             )}
         </button>
     );

@@ -44,9 +44,11 @@ export const WorkshopPage: React.FC<WorkshopPageProps> = ({ mode, onBack, onStor
         }
     });
 
-    const handleVoiceToggle = () => {
+    const handleVoiceStart = () => {
+        if (!isListening) startListening();
+    };
+    const handleVoiceEnd = () => {
         if (isListening) stopListening();
-        else startListening();
     };
 
     const scrollMessagesToBottom = useCallback(() => {
@@ -326,7 +328,8 @@ export const WorkshopPage: React.FC<WorkshopPageProps> = ({ mode, onBack, onStor
                             <VoiceInputButton
                                 isListening={isListening}
                                 isSupported={isSupported}
-                                onClick={handleVoiceToggle}
+                                onHoldStart={handleVoiceStart}
+                                onHoldEnd={handleVoiceEnd}
                                 disabled={isLoading}
                                 className="voice-button"
                             />

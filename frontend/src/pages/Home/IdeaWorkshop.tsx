@@ -43,12 +43,11 @@ export const IdeaWorkshop: React.FC<IdeaWorkshopProps> = ({ isOpen, onClose, onM
         }
     });
 
-    const handleVoiceToggle = () => {
-        if (isListening) {
-            stopListening();
-        } else {
-            startListening();
-        }
+    const handleVoiceStart = () => {
+        if (!isListening) startListening();
+    };
+    const handleVoiceEnd = () => {
+        if (isListening) stopListening();
     };
 
     // Scroll only the messages container (not the page)
@@ -352,7 +351,8 @@ export const IdeaWorkshop: React.FC<IdeaWorkshopProps> = ({ isOpen, onClose, onM
                                 <VoiceInputButton
                                     isListening={isListening}
                                     isSupported={isSupported}
-                                    onClick={handleVoiceToggle}
+                                    onHoldStart={handleVoiceStart}
+                                    onHoldEnd={handleVoiceEnd}
                                     disabled={isLoading}
                                     className={styles.voiceButton}
                                 />

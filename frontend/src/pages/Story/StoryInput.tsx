@@ -58,11 +58,15 @@ const StoryInput: React.FC<StoryInputProps> = ({ onStoryGenerated, setLoading, s
     }
   });
 
-  const handleVoiceToggle = () => {
+  const handleVoiceStart = () => {
+    if (!isListening) {
+      startListening();
+    }
+  };
+
+  const handleVoiceEnd = () => {
     if (isListening) {
       stopListening();
-    } else {
-      startListening();
     }
   };
 
@@ -213,7 +217,8 @@ const StoryInput: React.FC<StoryInputProps> = ({ onStoryGenerated, setLoading, s
         <VoiceInputButton
           isListening={isListening}
           isSupported={isSupported}
-          onClick={handleVoiceToggle}
+          onHoldStart={handleVoiceStart}
+          onHoldEnd={handleVoiceEnd}
         />
       </div>
 

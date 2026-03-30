@@ -1,0 +1,54 @@
+{
+  "title": "The Whispering Forests",
+  "setting": "Enchanted Forest of Elderglen",
+  "characters": [
+    "Eamon the Wanderer",
+    "Luna the Forest Sprite"
+  ],
+  "scenes": [
+    {
+      "scene_number": 1,
+      "text": "In the heart of the unknown lay the Enchanted Forest of Elderglen. Eamon, a curious young man with a backpack full of adventure, stepped into its mysterious depths. The forest was alive, whispers echoing through the canopy like ancient secrets. He followed the path illuminated by glowing mushrooms until he heard a soft cry for help.",
+      "image_description": "Eamon walking under glowing mushrooms in a dense, whispering forest",
+      "image_path": null
+    },
+    {
+      "scene_number": 2,
+      "text": "Eamon found Luna, a tiny forest sprite with twigs in her hair and moss on her dress, trapped in a vine cage. 'Help me!' she cried. 'I'm Luna, the guardian of Elderglen! This is my punishment for failing to protect our sacred tree.' Eamon's heart went out to her. He grabbed his knife, ready to cut the vines, but they squirmed like snakes! 'We need a plan,' he said, determination in his eyes.",
+      "image_description": "Eamon standing by Luna's vine cage, looking determined",
+      "image_path": null
+    },
+    {
+      "scene_number": 3,
+      "text": "Eamon discovered an ancient song inscribed on a stone near the cage. He sang it aloud, and the vines stilled, then fell away like dead leaves. Luna was free! She hugged Eamon, thanking him with tears in her eyes. Together, they saved Elderglen's sacred tree from withering. As he left Elderglen, Eamon knew he'd carry its magic with him forever.",
+      "image_description": "Eamon and Luna standing by the freed sacred tree, smiles on their faces",
+      "image_path": null
+    }
+  ],
+  "consistency_report": {
+    "per_scene": {
+      "1": {
+        "scene_number": 1,
+        "word_count": 56,
+        "length_score": 1.0,
+        "has_image": true
+      },
+      "2": {
+        "scene_number": 2,
+        "word_count": 75,
+        "length_score": 1.0,
+        "has_image": true
+      },
+      "3": {
+        "scene_number": 3,
+        "word_count": 62,
+        "length_score": 1.0,
+        "has_image": true
+      }
+    },
+    "overall": {
+      "avg_length_score": 1.0,
+      "image_coverage": 1.0
+    }
+  }
+}

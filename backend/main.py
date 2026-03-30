@@ -429,6 +429,36 @@ async def api_generate(
     except Exception as e:
         print(f"❌ Failed to start evaluation agent process: {e}")
 
+    # -----------------------------------------------------------------
+    # --- TRIGGER BACKGROUND TTS PRE-GENERATION (default voice) ---
+    # -----------------------------------------------------------------
+    try:
+        if story_id and final_story and final_story.get("scenes"):
+            import threading
+            def _pregenerate_tts(sid, scenes_data):
+                """Pre-generate TTS audio for all scenes using the default voice."""
+                try:
+                    tts = get_tts_manager()
+                    default_voice = "female"
+                    for scene in scenes_data:
+                        scene_num = scene.get("scene_number")
+                        text = scene.get("text", "")
+                        if text and scene_num:
+                            tts.generate_audio(text, sid, scene_num, default_voice)
+                    print(f"🔊 Background TTS pre-generation complete for story {sid} ({len(scenes_data)} scenes)")
+                except Exception as tts_err:
+                    print(f"⚠️ Background TTS pre-generation failed: {tts_err}")
+
+            tts_thread = threading.Thread(
+                target=_pregenerate_tts,
+                args=(story_id, final_story["scenes"]),
+                daemon=True
+            )
+            tts_thread.start()
+            print(f"🔊 Background TTS pre-generation started for story {story_id}...")
+    except Exception as e:
+        print(f"⚠️ Could not start background TTS: {e}")
+
     # --- Final combined status ---
     status_msg = image_status or story_status
 

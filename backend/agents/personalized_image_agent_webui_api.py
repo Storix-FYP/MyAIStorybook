@@ -70,23 +70,11 @@ class PersonalizedImageAgentWebUIAPI:
         return base64.b64encode(buffered.getvalue()).decode()
     
     def _load_lora(self):
-        """Load LoRA via WebUI API options endpoint"""
-        try:
-            # Set LoRA via API
-            response = requests.post(
-                f"{self.webui_url}/sdapi/v1/options",
-                json={"sd_lora": f"{self.lora_name}"},
-                timeout=5
-            )
-            if response.status_code == 200:
-                print(f"[WebUI API] ✅ LoRA loaded via API: {self.lora_name}")
-                return True
-            else:
-                print(f"[WebUI API] ⚠️ Failed to load LoRA via API (status {response.status_code})")
-                return False
-        except Exception as e:
-            print(f"[WebUI API] ⚠️ Could not load LoRA via API: {e}")
-            return False
+        """Load LoRA via prompt tag — the options API is NOT used because it causes
+        TypeError ('NoneType' object is not iterable) in --nowebui mode.
+        The LoRA is loaded automatically by including <lora:name:weight> in the prompt."""
+        print(f"[WebUI API] ✅ LoRA will be loaded via prompt tag: <lora:{self.lora_name}:1.0>")
+        return True
     
     def generate_personalized_image(
         self,
@@ -135,17 +123,18 @@ class PersonalizedImageAgentWebUIAPI:
         # Create ControlNet unit
         controlnet_unit = {
             "enabled": True,
+            "input_mode": "simple",  # Must be string enum: 'simple', 'batch', or 'merge'
             "module": "ip-adapter_face_id_plus",
             "model": "ip-adapter-faceid-plusv2_sd15",
             "weight": scale,
-            "image": image_b64,
-            "resize_mode": "Crop and Resize",  # String, not int
-            "control_mode": "Balanced",  # String enum value
+            "image": image_b64,  # ControlNet API accepts base64 string directly
+            "resize_mode": "Crop and Resize",
+            "control_mode": "Balanced",
             "guidance_start": control_start,
             "guidance_end": control_end,
         }
         
-        # Create txt2img payload with explicit LoRA loading
+        # Create txt2img payload — LoRA is loaded via prompt tag, not via API options
         payload = {
             "prompt": positive_prompt,
             "negative_prompt": negative_prompt,
@@ -159,9 +148,6 @@ class PersonalizedImageAgentWebUIAPI:
             "override_settings": {
                 "CLIP_stop_at_last_layers": 1,  # Better for IP-Adapter
             },
-            "extra_generation_params": {
-                f"Lora hashes": f"{self.lora_name}: 1.0",
-            },
             "alwayson_scripts": {
                 "controlnet": {
                     "args": [controlnet_unit]
@@ -173,7 +159,7 @@ class PersonalizedImageAgentWebUIAPI:
         print(f"  - Steps: {num_inference_steps}, CFG: {guidance_scale}")
         print(f"  - Control: {control_start:.1%} to {control_end:.1%}, Weight: {scale}")
         print(f"  - Prompt: {positive_prompt[:100]}...")  # Show first 100 chars
-        print(f"  - LoRA: {self.lora_name} (via prompt tag + extra_generation_params)")
+        print(f"  - LoRA: {self.lora_name} (via prompt tag)")
         
         try:
             # Call WebUI API

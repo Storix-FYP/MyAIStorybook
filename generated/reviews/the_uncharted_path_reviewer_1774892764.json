@@ -1,0 +1,54 @@
+{
+  "title": "The Uncharted Path",
+  "setting": "A mystical forest bordering a mysterious kingdom",
+  "characters": [
+    "Eamon",
+    "Luna"
+  ],
+  "scenes": [
+    {
+      "scene_number": 1,
+      "text": "In the heart of the Whispering Woods, Eamon, a curious cartographer, discovered an ancient map tucked within the hollow of an oak tree. He had ventured into these woods countless times, yet never had he seen this peculiar parchment. As he unrolled it, his eyes widened with disbelief. A path was drawn, leading deep into the forest, towards a mountain nonexistent on any other map. With a mix of excitement and trepidation, Eamon decided to follow this mysterious trail.",
+      "image_description": "Eamon studying an ancient map under the canopy of a towering oak tree",
+      "image_path": null
+    },
+    {
+      "scene_number": 2,
+      "text": "Days turned into weeks as Eamon followed the winding path. He encountered talking animals, who spoke of a prophecy foretelling the arrival of a 'Mapkeeper' who would restore balance to their realm. Intrigued and humbled, Eamon pressed on. Then, one evening, he stumbled upon a clearing illuminated by ethereal lights. There stood Luna, a majestic unicorn, her horn pulsating with moonlight. She was injured and surrounded by shadowy creatures trying to steal her light.",
+      "image_description": "Eamon approaching Luna in a clearing filled with glowing flora",
+      "image_path": null
+    },
+    {
+      "scene_number": 3,
+      "text": "With courage newfound, Eamon stood between Luna and the shadows. He challenged them, 'You cannot take her light without facing me first!' The creatures hissed but retreated into the darkness as dawn approached. As their forms faded, Luna's horn glowed brighter, banishing the last remnants of shadow. She looked at Eamon with gratitude. 'You are the Mapkeeper,' she whispered. Together, they continued along the path, their journey filled with wonder and friendship.",
+      "image_description": "Eamon and Luna walking side by side as sunlight chases away darkness",
+      "image_path": null
+    }
+  ],
+  "consistency_report": {
+    "per_scene": {
+      "1": {
+        "scene_number": 1,
+        "word_count": 79,
+        "length_score": 1.0,
+        "has_image": true
+      },
+      "2": {
+        "scene_number": 2,
+        "word_count": 74,
+        "length_score": 1.0,
+        "has_image": true
+      },
+      "3": {
+        "scene_number": 3,
+        "word_count": 73,
+        "length_score": 1.0,
+        "has_image": true
+      }
+    },
+    "overall": {
+      "avg_length_score": 1.0,
+      "image_coverage": 1.0
+    }
+  }
+}
