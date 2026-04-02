@@ -418,7 +418,14 @@ class IdeaWorkshopAgent:
         
         context_str = ", ".join([f"{k}: {v}" for k, v in collected_data.items() if v and v != "__SKIP__"])
         collected_json = json.dumps(collected_data, indent=2) if collected_data else "{}"
-        
+
+        # Extract last assistant message to give the LLM conversational context
+        last_assistant_message = ""
+        for msg in reversed(self.conversation_history):
+            if msg.get('role') == 'assistant':
+                last_assistant_message = msg.get('message', '')
+                break
+
         prompt = f"""You are an intelligent Story Workshop Assistant using the ReAct (Reasoning + Acting) framework.
 
 **Available Actions:**
@@ -427,19 +434,49 @@ class IdeaWorkshopAgent:
 3. skip - User wants to skip this field
 4. auto_fill - User wants YOU to decide
 5. generate_request - User wants to generate story NOW
-6. reject - ONLY for gibberish/URLs (BE LENIENT!)
+6. reject - Use when input is invalid (see rules below)
 
 **Story Fields:** genre, characters, setting, beginning, climax, ending, scenes, moral
 
 **Current Context:**
-- Current Question Field: {current_field or "None (initial message)"}
+- Current Question Field: {current_field or "None (initial message — first thing the user says about their story idea)"}
 - Already Collected: {context_str or "nothing yet"}
+
+**SUGGESTION CONFIRMATION RULE (Highest Priority — check this FIRST):**
+Look at the "Previous Assistant Message" below.
+If that message presented a generated/suggested value for the current field AND asked the user whether it's acceptable
+(e.g. "Here's one: '...' Does that work for you?", "How about '...'?", "I'll decide that for you! Let's go with: '...'", "I've chosen '...' for you. Is that okay?"),
+AND the user's current input is an affirmative reply such as:
+"yes", "yeah", "yep", "ok", "okay", "sure", "fine", "that works", "looks good", "great", "perfect", "sounds good", "go ahead", "that's fine", "i like it", "accepted", "correct", "right", "good"
+→ Extract the suggested VALUE from the previous assistant message and use `save_value` to save it.
+→ Do NOT mark this as invalid. Do NOT ask the question again.
+
+**Previous Assistant Message**: "{last_assistant_message}"
+
+**INPUT VALIDATION RULES — Read carefully before deciding (Apply AFTER the confirmation check above):**
+You must judge whether the user's input is a genuine, meaningful answer to the question being asked.
+Mark input as INVALID (use `reject`) if it is:
+- A greeting or social filler: "hi", "hello", "hey", "good morning", "how are you", "what's up", "sup"
+- Only numbers or a math expression: "9+9=?", "123-123=0", "42", "1000", "2+2"
+- Only symbols or special characters: "@@##", "!!", "---", "***", "????"
+- A URL or web link: anything starting with http, https, www, or ending in .com/.net
+- Meaningless random characters: "asa45sjsa", "asdfgh", "qwerty123", "zzzzz"
+- Completely off-topic, unrelated to story creation: "what is the capital of France", "who won the world cup"
+- For the VERY FIRST message (current_field is None, nothing collected yet): fewer than 3 meaningful words is ALSO invalid. "hi" alone is not a story idea.
+
+If input is INVALID → Action: reject, and in the feedback field, write a friendly explanation AND re-ask the exact same question.
+
+A response is VALID if it genuinely answers the asked question, including:
+- Single story-relevant words: "horror", "fantasy", "adventure"
+- Character names: "john and jack", "a brave girl named Lily"
+- Short but real answers: "haunted house", "happy ending", "no moral"
+- Narrative descriptions, even if brief
 
 **User Input:** "{user_message}"
 
 **Instructions:**
 Use this EXACT format:
-Thought: [Analyze user's intent and what fields can be extracted]
+Thought: [FIRST check if this is a confirmation of a previous suggestion. THEN check if input is valid. Apply the rules above.]
 Action: [ONE of: save_value, save_multiple, skip, auto_fill, generate_request, reject]
 Action Input: [JSON object with action details]
 
@@ -449,14 +486,7 @@ Action Input: [JSON object with action details]
 - skip: {{}}
 - auto_fill: {{}}
 - generate_request: {{}}
-- reject: {{"feedback": "message to user"}}
-
-**Guidelines:**
-- BE LENIENT: "cat and donkey" is VALID, "fantasy" is VALID
-- Narrative sentences are VALID: "once upon a time..." is VALID
-- If user provides FULL STORY, use save_multiple
-- Auto-fill keywords: "choose yourself", "you decide", "pick for me"
-- If UNSURE, use save_value (don't reject!)
+- reject: {{"feedback": "friendly explanation of why it was invalid + re-ask the EXACT same question word for word"}}
 
 Begin!
 

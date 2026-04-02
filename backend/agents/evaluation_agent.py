@@ -85,6 +85,30 @@ def main():
         print(f"[EvaluationAgent] ❌ Unexpected error: {e}")
         traceback.print_exc()
         sys.exit(1)
+        
+    finally:
+        # Aggressive Total Memory Cleanup after Evaluation Finishes!
+        print("\n[EvaluationAgent] 🧹 Evaluation complete. Initiating total GPU wipe...")
+        try:
+            import requests
+            # Unload the main WebUI checkpoint AND ControlNet cache to totally liberate the GPU!
+            requests.post("http://127.0.0.1:7861/sdapi/v1/options", json={"control_net_model_cache_size": 0}, timeout=10)
+            response = requests.post("http://127.0.0.1:7861/sdapi/v1/unload-checkpoint", timeout=10)
+            if response.status_code == 200:
+                print("[EvaluationAgent] ✅ WebUI models and ControlNet fully flushed from VRAM")
+        except Exception as e:
+            print(f"[EvaluationAgent] ⚠️ WebUI unload skipped (may be offline): {e}")
+
+        try:
+            import torch
+            import gc
+            if torch.cuda.is_available():
+                torch.cuda.empty_cache()
+                torch.cuda.ipc_collect()
+                gc.collect()
+                print("[EvaluationAgent] ✅ Local PyTorch GPU cache destroyed.")
+        except Exception:
+            pass
 
 if __name__ == "__main__":
     main()

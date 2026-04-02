@@ -1,0 +1,61 @@
+{
+  "title": "The Enchanted Film",
+  "setting": "A small town on the eve of the annual lantern festival",
+  "characters": [
+    "Timmy",
+    "Glimmer"
+  ],
+  "scenes": [
+    {
+      "scene_number": 1,
+      "text": "In the quiet town of Meadowgrove, young Timmy loved nothing more than watching movies at the old, enchanted cinema. One evening, as he sat in his usual seat under the glow of the projector, a magical film reel began to spin. To his astonishment, a tiny, glowing sprite named Glimmer popped out of the screen and onto his lap! 'I've been trapped in that film for centuries!' she exclaimed, her eyes sparkling like stardust. Timmy promised to help her find freedom just as the lantern festival was about to begin outside.",
+      "image_description": "Timmy's surprised face with Glimmer perched on his lap, surrounded by the soft glow of the cinema",
+      "image_path": null
+    },
+    {
+      "scene_number": 2,
+      "text": "The next day, Timmy and Glimmer ventured into the heart of the festival, where lanterns shaped like stars, moons, and dragons filled the night sky. But when they reached the main stage, they found a dark force lurking behind the curtain. It was the Shadow Weaver, who had been stealing light and happiness from Meadowgrove for years! With Glimmer's magic waning, Timmy knew they needed to outsmart the Shadow Weaver before the festival ended and all hope was lost.",
+      "image_description": "Timmy and Glimmer facing the menacing Shadow Weaver amidst a sea of colorful lanterns",
+      "image_path": null
+    },
+    {
+      "scene_number": 3,
+      "text": "Timmy devised a plan. He lured the Shadow Weaver into a nearby grove filled with glowing, enchanted flowers. As the Shadow Weaver chased after Timmy, Glimmer used her remaining magic to activate the flowers' petals, which absorbed the darkness like tiny moons. With the Shadow Weaver defeated and all light restored, the townsfolk cheered as Glimmer transformed into a beautiful lantern, joining the others in the sky. That night, Timmy watched his new friend soar among the stars, knowing they'd share many more adventures together.",
+      "image_description": "Timmy waving goodbye to Glimmer's lantern floating among the festival lights",
+      "image_path": null
+    }
+  ],
+  "consistency_report": {
+    "per_scene": {
+      "1": {
+        "scene_number": 1,
+        "word_count": 92,
+        "length_score": 1.0,
+        "has_image": true
+      },
+      "2": {
+        "scene_number": 2,
+        "word_count": 80,
+        "length_score": 1.0,
+        "has_image": true
+      },
+      "3": {
+        "scene_number": 3,
+        "word_count": 86,
+        "length_score": 1.0,
+        "has_image": true
+      }
+    },
+    "overall": {
+      "avg_length_score": 1.0,
+      "image_coverage": 1.0
+    }
+  },
+  "meta": {
+    "edited_at": "2026-04-01T18:38:35.054817Z",
+    "editor_version": "0.6",
+    "prompt_type": "normal",
+    "enhanced_prompt": "a boy watching a movie"
+  },
+  "finalized": true
+}

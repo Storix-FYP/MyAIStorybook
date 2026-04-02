@@ -1,0 +1,55 @@
+{
+  "title": "The Escape from the Silver Screen",
+  "setting": "A cozy attic filled with dusty books, vintage toys, and an ancient movie projector.",
+  "characters": [
+    "Oliver",
+    "Captain Blackwood",
+    "Princess Lyra"
+  ],
+  "scenes": [
+    {
+      "scene_number": 1,
+      "text": "In the quiet of his grandma's attic, Oliver discovered a mysterious old film reel tucked behind some books. As he threaded it through the ancient projector and flicked on the light, the screen flickered to life. A swashbuckling pirate captain appeared, waving his sword and shouting, 'Arr mateys!' Suddenly, with a pop, the captain leapt off the screen and into Oliver's world! His eyes wide with wonder, Oliver asked, 'Who are you?' The captain laughed heartily, 'Captain Blackwood, at your service, young sir! And who might you be?'",
+      "image_description": "A boy watching in awe as a pirate steps out of an old projector",
+      "image_path": null
+    },
+    {
+      "scene_number": 2,
+      "text": "The next day, Princess Lyra tumbled out of the projector, her golden dress shimmering and her eyes filled with tears. 'Help me!' she cried, 'I've lost my way! Captain Blackwood's kidnapped my dragon, Ember! I must find him!' Oliver, though scared, agreed to help. They ventured into their backyard, now transformed into a mystical forest filled with talking animals. As they searched, they found clues that led them towards the dark and forbidding Blackwood Manor. Oliver gulped, 'We have to go in there?' Princess Lyra nodded, her chin trembling but her resolve strong.",
+      "image_description": "A boy and princess searching through a magical forest",
+      "image_path": null
+    },
+    {
+      "scene_number": 3,
+      "text": "Inside the manor, they found Captain Blackwood sitting on a pile of treasure, Ember the dragon tied up beside him. 'Hah!' Blackwood laughed when he saw them, 'More captives for my collection! You can't resist the power of cinema, young Oliver!' But Oliver had an idea. He remembered the projector's lamp and shouted, 'Princess Lyra, sing your most enchanting song!' As she sang, her voice filled with longing for home, Blackwood started to wobble and fade like an old film reel running out of light. When the last note echoed, only Oliver and Ember remained. Oliver smiled, 'Looks like you're heading back to your own story, Captain.' Back in the attic, everything returned to normal, but Oliver knew he'd never forget his adventure.",
+      "image_description": "A boy leading a dragon out of a manor, leaving behind an fading pirate",
+      "image_path": null
+    }
+  ],
+  "consistency_report": {
+    "per_scene": {
+      "1": {
+        "scene_number": 1,
+        "word_count": 90,
+        "length_score": 1.0,
+        "has_image": true
+      },
+      "2": {
+        "scene_number": 2,
+        "word_count": 95,
+        "length_score": 1.0,
+        "has_image": true
+      },
+      "3": {
+        "scene_number": 3,
+        "word_count": 127,
+        "length_score": 1.0,
+        "has_image": true
+      }
+    },
+    "overall": {
+      "avg_length_score": 1.0,
+      "image_coverage": 1.0
+    }
+  }
+}

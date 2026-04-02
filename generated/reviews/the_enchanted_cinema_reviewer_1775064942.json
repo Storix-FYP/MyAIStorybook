@@ -1,0 +1,54 @@
+{
+  "title": "The Enchanted Cinema",
+  "setting": "A cozy attic bedroom filled with old movies and antiques.",
+  "characters": [
+    "Lily",
+    "Orion"
+  ],
+  "scenes": [
+    {
+      "scene_number": 1,
+      "text": "In the quiet of her room, under a canopy of stars through the skylight, Lily watched an old projector whirr to life. The flickering film cast eerie shadows on the walls, telling tales of a magical world where flowers sang and trees whispered secrets. As she sat there alone in the moonlit night, she felt something stir in her heart - a longing for adventure.",
+      "image_description": "Girl watching old projector in moonlit room",
+      "image_path": null
+    },
+    {
+      "scene_number": 2,
+      "text": "Suddenly, the film on the screen seemed to ripple like water. Out popped a little glow worm named Orion! He was no taller than Lily's thumb but with a personality as big as her heart. 'You've summoned me!' he exclaimed. 'I'm from the Enchanted Realm of Lumina! But it's fading away, and we need your help, Lily!'",
+      "image_description": "Girl face-to-face with glowing little creature",
+      "image_path": null
+    },
+    {
+      "scene_number": 3,
+      "text": "Lily leapt into action, her heart pounding with excitement. Together with Orion, she embarked on a thrilling journey through the projector's lens. They raced through vibrant fields of glowing flowers, navigated whispering forests filled with friendly faces carved into the trees, and even rode a giant butterfly to the Palace of Starlight! There, Lily discovered her unique gift - she could bring Lumina's fading colors back to life just by touching them!",
+      "image_description": "Girl riding a giant butterfly under starry sky",
+      "image_path": null
+    }
+  ],
+  "consistency_report": {
+    "per_scene": {
+      "1": {
+        "scene_number": 1,
+        "word_count": 64,
+        "length_score": 1.0,
+        "has_image": true
+      },
+      "2": {
+        "scene_number": 2,
+        "word_count": 61,
+        "length_score": 1.0,
+        "has_image": true
+      },
+      "3": {
+        "scene_number": 3,
+        "word_count": 73,
+        "length_score": 1.0,
+        "has_image": true
+      }
+    },
+    "overall": {
+      "avg_length_score": 1.0,
+      "image_coverage": 1.0
+    }
+  }
+}

@@ -1,0 +1,54 @@
+{
+  "title": "The Dragon's Locket",
+  "setting": "A mystical forest with floating islands and sparkling waterfalls.",
+  "characters": [
+    "Tom",
+    "Mia"
+  ],
+  "scenes": [
+    {
+      "scene_number": 1,
+      "text": "In the heart of Whisperwood Forest, Tom played with his friends near the bubbling Crystal Spring. Suddenly, Mia noticed a glowing locket in the moss. 'Look!' she exclaimed, picking it up. As soon as her fingers touched it, a soft glow enveloped them both. Then, a tiny dragon burst out from the locket and hovered above their hands. 'Wow! It's magical!' Tom whispered.",
+      "image_description": "Two friends excitedly examining a glowing locket with a miniature dragon floating beside them",
+      "image_path": null
+    },
+    {
+      "scene_number": 2,
+      "text": "The tiny dragon, whom they named Spark, led them on an adventure through the forest. They flew over ancient ruins and soared high above the treetops. But as they approached the Floating Islands, a dark shadow loomed. A monstrous dragon appeared, roaring menacingly. 'That's our locket!' Tom realized, seeing it dangling around its neck.",
+      "image_description": "Two friends riding on Spark, facing a monstrous dragon guarding the Floating Islands",
+      "image_path": null
+    },
+    {
+      "scene_number": 3,
+      "text": "With Mia's idea, they devised a plan. Tom distracted the monster with his loudest shout, while Mia snuck behind it and swiftly untied the locket from its neck. With the locket safe in their hands again, Spark grew larger, laughing joyously. 'We did it!' Tom cheered. Back home, they returned Spark to his locket, promising to visit him often.",
+      "image_description": "Tom celebrating with Mia as Spark grows bigger, now wearing the locket around its neck",
+      "image_path": null
+    }
+  ],
+  "consistency_report": {
+    "per_scene": {
+      "1": {
+        "scene_number": 1,
+        "word_count": 64,
+        "length_score": 1.0,
+        "has_image": true
+      },
+      "2": {
+        "scene_number": 2,
+        "word_count": 55,
+        "length_score": 1.0,
+        "has_image": true
+      },
+      "3": {
+        "scene_number": 3,
+        "word_count": 60,
+        "length_score": 1.0,
+        "has_image": true
+      }
+    },
+    "overall": {
+      "avg_length_score": 1.0,
+      "image_coverage": 1.0
+    }
+  }
+}

@@ -35,12 +35,11 @@ export const Chatbot: React.FC<ChatbotProps> = ({ storyId, storyData }) => {
         }
     });
 
-    const handleVoiceToggle = () => {
-        if (isListening) {
-            stopListening();
-        } else {
-            startListening();
-        }
+    const handleVoiceStart = () => {
+        if (!isListening) startListening();
+    };
+    const handleVoiceEnd = () => {
+        if (isListening) stopListening();
     };
 
     const characters = storyData?.characters || [];
@@ -189,7 +188,8 @@ export const Chatbot: React.FC<ChatbotProps> = ({ storyId, storyData }) => {
                             <VoiceInputButton
                                 isListening={isListening}
                                 isSupported={isSupported}
-                                onClick={handleVoiceToggle}
+                                onHoldStart={handleVoiceStart}
+                                onHoldEnd={handleVoiceEnd}
                                 disabled={isLoading}
                                 className={styles.voiceButton}
                             />

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useSpeechToText } from '@/hooks/useSpeechToText';
 import { VoiceInputButton } from '@/shared/components/VoiceInputButton';
 import styles from './IdeaWorkshop.module.css';
@@ -28,6 +28,7 @@ export const IdeaWorkshop: React.FC<IdeaWorkshopProps> = ({ isOpen, onClose, onM
     const [storyVersion, setStoryVersion] = useState(1);
     const [wordCount, setWordCount] = useState(0);
     const messagesEndRef = useRef<HTMLDivElement>(null);
+    const messagesContainerRef = useRef<HTMLDivElement>(null);
 
     // Speech-to-text hook
     const {
@@ -42,18 +43,25 @@ export const IdeaWorkshop: React.FC<IdeaWorkshopProps> = ({ isOpen, onClose, onM
         }
     });
 
-    const handleVoiceToggle = () => {
-        if (isListening) {
-            stopListening();
-        } else {
-            startListening();
-        }
+    const handleVoiceStart = () => {
+        if (!isListening) startListening();
+    };
+    const handleVoiceEnd = () => {
+        if (isListening) stopListening();
     };
 
-    // Auto-scroll to bottom
+    // Scroll only the messages container (not the page)
+    const scrollMessagesToBottom = useCallback(() => {
+        const container = messagesContainerRef.current;
+        if (container) {
+            container.scrollTop = container.scrollHeight;
+        }
+    }, []);
+
+    // Scroll messages container to bottom whenever messages update
     useEffect(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }, [messages]);
+        scrollMessagesToBottom();
+    }, [messages, scrollMessagesToBottom]);
 
     // Word count for improvement mode
     useEffect(() => {
@@ -106,10 +114,33 @@ export const IdeaWorkshop: React.FC<IdeaWorkshopProps> = ({ isOpen, onClose, onM
         }
     };
 
+    // Detect if the user explicitly wants to generate the story
+    const isGenerateIntent = (text: string): boolean => {
+        const lower = text.toLowerCase().trim();
+        const patterns = [
+            'generate story', 'generate the story', 'create story', 'create the story',
+            'generate now', 'create now', 'make the story', 'make story',
+            'build the story', 'build story', 'write the story', 'write story',
+            'yes, generate', 'yes generate', 'go ahead', 'generate it',
+            'create it', 'yes, create', 'yes create', 'proceed', 'generate please',
+        ];
+        return patterns.some(p => lower.includes(p));
+    };
+
     const handleSendMessage = async () => {
         if (!userInput.trim() || !sessionId || isLoading) return;
 
         const message = userInput.trim();
+
+        // If all fields are collected AND the user explicitly asks to generate, trigger story generation
+        if (readyToGenerate && isGenerateIntent(message)) {
+            setUserInput('');
+            setMessages(prev => [...prev, { role: 'user', message }]);
+            handleGenerateStory();
+            return;
+        }
+
+        // Otherwise always continue the conversation normally
         setUserInput('');
         setIsLoading(true);
 
@@ -198,11 +229,7 @@ export const IdeaWorkshop: React.FC<IdeaWorkshopProps> = ({ isOpen, onClose, onM
     const handleKeyPress = (e: React.KeyboardEvent) => {
         if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
-            if (readyToGenerate) {
-                handleGenerateStory();
-            } else {
-                handleSendMessage();
-            }
+            handleSendMessage();
         }
     };
 
@@ -281,7 +308,7 @@ export const IdeaWorkshop: React.FC<IdeaWorkshopProps> = ({ isOpen, onClose, onM
                             {mode === 'improvement' ? '🔧 Improvement Mode' : '💡 New Idea Mode'}
                         </div>
 
-                        <div className={styles.messagesContainer}>
+                        <div className={styles.messagesContainer} ref={messagesContainerRef}>
                             {messages.map((msg, index) => (
                                 <div
                                     key={index}
@@ -324,17 +351,18 @@ export const IdeaWorkshop: React.FC<IdeaWorkshopProps> = ({ isOpen, onClose, onM
                                 <VoiceInputButton
                                     isListening={isListening}
                                     isSupported={isSupported}
-                                    onClick={handleVoiceToggle}
+                                    onHoldStart={handleVoiceStart}
+                                    onHoldEnd={handleVoiceEnd}
                                     disabled={isLoading}
                                     className={styles.voiceButton}
                                 />
                             </div>
                             <button
                                 className={styles.sendButton}
-                                onClick={readyToGenerate ? handleGenerateStory : handleSendMessage}
+                                onClick={handleSendMessage}
                                 disabled={!userInput.trim() || isLoading || (mode === 'improvement' && wordCount > 300)}
                             >
-                                {readyToGenerate ? '✨ Generate Story' : 'Send'}
+                                {readyToGenerate ? '✨ Send Message' : 'Send'}
                             </button>
                         </div>
                     </div>

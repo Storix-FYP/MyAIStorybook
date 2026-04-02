@@ -1,6 +1,6 @@
 @echo off
 echo ==================================
-echo  🎨 Setting up & Starting Next.js Frontend
+echo  🎨 Setting up ^& Starting Next.js Frontend
 echo ==================================
 
 echo Checking for Node.js dependencies...

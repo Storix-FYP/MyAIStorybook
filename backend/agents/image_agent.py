@@ -71,10 +71,10 @@ class ImageAgent:
     def generate_image(self, prompt_text: str, filename: str = "output.png"):
         print(f"[ImageAgent] Generating image for prompt: '{prompt_text}'...")
     
-        # Apply content safety filter
+        # Apply content safety filter with storybook aesthetic reinforcements
         from backend.utils.content_safety import enhance_prompt_for_children
         
-        enhanced_prompt, safe_negative, is_safe = enhance_prompt_for_children(prompt_text)
+        enhanced_prompt, safe_negative, is_safe = enhance_prompt_for_children(prompt_text, mode="simple")
         
         if not is_safe:
             raise ValueError(f"Prompt rejected for child safety: {prompt_text}")
@@ -87,8 +87,8 @@ class ImageAgent:
             enhanced_prompt = " ".join(prompt_words[:77])
             print(f"[ImageAgent] ⚠️ Truncated prompt to 77 tokens for CLIP compatibility.")
     
-        # Advanced prompting with safety enhancements
-        positive_prompt = f"masterpiece, best quality, ultra-detailed, photorealistic illustration, {enhanced_prompt}"
+        # Advanced prompting with safety enhancements and anatomy quality
+        positive_prompt = f"masterpiece, best quality, ultra-detailed, photorealistic illustration, clear facial features, {enhanced_prompt}"
         negative_prompt = safe_negative
     
         # Pass 1: txt2img
@@ -98,7 +98,7 @@ class ImageAgent:
             negative_prompt=negative_prompt,
             width=512,
             height=512,
-            num_inference_steps=25,
+            num_inference_steps=30,
             guidance_scale=7,
             generator=self.generator,
         ).images[0]
@@ -109,7 +109,7 @@ class ImageAgent:
             prompt=positive_prompt,
             negative_prompt=negative_prompt,
             image=low_res_image,
-            num_inference_steps=30,
+            num_inference_steps=35,
             strength=0.5,
             guidance_scale=7,
             generator=self.generator,

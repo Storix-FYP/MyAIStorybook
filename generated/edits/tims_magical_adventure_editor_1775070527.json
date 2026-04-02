@@ -1,0 +1,61 @@
+{
+  "title": "Tim's Magical Adventure",
+  "setting": "A mystical forest filled with glowing plants and creatures of imagination",
+  "characters": [
+    "Tim",
+    "Luna the Moon Faerie"
+  ],
+  "scenes": [
+    {
+      "scene_number": 1,
+      "text": "One rainy afternoon, young Tim was watching 'The Mysterious Movie' in his cozy room. Suddenly, the movie's old projector flickered, and a bright beam shot out, pulling Tim into the magical world on screen. He found himself in a mystical forest filled with glowing plants and creatures of imagination. Soon, he met Luna, a friendly Moon Faerie who could light up the darkest nights. She told him about a hidden treasure deep within the forest, guarded by the grumpy old Troll, Grumbleguts.",
+      "image_description": "Tim stepping into a vibrant forest, looking surprised, with Luna floating beside him",
+      "image_path": null
+    },
+    {
+      "scene_number": 2,
+      "text": "Together, Tim and Luna journeyed through the enchanted woods. They crossed whispering brooks, climbed glowing vines, and even danced with friendly fireflies. However, as they approached Grumbleguts' cave, the once-jubilant forest grew quiet and eerie. Tim's heart pounded as he saw the massive troll snoring by a pile of glittering treasure. Luna whispered that only a true act of kindness could awaken Grumbleguts without angering him. Taking a deep breath, Tim gently plucked a glowing flower from near the troll's nose and placed it in his hair.",
+      "image_description": "Tim tiptoeing towards Grumbleguts' cave, with Luna watching nervously",
+      "image_path": null
+    },
+    {
+      "scene_number": 3,
+      "text": "Grumbleguts stirred, smelled the flower, and woke up smiling. To Tim's surprise, the troll was delighted to have such a kind-hearted visitor. Grumbleguts revealed that his treasure was once stolen by a mischievous trickster, but now he saw Tim as the genuine friend he'd been waiting for. He gifted Tim a small moonstone from his treasure pile, saying it would guide him back home. As Tim touched the stone, the projector beam returned, pulling him back to his room, filled with newfound magic and friendship.",
+      "image_description": "Grumbleguts smiling at Tim while giving him the moonstone",
+      "image_path": null
+    }
+  ],
+  "consistency_report": {
+    "per_scene": {
+      "1": {
+        "scene_number": 1,
+        "word_count": 83,
+        "length_score": 1.0,
+        "has_image": true
+      },
+      "2": {
+        "scene_number": 2,
+        "word_count": 90,
+        "length_score": 1.0,
+        "has_image": true
+      },
+      "3": {
+        "scene_number": 3,
+        "word_count": 88,
+        "length_score": 1.0,
+        "has_image": true
+      }
+    },
+    "overall": {
+      "avg_length_score": 1.0,
+      "image_coverage": 1.0
+    }
+  },
+  "meta": {
+    "edited_at": "2026-04-01T19:09:57.302072Z",
+    "editor_version": "0.6",
+    "prompt_type": "normal",
+    "enhanced_prompt": "While watching 'The Mysterious Movie', young Tim noticed an extraordinary event unfolding on the screen, drawing him into its magical world."
+  },
+  "finalized": true
+}

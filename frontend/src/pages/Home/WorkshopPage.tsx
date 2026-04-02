@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useSpeechToText } from '@/hooks/useSpeechToText';
 import { VoiceInputButton } from '@/shared/components/VoiceInputButton';
 import './WorkshopPage.css';
@@ -24,13 +24,14 @@ export const WorkshopPage: React.FC<WorkshopPageProps> = ({ mode, onBack, onStor
     const [isLoading, setIsLoading] = useState(false);
     const [readyToGenerate, setReadyToGenerate] = useState(false);
     const [generatedStory, setGeneratedStory] = useState<string | null>(null);
-    const [storyVersion, setStoryVersion] = useState(1);
+    const [generatedStoryId, setGeneratedStoryId] = useState<number | null>(null);
     const [wordCount, setWordCount] = useState(0);
     const [isInitializing, setIsInitializing] = useState(true);
     const [connectionError, setConnectionError] = useState<string | null>(null);
+    const [isSaving, setIsSaving] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
+    const messagesAreaRef = useRef<HTMLDivElement>(null);
 
-    // Speech-to-text hook
     const {
         isListening,
         isSupported,
@@ -43,78 +44,91 @@ export const WorkshopPage: React.FC<WorkshopPageProps> = ({ mode, onBack, onStor
         }
     });
 
-    const handleVoiceToggle = () => {
-        if (isListening) {
-            stopListening();
-        } else {
-            startListening();
-        }
+    const handleVoiceStart = () => {
+        if (!isListening) startListening();
+    };
+    const handleVoiceEnd = () => {
+        if (isListening) stopListening();
     };
 
-    // Initialize session
-    useEffect(() => {
-        // Scroll to top when component mounts
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+    const scrollMessagesToBottom = useCallback(() => {
+        const area = messagesAreaRef.current;
+        if (area) area.scrollTop = area.scrollHeight;
+    }, []);
 
-        const initSession = async () => {
-            setIsInitializing(true);
-            setConnectionError(null);
-            try {
-                const response = await fetch('http://127.0.0.1:8000/api/workshop/start', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ mode })
-                });
-
-                if (!response.ok) {
-                    throw new Error('Failed to start workshop');
-                }
-
-                const data = await response.json();
-                setSessionId(data.session_id);
-                setMessages([{
-                    role: 'assistant',
-                    message: data.initial_message
-                }]);
-            } catch (error) {
-                console.error('Error starting workshop:', error);
-                setConnectionError('Unable to connect to the workshop server. Please make sure the backend is running.');
-                setMessages([{
-                    role: 'assistant',
-                    message: 'Welcome! I\'m here to help you craft your story. Please share your ideas and let\'s create something magical together! ✨'
-                }]);
-            } finally {
-                setIsInitializing(false);
-            }
-        };
-
-        initSession();
+    // ── Initialize / re-initialize session ──────────────────────────────────
+    const initSession = useCallback(async () => {
+        setIsInitializing(true);
+        setConnectionError(null);
+        setMessages([]);
+        setReadyToGenerate(false);
+        setGeneratedStory(null);
+        setGeneratedStoryId(null);
+        setSessionId(null);
+        try {
+            const response = await fetch('http://127.0.0.1:8000/api/workshop/start', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ mode })
+            });
+            if (!response.ok) throw new Error('Failed to start workshop');
+            const data = await response.json();
+            setSessionId(data.session_id);
+            setMessages([{ role: 'assistant', message: data.initial_message }]);
+        } catch (error) {
+            console.error('Error starting workshop:', error);
+            setConnectionError('Unable to connect to the workshop server. Please make sure the backend is running.');
+            setMessages([{
+                role: 'assistant',
+                message: 'Welcome! I\'m here to help you craft your story. Please share your ideas and let\'s create something magical together! ✨'
+            }]);
+        } finally {
+            setIsInitializing(false);
+        }
     }, [mode]);
 
-    // Auto-scroll to bottom
-    useEffect(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }, [messages]);
+    useEffect(() => { initSession(); }, [initSession]);
 
-    // Word count for improvement mode
+    useEffect(() => {
+        scrollMessagesToBottom();
+    }, [messages, scrollMessagesToBottom]);
+
     useEffect(() => {
         if (mode === 'improvement') {
             setWordCount(userInput.trim().split(/\s+/).filter(w => w.length > 0).length);
         }
     }, [userInput, mode]);
 
+    // ── Generate intent detection ────────────────────────────────────────────
+    const isGenerateIntent = (text: string): boolean => {
+        const lower = text.toLowerCase().trim();
+        const patterns = [
+            'generate story', 'generate the story', 'create story', 'create the story',
+            'generate now', 'create now', 'make the story', 'make story',
+            'build the story', 'build story', 'write the story', 'write story',
+            'yes, generate', 'yes generate', 'go ahead', 'generate it',
+            'create it', 'yes, create', 'yes create', 'proceed', 'generate please',
+        ];
+        return patterns.some(p => lower.includes(p));
+    };
+
+    // ── Send Message ─────────────────────────────────────────────────────────
     const handleSendMessage = async () => {
         if (!userInput.trim() || isLoading) return;
-
         const message = userInput.trim();
+
+        if (readyToGenerate && isGenerateIntent(message)) {
+            setUserInput('');
+            setMessages(prev => [...prev, { role: 'user', message }]);
+            handleGenerateStory();
+            return;
+        }
+
         setUserInput('');
         setIsLoading(true);
-
-        // Add user message optimistically
         setMessages(prev => [...prev, { role: 'user', message }]);
 
         if (!sessionId) {
-            // If no session, just echo back for demo purposes
             setTimeout(() => {
                 setMessages(prev => [...prev, {
                     role: 'assistant',
@@ -129,23 +143,11 @@ export const WorkshopPage: React.FC<WorkshopPageProps> = ({ mode, onBack, onStor
             const response = await fetch('http://127.0.0.1:8000/api/workshop/chat', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    session_id: sessionId,
-                    user_message: message
-                })
+                body: JSON.stringify({ session_id: sessionId, user_message: message })
             });
-
             if (!response.ok) throw new Error('Failed to send message');
-
             const data = await response.json();
-
-            // Add assistant response
-            setMessages(prev => [...prev, {
-                role: 'assistant',
-                message: data.response,
-                metadata: data.metadata
-            }]);
-
+            setMessages(prev => [...prev, { role: 'assistant', message: data.response, metadata: data.metadata }]);
             setReadyToGenerate(data.ready_to_generate);
         } catch (error) {
             console.error('Error sending message:', error);
@@ -158,12 +160,12 @@ export const WorkshopPage: React.FC<WorkshopPageProps> = ({ mode, onBack, onStor
         }
     };
 
+    // ── Generate Story ───────────────────────────────────────────────────────
     const handleGenerateStory = async () => {
         if (!sessionId) {
             alert('Session not initialized. Please refresh and try again.');
             return;
         }
-
         setIsLoading(true);
         try {
             const response = await fetch('http://127.0.0.1:8000/api/workshop/generate', {
@@ -171,15 +173,11 @@ export const WorkshopPage: React.FC<WorkshopPageProps> = ({ mode, onBack, onStor
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ session_id: sessionId })
             });
-
             if (!response.ok) throw new Error('Failed to generate story');
-
             const data = await response.json();
             setGeneratedStory(data.story_text);
-            setStoryVersion(data.version);
-            if (onStoryGenerated) {
-                onStoryGenerated(data.story_text);
-            }
+            setGeneratedStoryId(data.story_id ?? null);
+            if (onStoryGenerated) onStoryGenerated(data.story_text);
         } catch (error) {
             console.error('Error generating story:', error);
             setMessages(prev => [...prev, {
@@ -191,28 +189,50 @@ export const WorkshopPage: React.FC<WorkshopPageProps> = ({ mode, onBack, onStor
         }
     };
 
-    const handleImproveFurther = () => {
-        setGeneratedStory(null);
-        setReadyToGenerate(false);
-        setMessages(prev => [...prev, {
-            role: 'assistant',
-            message: "What would you like to improve about the story?"
-        }]);
+    // ── I Love It → save to workshop library + go home ────────────────────
+    const handleLoveIt = async () => {
+        setIsSaving(true);
+        try {
+            const token = localStorage.getItem('auth_token');
+            const res = await fetch('http://localhost:8000/api/workshop/save', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+                },
+                body: JSON.stringify({
+                    story_id: generatedStoryId,
+                    story_text: generatedStory,
+                    mode,
+                    session_id: sessionId
+                })
+            });
+            if (!res.ok) {
+                const err = await res.json().catch(() => ({}));
+                console.error('[Workshop Save] Failed:', res.status, err);
+            } else {
+                const result = await res.json();
+                console.log('[Workshop Save] Success:', result);
+            }
+        } catch (err) {
+            console.error('[Workshop Save] Network error:', err);
+        } finally {
+            setIsSaving(false);
+            onBack();
+        }
     };
 
-    const handleAcceptStory = () => {
-        alert('Story saved! Redirecting to home...');
-        onBack();
+    // ── Start Over → discard, fresh session ──────────────────────────────────
+    const handleStartOver = () => {
+        setGeneratedStory(null);
+        setGeneratedStoryId(null);
+        initSession();          // re-initialize a brand-new session
     };
 
     const handleKeyPress = (e: React.KeyboardEvent) => {
         if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
-            if (readyToGenerate) {
-                handleGenerateStory();
-            } else {
-                handleSendMessage();
-            }
+            handleSendMessage();
         }
     };
 
@@ -235,7 +255,6 @@ export const WorkshopPage: React.FC<WorkshopPageProps> = ({ mode, onBack, onStor
 
     const modeDetails = getModeDetails();
 
-    // Loading state
     if (isInitializing) {
         return (
             <div className="workshop-wrapper">
@@ -247,53 +266,10 @@ export const WorkshopPage: React.FC<WorkshopPageProps> = ({ mode, onBack, onStor
         );
     }
 
-    // Story display view
-    if (generatedStory) {
-        return (
-            <div className="workshop-wrapper">
-                <div className="workshop-header">
-                    <button className="back-button" onClick={onBack}>
-                        ← Back to Home
-                    </button>
-                    <div className="mode-badge">
-                        <span className="mode-icon">{modeDetails.icon}</span>
-                        <span>{modeDetails.title}</span>
-                    </div>
-                </div>
-
-                <div className="workshop-card story-result-card">
-                    <div className="story-result-header">
-                        <h2>✨ Your Generated Story</h2>
-                        <span className="version-badge">Version {storyVersion}</span>
-                    </div>
-                    <div className="story-result-content">
-                        {generatedStory}
-                    </div>
-                    <div className="story-result-actions">
-                        <button className="action-button primary" onClick={handleAcceptStory}>
-                            ✓ I Love It!
-                        </button>
-                        {mode === 'improvement' && (
-                            <button className="action-button secondary" onClick={handleImproveFurther}>
-                                🔧 Improve Further
-                            </button>
-                        )}
-                        <button className="action-button outline" onClick={onBack}>
-                            Start Over
-                        </button>
-                    </div>
-                </div>
-            </div>
-        );
-    }
-
-    // Main chat view
     return (
         <div className="workshop-wrapper">
             <div className="workshop-header">
-                <button className="back-button" onClick={onBack}>
-                    ← Back to Home
-                </button>
+                <button className="back-button" onClick={onBack}>← Back to Home</button>
                 <div className="mode-badge">
                     <span className="mode-icon">{modeDetails.icon}</span>
                     <span>{modeDetails.title}</span>
@@ -314,23 +290,19 @@ export const WorkshopPage: React.FC<WorkshopPageProps> = ({ mode, onBack, onStor
                 )}
 
                 <div className="chat-container">
-                    <div className="messages-area">
+                    <div className="messages-area" ref={messagesAreaRef}>
                         {messages.map((msg, index) => (
                             <div
                                 key={index}
                                 className={`message ${msg.role === 'user' ? 'user-message' : 'assistant-message'}`}
                             >
-                                <div className="message-bubble">
-                                    {msg.message}
-                                </div>
+                                <div className="message-bubble">{msg.message}</div>
                             </div>
                         ))}
                         {isLoading && (
                             <div className="message assistant-message">
                                 <div className="message-bubble typing">
-                                    <span></span>
-                                    <span></span>
-                                    <span></span>
+                                    <span></span><span></span><span></span>
                                 </div>
                             </div>
                         )}
@@ -356,33 +328,54 @@ export const WorkshopPage: React.FC<WorkshopPageProps> = ({ mode, onBack, onStor
                             <VoiceInputButton
                                 isListening={isListening}
                                 isSupported={isSupported}
-                                onClick={handleVoiceToggle}
+                                onHoldStart={handleVoiceStart}
+                                onHoldEnd={handleVoiceEnd}
                                 disabled={isLoading}
                                 className="voice-button"
                             />
                         </div>
                         <div className="button-row">
-                            {readyToGenerate ? (
-                                <button
-                                    className="generate-story-button"
-                                    onClick={handleGenerateStory}
-                                    disabled={isLoading}
-                                >
-                                    ✨ Generate My Story
-                                </button>
-                            ) : (
-                                <button
-                                    className="send-message-button"
-                                    onClick={handleSendMessage}
-                                    disabled={!userInput.trim() || isLoading || (mode === 'improvement' && wordCount > 300)}
-                                >
-                                    Send Message
-                                </button>
-                            )}
+                            <button
+                                className="send-message-button"
+                                onClick={handleSendMessage}
+                                disabled={!userInput.trim() || isLoading || (mode === 'improvement' && wordCount > 300)}
+                            >
+                                {readyToGenerate ? '✨ Send Message' : 'Send Message'}
+                            </button>
                         </div>
                     </div>
                 </div>
             </div>
+
+            {/* ── Story Result Popup Modal ─────────────────────────────────────── */}
+            {generatedStory && (
+                <div className="story-popup-overlay">
+                    <div className="story-popup-modal">
+                        <div className="story-popup-header">
+                            <h2>✨ Your Generated Story</h2>
+                        </div>
+                        <div className="story-popup-content">
+                            {generatedStory}
+                        </div>
+                        <div className="story-popup-actions">
+                            <button
+                                className="popup-btn popup-btn-love"
+                                onClick={handleLoveIt}
+                                disabled={isSaving}
+                            >
+                                {isSaving ? 'Saving...' : '❤️ I Love It'}
+                            </button>
+                            <button
+                                className="popup-btn popup-btn-restart"
+                                onClick={handleStartOver}
+                                disabled={isSaving}
+                            >
+                                🔄 Start Over
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

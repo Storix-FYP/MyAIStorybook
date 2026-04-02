@@ -22,6 +22,7 @@ from backend.agents.image_agent import ImageAgent
 from backend.agents.chatbot_agent import ChatbotAgent
 from backend.utils.tts_manager import get_tts_manager
 from backend.utils.evaluation_manager import get_evaluation_manager
+from backend.utils.ollama_manager import OllamaManager
 
 # Feature flag for LangChain Workshop Agent
 USE_LANGCHAIN_WORKSHOP = True  # Set to False to use original implementation
@@ -138,6 +139,24 @@ os.makedirs(IMAGES_DIR, exist_ok=True)
 os.makedirs(STORIES_DIR, exist_ok=True)
 os.makedirs(AUDIO_DIR, exist_ok=True)
 
+@app.on_event("startup")
+def startup_event():
+    """Run required initialization when backend starts"""
+    print("🚀 Backend starting up...")
+    try:
+        from backend.utils.ollama_manager import OllamaManager
+        
+        # On boot, forcefully clean up any orphaned Ollama processes from previous crashed sessions
+        # and start a fresh server in the background. This prevents 'ollama run' from hanging.
+        if OllamaManager.is_ollama_running():
+            print("🧹 Found lingering Ollama process on startup. Cleaning it up...")
+            OllamaManager.pause_ollama()
+            
+        print("▶️ Ensuring fresh default Ollama server is running...")
+        OllamaManager.resume_ollama()
+    except Exception as e:
+        print(f"⚠️ Failed to sanitize Ollama on startup: {e}")
+
 # Serve generated static files
 app.mount("/generated", StaticFiles(directory=GENERATED_DIR), name="generated")
 
@@ -175,9 +194,49 @@ async def device():
     return get_device_info()
 
 # -------------------------
+# Face Detection Endpoint
+# -------------------------
+@app.post("/api/check-face")
+async def api_check_face(request: Request):
+    """
+    Lightweight face detection check on an uploaded photo.
+    Called by the frontend immediately after the user uploads their photo.
+    Returns whether a face was detected, so the UI can warn + offer re-upload.
+    """
+    import base64
+    import io
+    body = await request.json()
+    image_data = body.get("image")
+    if not image_data:
+        raise HTTPException(status_code=400, detail="Missing 'image' field")
+
+    try:
+        # Decode base64 → PIL
+        raw = image_data.split(',')[1] if ',' in image_data else image_data
+        photo_bytes = base64.b64decode(raw)
+        photo = PILImage.open(io.BytesIO(photo_bytes)).convert("RGB")
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Invalid image data: {e}")
+
+    if not PERSONALIZED_AGENT_AVAILABLE:
+        # Optimistic fallback: assume face present if we can't check
+        return {"face_detected": True, "confidence": 1.0, "gender": None}
+
+    try:
+        checker = PersonalizedImageAgent()
+        result = checker.check_face_in_image(photo)
+        return result
+    except Exception as e:
+        print(f"⚠️ /api/check-face error: {e}")
+        # Don't block the user — return optimistic default
+        return {"face_detected": True, "confidence": 0.0, "gender": None}
+
+
+# -------------------------
 # Main generation endpoint
 # -------------------------
 @app.post("/api/generate")
+
 async def api_generate(
     request: Request, 
     current_user: User = Depends(get_current_user_optional),
@@ -188,10 +247,12 @@ async def api_generate(
     generate_images = body.get("generate_images", True)
     use_personalized = body.get("use_personalized_images", False)
     user_photo_data = body.get("user_photo")  # Base64 encoded image
+    use_first_frame_as_reference = body.get("use_first_frame_as_reference", False)  # "Continue Anyway" fallback
     mode = body.get("mode", "simple")  # 'simple' or 'personalized'
     genre = body.get("genre", "Fantasy")  # Story genre
     num_pages = body.get("num_pages", 3)  # Number of pages/scenes (1-5)
     timestamp = int(time.time())
+
 
     # Validate num_pages (cap at 6)
     if not isinstance(num_pages, int) or num_pages < 3:
@@ -207,6 +268,36 @@ async def api_generate(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Please login to generate images. Guest users can only create text stories."
         )
+
+    # --- Memory Clearance: Auto-clear VRAM before text generation ---
+    print("🧹 Preparing memory for text generation...")
+    try:
+        import requests
+        # Attempt to unload WebUI checkpoints from VRAM to make room for Ollama
+        for port in [7860, 7861]:
+            try:
+                # Force ControlNet to dump its cached models from VRAM
+                requests.post(f"http://127.0.0.1:{port}/sdapi/v1/options", json={"control_net_model_cache_size": 0}, timeout=2)
+                
+                # Unload base checkpoints
+                requests.post(f"http://127.0.0.1:{port}/sdapi/v1/unload-checkpoint", timeout=2)
+                print(f"🧹 Successfully requested WebUI (port {port}) to dump base models and ControlNet cache from VRAM")
+            except:
+                pass
+    except Exception as e:
+        print(f"⚠️ Could not unload WebUI models: {e}")
+        
+    try:
+        import torch
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+            torch.cuda.synchronize()
+            print("🧹 Cleared PyTorch GPU cache before text generation")
+    except Exception:
+        pass
+
+    import gc
+    gc.collect()
 
     # --- Step 1: PromptAgent ---
     prompt_agent = PromptAgent()
@@ -243,84 +334,317 @@ async def api_generate(
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Story generation failed: {e}")
 
+    # --- Step 2.5: Inject Genre Styling & Condense image prompts (while Ollama is still running) ---
+    if generate_images:
+        print(f"📝 Preparing image prompts with '{genre}' styling...")
+        style_map = {
+            "Fantasy": "soft watercolor illustration, whimsical atmosphere, clean lines, storybook aesthetic",
+            "Fairy Tale": "enchanted world, gentle pastel colors, storybook style, high-detail painterly",
+            "Adventure": "vibrant 2D cartoon, bold outlines, expressive, high contrast, flat vector art",
+            "Sci-Fi": "stylized 3D render, Pixar-inspired, smooth textures, bright colors, clean shapes"
+        }
+        genre_style = style_map.get(genre, "beautifully illustrated children's storybook style")
+
+        import subprocess
+        for scene in final_story.get("scenes", []):
+            description = scene.get("image_description") or scene.get("text", "")
+            
+            # Optimization: If it's already a short, clean prompt, don't call the LLM again.
+            # Just append the style tag directly.
+            words = description.split()
+            if len(words) <= 12:
+                scene["image_description"] = f"{description}, {genre_style}"
+                print(f"  📝 Scene {scene.get('scene_number', '?')} (Stylized): '{scene['image_description']}'")
+                continue
+
+            # If it's long, use Ollama to fuse the style and content into something concise (< 15-20 words)
+            full_description_with_style = f"{description}, {genre_style}"
+            
+            try:
+                condense_request = f"""You are a Stable Diffusion prompt optimizer. Convert the following scene description into a SHORT visual prompt.
+
+Rules:
+- Output ONLY the condensed prompt, nothing else
+- Maximum 20 words
+- Keep the style keywords: {genre_style}
+- Focus on: character appearance, action, setting
+- Use comma-separated visual tags
+
+Description: {full_description_with_style}
+
+Short visual prompt:"""
+                proc = subprocess.run(
+                    ["ollama", "run", "mistral-nemo:12b"],
+                    input=condense_request.encode("utf-8"),
+                    capture_output=True,
+                    check=False,
+                    timeout=15,
+                )
+                if proc.returncode == 0:
+                    condensed = proc.stdout.decode("utf-8").strip()
+                    condensed = condensed.strip('"\'`').replace("```", "").strip()
+                    condensed = condensed.split('\n')[0].strip()
+                    if len(condensed) >= 5:
+                        scene["image_description"] = condensed
+                        print(f"  📝 Scene {scene.get('scene_number', '?')} (Condensed): '{condensed}'")
+                        continue
+            except Exception as e:
+                print(f"  ⚠️ Condensation failed for scene {scene.get('scene_number', '?')}: {e}")
+            
+            # Fallback
+            scene["image_description"] = " ".join(words[:20]) + f", {genre_style}"
+            print(f"  📝 Scene {scene.get('scene_number', '?')} (Fallback): '{scene['image_description']}'")
+
     # --- Step 3: ImageAgent (if enabled) ---
     image_status = "Images not generated."
     if generate_images:
         try:
             print("🖼 Starting image generation...")
-            
-            # Pause Ollama to free GPU memory for faster image generation
-            from backend.utils.ollama_manager import OllamaManager
-            ollama_was_running = OllamaManager.pause_ollama()
-            
             try:
                 # Determine which image agent to use
                 use_personal_agent = (
-                    use_personalized and 
-                    user_photo_data and 
+                    use_personalized and
+                    user_photo_data and
                     PERSONALIZED_AGENT_AVAILABLE
                 )
                 
+                # --- OVERARCHING PRE-ANALYSIS BEFORE OLLAMA PAUSES ---
+                # We must count characters using the LLM before Ollama goes offline
+                global_scene_analysis_cache = {}
+                story_characters = final_story.get("characters", [])
+                main_character = story_characters[0] if story_characters else ""
+                
+                if PERSONALIZED_AGENT_AVAILABLE:
+                    print("🧠 Pre-analyzing scenes for character counts while LLM is active...")
+                    try:
+                        pre_analyzer = PersonalizedImageAgent()
+                        pre_analyzer.analyze_story_scenes(
+                            scenes=final_story.get("scenes", []),
+                            characters=story_characters,
+                            main_character=main_character
+                        )
+                        global_scene_analysis_cache = pre_analyzer.scene_analysis_cache
+                        del pre_analyzer
+                    except Exception as e:
+                        print(f"⚠️ Pre-analysis failed: {e}")
+
+                # Pause Ollama to free GPU memory for faster image generation
+                from backend.utils.ollama_manager import OllamaManager
+                ollama_was_running = OllamaManager.pause_ollama()
+
                 if use_personal_agent:
                     print("🎭 Using PersonalizedImageAgent with user photo...")
-                    
-                    # Decode base64 image
+
                     import base64
                     import io
                     try:
                         photo_bytes = base64.b64decode(user_photo_data.split(',')[1] if ',' in user_photo_data else user_photo_data)
                         user_photo = PILImage.open(io.BytesIO(photo_bytes)).convert("RGB")
-                        
+
                         # Initialize PersonalizedImageAgent
                         image_agent = PersonalizedImageAgent()
                         image_agent.set_user_photo(user_photo)
-                        
-                        # Generate personalized images
-                        for scene in final_story.get("scenes", []):
+                        # Inject pre-computed character counts so we avoid hitting paused Ollama
+                        image_agent.scene_analysis_cache = global_scene_analysis_cache
+
+                        print(f"🎭 Main character: '{main_character}', All characters: {story_characters}")
+
+                        # --- Memory Clearance: Auto-reload VRAM for Image Generation ---
+                        print("🧹 Preparing memory for image generation by reloading WebUI models...")
+                        try:
+                            import requests
+                            for port in [7860, 7861]:
+                                try:
+                                    requests.post(f"http://127.0.0.1:{port}/sdapi/v1/reload-checkpoint", timeout=30)
+                                    print(f"🧹 Successfully requested WebUI (port {port}) to reload models into VRAM")
+                                except:
+                                    pass
+                        except Exception as e:
+                            print(f"⚠️ Could not reload WebUI models: {e}")
+
+                        scenes = final_story.get("scenes", [])
+                        first_frame_reference_set = False
+    
+                        for scene in scenes:
                             description = scene.get("image_description") or scene.get("text", "")
-                            words = description.split()
-                            if len(words) > 70:
-                                description = " ".join(words[:70])
-                                print(f"[Safety] ⚠️ Truncated long image prompt for scene {scene.get('scene_number', '?')}")
-                            
+                            # Style already injected in Step 2.5
                             scene_number = scene.get("scene_number", 0)
                             filename = f"{sanitize_filename(story_title)}_{timestamp}_scene_{scene_number}.png"
-                            
+    
+                            # --- "Continue Anyway" mode ---
+                            # If user's photo had no face, generate scenes without reference
+                            # until we find a face, then extract it for all subsequent scenes!
+                            if use_first_frame_as_reference and not first_frame_reference_set:
+                                print(f"🖼 [first-frame mode] Generating Scene {scene_number} without face reference (searching for a face)...")
+                                # Temporarily clear user_photo so no face is injected for this scene
+                                temp_photo = image_agent.user_photo
+                                image_agent.user_photo = None
+                                image_path = image_agent._generate_without_face(description, filename)
+                                image_agent.user_photo = temp_photo
+                                scene["image_path"] = image_path
+    
+                                # Attempt to extract face from CURRENT Scene for use in subsequent scenes
+                                try:
+                                    scene_pil = PILImage.open(image_path).convert("RGB")
+                                    if image_agent.set_first_frame_reference(scene_pil):
+                                        first_frame_reference_set = True
+                                        print(f"✅ [first-frame mode] Face extracted from Scene {scene_number} — will use for remaining scenes")
+                                    else:
+                                        print(f"⚠️ [first-frame mode] No face found in Scene {scene_number} — will try again next scene")
+                                except Exception as ex:
+                                    print(f"⚠️ [first-frame mode] Could not extract face from Scene {scene_number}: {ex}")
+                                continue  # Scene already saved
+    
                             print(f"Generating personalized image for scene {scene_number}...")
                             image_path = image_agent.generate_personalized_image(
-                                prompt_text=description, 
-                                filename=filename
+                                prompt_text=description,
+                                filename=filename,
+                                characters=story_characters,
+                                main_character=main_character,
+                                scene_number=scene_number,
+                                condense=False
                             )
                             scene["image_path"] = image_path
-                        
+    
                         image_status = "Personalized images generated successfully! 🎭✅"
-                        
+    
                     except Exception as e:
                         print(f"❌ Personalized generation failed: {e}")
                         print("Falling back to standard image generation...")
                         use_personal_agent = False
-                
+                    finally:
+                        # Clean up personalized agent to free memory
+                        if 'image_agent' in dir() and hasattr(image_agent, 'cleanup'):
+                            try:
+                                image_agent.cleanup()
+                            except Exception:
+                                pass
+
                 if not use_personal_agent:
-                    # Standard image generation
-                    print("🖼 Using standard ImageAgent...")
-                    image_agent = ImageAgent()
-                    for scene in final_story.get("scenes", []):
+                    # Standard / simple mode generation
+                    if PERSONALIZED_AGENT_AVAILABLE:
+                        print("🖼 Using WebUI for standard generation (ensuring resource consistency)...")
+                        image_agent = PersonalizedImageAgent()
+                        # Inject pre-computed character counts
+                        image_agent.scene_analysis_cache = global_scene_analysis_cache
+                        
+                        # Fix Device Mismatch Error: Reload WebUI models before starting simple mode
+                        print("🧹 Reloading WebUI models for simple mode generation...")
+                        try:
+                            import requests
+                            for port in [7860, 7861]:
+                                try:
+                                    requests.post(f"http://127.0.0.1:{port}/sdapi/v1/reload-checkpoint", timeout=30)
+                                    print(f"🧹 Successfully requested WebUI (port {port}) to reload models into VRAM")
+                                except: pass
+                        except: pass
+                    else:
+                        print("🖼 Using local diffusers ImageAgent...")
+                        image_agent = ImageAgent()
+
+                    scenes = final_story.get("scenes", [])
+                    consistency_agent = None
+                    reference_face_found = False
+                    
+                    # For simple mode, if we're using WebUI, we don't need a separate consistency_agent instance
+                    # we can just use the SAME image_agent we just created!
+                    if PERSONALIZED_AGENT_AVAILABLE:
+                        consistency_agent = image_agent
+                        # Set default character attributes since we are using WebUI agent manually
+                        consistency_agent.main_character = main_character
+                        consistency_agent.all_characters = story_characters
+
+                    for idx, scene in enumerate(scenes):
                         description = scene.get("image_description") or scene.get("text", "")
+                        # Style already injected in Step 2.5
                         words = description.split()
                         if len(words) > 70:
                             description = " ".join(words[:70])
                             print(f"[Safety] ⚠️ Truncated long image prompt for scene {scene.get('scene_number', '?')}")
-                        
+    
                         scene_number = scene.get("scene_number", 0)
                         filename = f"{sanitize_filename(story_title)}_{timestamp}_scene_{scene_number}.png"
+    
+                        # If we already found a face in an earlier scene, generate this one with consistency agent
+                        if reference_face_found and consistency_agent:
+                            print(f"🎭 [simple mode] Generating scene {scene_number} with character consistency...")
+                            try:
+                                # We already injected character into consistency_agent above if it's WebUI
+                                image_path = consistency_agent.generate_personalized_image(
+                                    prompt_text=description,
+                                    filename=filename,
+                                    characters=story_characters,
+                                    main_character=main_character,
+                                    scene_number=scene_number,
+                                    condense=False
+                                )
+                                scene["image_path"] = image_path
+                                continue # Done with this scene!
+                            except Exception as e:
+                                print(f"⚠️ Consistency gen failed for scene {scene_number}: {e} — falling back to standard gen")
+                                # Fall through to standard generation
+    
+                        # Standard generation (either it's before we found a face, or consistency failed)
+                        print(f"Generating image for scene {scene_number} (standard mode)...")
+                        if PERSONALIZED_AGENT_AVAILABLE:
+                            # Use WebUI's non-face injection method to match Scene 1 quality with Scene 2
+                            image_path = image_agent._generate_without_face(description, filename)
+                        else:
+                            # Use local diffusers agent
+                            image_path = image_agent.generate_image(prompt_text=description, filename=filename)
                         
-                        print(f"Generating image for scene {scene_number}...")
-                        image_path = image_agent.generate_image(prompt_text=description, filename=filename)
                         scene["image_path"] = image_path
-
+    
+                        # If we haven't found a face yet, try to extract one from this newly generated standard image
+                        if not reference_face_found and PERSONALIZED_AGENT_AVAILABLE and idx < len(scenes) - 1:
+                            try:
+                                scene_pil = PILImage.open(image_path).convert("RGB")
+                                # If it's WebUI, our image_agent IS the consistency agent, so we just set reference on it!
+                                if image_agent.set_first_frame_reference(scene_pil):
+                                    reference_face_found = True
+                                    print(f"✅ [simple mode] Face extracted from Scene {scene_number} — will use for remaining scenes")
+                                else:
+                                    print(f"ℹ️ [simple mode] No face found in Scene {scene_number} — will try again next scene")
+                            except Exception as e:
+                                print(f"⚠️ [simple mode] Face extraction attempt failed: {e}")
+    
+                    if consistency_agent and hasattr(consistency_agent, 'cleanup'):
+                        try:
+                            consistency_agent.cleanup()
+                        except:
+                            pass
+    
                     image_status = "Images generated successfully. ✅"
+
+
             
             finally:
+                # Unload WebUI models from VRAM to free GPU memory
+                try:
+                    import requests as req
+                    for port in [7860, 7861]:
+                        try:
+                            req.post(f"http://127.0.0.1:{port}/sdapi/v1/options", json={"control_net_model_cache_size": 0}, timeout=5)
+                            req.post(f"http://127.0.0.1:{port}/sdapi/v1/unload-checkpoint", timeout=5)
+                        except Exception:
+                            pass
+                    print("🧹 WebUI base models AND ControlNet cache fully unloaded from VRAM")
+                except Exception:
+                    pass
+                
+                # Clear GPU memory
+                try:
+                    import torch
+                    if torch.cuda.is_available():
+                        torch.cuda.empty_cache()
+                        torch.cuda.synchronize()
+                except Exception:
+                    pass
+                
+                import gc
+                gc.collect()
+                print("🧹 GPU memory cleaned after image generation")
+                
                 # Resume Ollama after image generation
                 if ollama_was_running:
                     OllamaManager.resume_ollama()
@@ -382,12 +706,43 @@ async def api_generate(
         if os.path.exists(evaluator_script_path):
             print(f"🚀 Kicking off background evaluation for Story ID {story_id}...")
             # Pass story_file and story_id to the evaluator
+            import subprocess as subp
             command = [sys.executable, evaluator_script_path, story_file, str(story_id or 0)]
-            subprocess.Popen(command)
+            subp.Popen(command)
         else:
             print(f"⚠ Warning: Evaluation agent script not found at {evaluator_script_path}")
     except Exception as e:
         print(f"❌ Failed to start evaluation agent process: {e}")
+
+    # -----------------------------------------------------------------
+    # --- TRIGGER BACKGROUND TTS PRE-GENERATION (default voice) ---
+    # -----------------------------------------------------------------
+    try:
+        if story_id and final_story and final_story.get("scenes"):
+            import threading
+            def _pregenerate_tts(sid, scenes_data):
+                """Pre-generate TTS audio for all scenes using the default voice."""
+                try:
+                    tts = get_tts_manager()
+                    default_voice = "female"
+                    for scene in scenes_data:
+                        scene_num = scene.get("scene_number")
+                        text = scene.get("text", "")
+                        if text and scene_num:
+                            tts.generate_audio(text, sid, scene_num, default_voice)
+                    print(f"🔊 Background TTS pre-generation complete for story {sid} ({len(scenes_data)} scenes)")
+                except Exception as tts_err:
+                    print(f"⚠️ Background TTS pre-generation failed: {tts_err}")
+
+            tts_thread = threading.Thread(
+                target=_pregenerate_tts,
+                args=(story_id, final_story["scenes"]),
+                daemon=True
+            )
+            tts_thread.start()
+            print(f"🔊 Background TTS pre-generation started for story {story_id}...")
+    except Exception as e:
+        print(f"⚠️ Could not start background TTS: {e}")
 
     # --- Final combined status ---
     status_msg = image_status or story_status
@@ -789,6 +1144,118 @@ async def generate_workshop_story(
         traceback.print_exc()
         db.rollback()
         raise HTTPException(status_code=500, detail=f"Story generation error: {str(e)}")
+
+
+# -------------------------
+# Workshop Library endpoints  (separate from Simple/Personalized story library)
+# -------------------------
+
+@app.post("/api/workshop/save")
+async def save_workshop_story(
+    request: Request,
+    current_user: User = Depends(get_current_user_optional),
+    db: Session = Depends(get_db)
+):
+    """
+    Mark a generated workshop story as 'loved' by the user.
+    Request body: { story_id, story_text, mode, session_id }
+    """
+    try:
+        body = await request.json()
+        story_id = body.get("story_id")
+        story_text = body.get("story_text", "")
+        mode = body.get("mode", "new_idea")
+        session_id = body.get("session_id")
+
+        print(f"[Workshop Save] story_id={story_id}, session_id={session_id}, user={current_user.id if current_user else 'guest'}, mode={mode}")
+
+        # Generate a short title from the first non-empty line
+        first_line = next((line.strip() for line in story_text.split("\n") if line.strip()), "Workshop Story")
+        title = first_line[:60] + ("..." if len(first_line) > 60 else "")
+
+        ws = None
+
+        # 1. Look up by story_id (the row created by /api/workshop/generate)
+        if story_id:
+            ws = db.query(WorkshopStory).filter(WorkshopStory.id == story_id).first()
+            print(f"[Workshop Save] Found by story_id: {ws is not None}")
+
+        # 2. Fallback: find the latest story for this session
+        if ws is None and session_id:
+            ws = db.query(WorkshopStory).filter(
+                WorkshopStory.session_id == session_id
+            ).order_by(WorkshopStory.created_at.desc()).first()
+            print(f"[Workshop Save] Found by session_id fallback: {ws is not None}")
+
+        if ws is not None:
+            ws.saved_by_user = True
+            ws.user_id = current_user.id if current_user else None
+            ws.title = title
+            ws.mode = mode
+            db.commit()
+            db.refresh(ws)
+            print(f"[Workshop Save] Saved successfully. library_id={ws.id}")
+            return JSONResponse({"saved": True, "library_id": ws.id, "title": title})
+
+        # 3. Last resort: create a brand new row only if we have a valid session
+        if session_id:
+            session = db.query(WorkshopSession).filter(WorkshopSession.id == session_id).first()
+            if session:
+                ws = WorkshopStory(
+                    session_id=session_id,
+                    user_id=current_user.id if current_user else None,
+                    version=1,
+                    story_text=story_text,
+                    title=title,
+                    mode=mode,
+                    saved_by_user=True
+                )
+                db.add(ws)
+                db.commit()
+                db.refresh(ws)
+                print(f"[Workshop Save] Created new row. library_id={ws.id}")
+                return JSONResponse({"saved": True, "library_id": ws.id, "title": title})
+
+        print("[Workshop Save] ERROR: Could not find or create a WorkshopStory row.")
+        raise HTTPException(status_code=400, detail="Could not save story: session or story not found.")
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        traceback.print_exc()
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Error saving workshop story: {str(e)}")
+
+
+@app.get("/api/workshop/saved")
+async def list_saved_workshop_stories(
+    current_user: User = Depends(get_current_user_optional),
+    db: Session = Depends(get_db)
+):
+    """
+    List workshop library stories for the current user (saved_by_user=True only).
+    Completely separate from /api/stories.
+    """
+    if not current_user:
+        return JSONResponse([])
+    try:
+        saved = db.query(WorkshopStory).filter(
+            WorkshopStory.user_id == current_user.id,
+            WorkshopStory.saved_by_user.is_(True)
+        ).order_by(WorkshopStory.created_at.desc()).all()
+
+        print(f"[Workshop Saved] user={current_user.id}, found {len(saved)} stories")
+
+        return JSONResponse([{
+            "id": s.id,
+            "title": s.title or "Untitled Workshop Story",
+            "mode": s.mode or "workshop",
+            "story_text": s.story_text,
+            "created_at": s.created_at.isoformat() if s.created_at else None
+        } for s in saved])
+    except Exception as e:
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Error listing workshop library: {str(e)}")
 
 
 # -------------------------

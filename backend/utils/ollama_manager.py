@@ -112,7 +112,8 @@ class OllamaManager:
                     stderr=subprocess.DEVNULL,
                     creationflags=subprocess.CREATE_NEW_PROCESS_GROUP if os.name == 'nt' else 0
                 )
-                time.sleep(3)  # Wait for Ollama to start
+                print("[OllamaManager] Waiting 10s for GPU memory to re-aggregate...")
+                time.sleep(10)  # Wait for Ollama to start and Windows driver to settle
                 print("[OllamaManager] ✅ Ollama resumed")
                 return True
             else:

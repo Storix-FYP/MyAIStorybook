@@ -6,6 +6,9 @@ interface StoryHistorySidebarProps {
     onNewStory: () => void;
     isOpen: boolean;
     onToggle: () => void;
+    // Workshop library icon — sits below the 📜 icon on the same panel
+    isWorkshopOpen: boolean;
+    onWorkshopToggle: () => void;
 }
 
 interface StoryMetadata {
@@ -19,7 +22,9 @@ const StoryHistorySidebar: React.FC<StoryHistorySidebarProps> = ({
     onLoadStory,
     onNewStory,
     isOpen,
-    onToggle
+    onToggle,
+    isWorkshopOpen,
+    onWorkshopToggle,
 }) => {
     const [stories, setStories] = useState<StoryMetadata[]>([]);
     const [loading, setLoading] = useState(false);
@@ -67,8 +72,22 @@ const StoryHistorySidebar: React.FC<StoryHistorySidebarProps> = ({
 
     return (
         <div className={`story-history-sidebar ${isOpen ? 'open' : ''}`}>
-            <button className="sidebar-toggle" onClick={onToggle}>
+            {/* ── Icon 1: Story Library (📜) ── */}
+            <button
+                className="sidebar-toggle"
+                onClick={onToggle}
+                title="Story Library"
+            >
                 {isOpen ? '✕' : '📜'}
+            </button>
+
+            {/* ── Icon 2: Workshop Library (💡) — sits right below 📜 ── */}
+            <button
+                className="sidebar-toggle sidebar-toggle--workshop"
+                onClick={onWorkshopToggle}
+                title="Workshop Library"
+            >
+                {isWorkshopOpen ? '✕' : '💡'}
             </button>
 
             <div className="sidebar-content">

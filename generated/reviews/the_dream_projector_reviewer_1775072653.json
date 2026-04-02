@@ -1,0 +1,54 @@
+{
+  "title": "The Dream projector",
+  "setting": "A cozy attic bedroom filled with old movies and vintage posters.",
+  "characters": [
+    "Timmy",
+    "Mr. Moonface"
+  ],
+  "scenes": [
+    {
+      "scene_number": 1,
+      "text": "In the quiet town of Bumblebee, young Timmy spent his days exploring the dusty corners of his grandpa's attic. One day, he discovered an old, peculiar film projector tucked away in a forgotten box. As soon as he turned it on, a magical film began to play. The scenes were alive with colors and whimsy that made his heart flutter with wonder. When Timmy finally fell asleep that night, he couldn't shake the feeling of adventure lingering in his mind.",
+      "image_description": "Timmy watching mesmerizing scenes unfold from an old projector",
+      "image_path": null
+    },
+    {
+      "scene_number": 2,
+      "text": "Suddenly, Timmy felt himself being pulled into the projector's light. He tumbled through a whirlwind of colors and found himself in the magical world he had been dreaming about. There, he met Mr. Moonface, a wise old gentleman with a crescent moon for a face. Mr. Moonface explained that once every century, someone was chosen to live out their dreams on the other side of the projector. But there was a catch - Timmy must find his way back before dawn or risk being trapped in the dream world forever.",
+      "image_description": "Timmy tumbling into the projector's light, emerging in a vibrant dream world",
+      "image_path": null
+    },
+    {
+      "scene_number": 3,
+      "text": "With Mr. Moonface's guidance, Timmy embarked on an unforgettable journey filled with laughter, friendship, and self-discovery. As dawn approached, he realized he had to say goodbye to his newfound friends and return home. With a heavy heart but light footsteps, Timmy stepped back into the projector's beam just as the sun began to rise. Back in his attic bedroom, he woke up with a smile, knowing that some dreams are worth chasing even if they're only for a night.",
+      "image_description": "Timmy stepping back into the projector's light at dawn",
+      "image_path": null
+    }
+  ],
+  "consistency_report": {
+    "per_scene": {
+      "1": {
+        "scene_number": 1,
+        "word_count": 82,
+        "length_score": 1.0,
+        "has_image": true
+      },
+      "2": {
+        "scene_number": 2,
+        "word_count": 90,
+        "length_score": 1.0,
+        "has_image": true
+      },
+      "3": {
+        "scene_number": 3,
+        "word_count": 83,
+        "length_score": 1.0,
+        "has_image": true
+      }
+    },
+    "overall": {
+      "avg_length_score": 1.0,
+      "image_coverage": 1.0
+    }
+  }
+}

@@ -1,0 +1,54 @@
+{
+  "title": "The Boy Who Found Magic",
+  "setting": "A cozy attic room filled with vintage movies and dusty film reels.",
+  "characters": [
+    "Oliver",
+    "Mr. Flicker"
+  ],
+  "scenes": [
+    {
+      "scene_number": 1,
+      "text": "In the quiet town of Brackendale, young Oliver spent his afternoons exploring his grandpa's attic, a treasure trove of forgotten films and old projectors. One sunny afternoon, as dust motes danced in the sunlight, Oliver popped an ancient reel into Mr. Flicker, his favorite projector. As the flickering images sprang to life on the wall, Oliver felt a familiar warmth wash over him. Suddenly, the black-and-white silent film began to shimmer and change. Color bloomed like magic paintbrush strokes across the screen, and the actors' stiff movements fluidly transformed into lively dances.",
+      "image_description": "Oliver's awestruck face as he watches colors bloom on a black-and-white movie",
+      "image_path": null
+    },
+    {
+      "scene_number": 2,
+      "text": "A enchanting melody flowed from the speaker, unlike anything Oliver had ever heard. The characters in the film began to sing along, their voices echoing through the attic like a captivating lullaby. Unable to resist, Oliver joined them, his voice blending seamlessly with theirs. As he sang, Mr. Flicker's projector light flickered brighter, and the room filled with swirling colors. In the midst of this magical spectacle, Oliver noticed one film reel spinning on its own among the others, glowing like a small sun.",
+      "image_description": "Reel spinning alone, glowing amidst other films as colors swirl around",
+      "image_path": null
+    },
+    {
+      "scene_number": 3,
+      "text": "Oliver reached for the glowing reel, feeling an irresistible pull. As his fingers brushed against it, he was swept into the movie screen's vibrant world. He found himself dancing with the characters in a lush, green meadow under a sky filled with cotton-candy clouds. A majestic unicorn galloped towards them, its opalescent coat shimmering like rainbows. It nuzzled Oliver gently before guiding him back to Mr. Flicker's warm embrace. With a soft click, the projector wound down, and the attic returned to normal. But for Oliver, everything had changed forever.",
+      "image_description": "Oliver dancing with magical creatures in a vibrant meadow",
+      "image_path": null
+    }
+  ],
+  "consistency_report": {
+    "per_scene": {
+      "1": {
+        "scene_number": 1,
+        "word_count": 95,
+        "length_score": 1.0,
+        "has_image": true
+      },
+      "2": {
+        "scene_number": 2,
+        "word_count": 85,
+        "length_score": 1.0,
+        "has_image": true
+      },
+      "3": {
+        "scene_number": 3,
+        "word_count": 93,
+        "length_score": 1.0,
+        "has_image": true
+      }
+    },
+    "overall": {
+      "avg_length_score": 1.0,
+      "image_coverage": 1.0
+    }
+  }
+}

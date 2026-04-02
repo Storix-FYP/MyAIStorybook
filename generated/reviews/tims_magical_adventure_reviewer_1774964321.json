@@ -1,0 +1,54 @@
+{
+  "title": "Tim's Magical Adventure",
+  "setting": "A modern-day house connected to a fantastical world hidden behind a television set.",
+  "characters": [
+    "Tim",
+    "Glinnis"
+  ],
+  "scenes": [
+    {
+      "scene_number": 1,
+      "text": "In the quiet town of Mossgrove, young Tim spent his evenings watching 'The Chronicles of Glinnis' on his old TV. One day, after the credits rolled, he noticed something shimmering behind the screen. With a deep breath and fingers crossed, he reached in, feeling around until his hand grasped something cold and metallic - a door handle! As it creaked open, Tim found himself face-to-face with Glinnis, the magical creature from his favorite movie.",
+      "image_description": "Tim reaching into the TV screen, eyes wide with surprise",
+      "image_path": null
+    },
+    {
+      "scene_number": 2,
+      "text": "'Glinnis!' Tim exclaimed. 'I'm your biggest fan! Can you show me your world?' Delighted, Glinnis agreed, but warned of the mischievous Whispering Winds that could lead them astray. Together they ventured into the enchanted realm, but soon found themselves lost amidst towering, whispering mushrooms. With each gust of wind, their path changed, and Tim struggled to remember his way back.",
+      "image_description": "Tim and Glinnis standing among giant glowing mushrooms, surrounded by swirling winds",
+      "image_path": null
+    },
+    {
+      "scene_number": 3,
+      "text": "Just as despair began to set in, Tim remembered a scene from the movie. 'Glinnis!' he cried, 'The winds can't harm us if we sing our favorite song together!' They sang loud and clear, their voices filling the air with courage and joy, silencing the Whispering Winds at last. Back on track, they returned to the TV door, where Tim promised Glinnis he'd never forget his adventure or his new friend.",
+      "image_description": "Tim and Glinnis standing side by side, hands raised in victory, winds calmed",
+      "image_path": null
+    }
+  ],
+  "consistency_report": {
+    "per_scene": {
+      "1": {
+        "scene_number": 1,
+        "word_count": 75,
+        "length_score": 1.0,
+        "has_image": true
+      },
+      "2": {
+        "scene_number": 2,
+        "word_count": 61,
+        "length_score": 1.0,
+        "has_image": true
+      },
+      "3": {
+        "scene_number": 3,
+        "word_count": 73,
+        "length_score": 1.0,
+        "has_image": true
+      }
+    },
+    "overall": {
+      "avg_length_score": 1.0,
+      "image_coverage": 1.0
+    }
+  }
+}

@@ -1,0 +1,54 @@
+{
+  "title": "The Enchanted Trail",
+  "setting": "A mystical forest filled with talking animals and ancient ruins",
+  "characters": [
+    "Timmy",
+    "Oliver"
+  ],
+  "scenes": [
+    {
+      "scene_number": 1,
+      "text": "In the heart of Whisperwood Forest, two best friends, Timmy and Oliver, decided to embark on an adventure. They packed their bags with sandwiches, water bottles, and maps they'd drawn themselves. 'Let's find something extraordinary!' Timmy exclaimed, his eyes sparkling with curiosity. Oliver nodded eagerly as they stepped into the woods, unaware that their journey would lead them far beyond ordinary. The forest was alive with whispers and giggles from unseen creatures. As they walked deeper, they noticed unusual flowers that glowed softly and trees bearing fruits of gold.",
+      "image_description": "Timmy and Oliver excitedly entering Whisperwood Forest, surrounded by glowing flora",
+      "image_path": null
+    },
+    {
+      "scene_number": 2,
+      "text": "Suddenly, a magnificent creature emerged from the shadows. It was a unicorn, its coat shimmering like stardust. 'Greetings, brave adventurers,' it said in a voice as soft as rustling leaves. 'I am Lumina, guardian of the forest's heart. To reach it, you must first answer my riddle: What has roots that nobody sees, Is taller than trees, Up, up it goes, And yet never grows?' Timmy and Oliver racked their brains, pondering the riddle. After a moment, Timmy's face lit up with realization. 'A mountain!' he cried. Lumina smiled, 'Well answered. Now, follow me.' She led them to a hidden entrance in the base of an ancient tree.",
+      "image_description": "Timmy and Oliver meeting Lumina the unicorn beneath the canopy",
+      "image_path": null
+    },
+    {
+      "scene_number": 3,
+      "text": "Inside the tree, they discovered a spiral staircase carved into its trunk. As they climbed, they found themselves in a breathtaking room filled with ancient artifacts glowing with magic. 'Wow!' Oliver gasped. Lumina explained that these were the treasures of Whisperwood's past guardians. But something was amiss; one artifact, a gem-encrusted chalice, was missing. Suddenly, the floor trembled. A voice echoed through the chamber, 'You've come too far, little adventurers.' Out popped a mischievous-looking gnome named Grimm. He had taken the chalice to prove his worthiness as guardian. But when Lumina asked him about it, he hung his head. 'I couldn't resist its power,' he admitted. Timmy stepped forward, offering Grimm a chance to redeem himself by guiding them back safely.",
+      "image_description": "Timmy shaking hands with Grimm the gnome amidst ancient artifacts",
+      "image_path": null
+    }
+  ],
+  "consistency_report": {
+    "per_scene": {
+      "1": {
+        "scene_number": 1,
+        "word_count": 91,
+        "length_score": 1.0,
+        "has_image": true
+      },
+      "2": {
+        "scene_number": 2,
+        "word_count": 110,
+        "length_score": 1.0,
+        "has_image": true
+      },
+      "3": {
+        "scene_number": 3,
+        "word_count": 126,
+        "length_score": 1.0,
+        "has_image": true
+      }
+    },
+    "overall": {
+      "avg_length_score": 1.0,
+      "image_coverage": 1.0
+    }
+  }
+}

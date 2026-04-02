@@ -1,0 +1,54 @@
+{
+  "title": "The Enchanted Eid Tree",
+  "setting": "A bustling Muslim neighborhood on the morning of Eid ul-Fitr",
+  "characters": [
+    "Ali",
+    "the Genie"
+  ],
+  "scenes": [
+    {
+      "scene_number": 1,
+      "text": "In the heart of the festive neighborhood, young Ali couldn't contain his excitement. He had stayed up late helping to decorate the grand tree with colorful lights and intricate lanterns. As the first light of dawn broke, Ali felt his eyelids grow heavy. He nestled beneath the tree's sparkling branches, listening to the distant calls for prayer, and drifted off to sleep. Meanwhile, a mischievous genie, awakened by Ali's kindness, began to whisper wishes into the boy's dreams.",
+      "image_description": "Ali sleeping peacefully under a vibrantly lit Eid tree at sunrise",
+      "image_path": null
+    },
+    {
+      "scene_number": 2,
+      "text": "When Ali opened his eyes, he gasped. The tree was no longer just a tree but an enormous, glowing lantern filled with tiny, flying genies! They giggled and darted about, their lights flickering like stars. 'You've awakened me after centuries, young master,' said the largest genie, appearing before Ali. 'As a reward, I'll grant you three wishes!' Ali's heart pounded with joy. He could think of so many wonderful things to wish for, but he also knew Eid was about giving and sharing.",
+      "image_description": "Ali awakes to find the Eid tree transformed into a lantern filled with flying genies",
+      "image_path": null
+    },
+    {
+      "scene_number": 3,
+      "text": "Ali pondered his wishes carefully. 'I wish for every home in our neighborhood to have delicious Eid treats,' he said. The genie snapped his fingers, and suddenly, every household was filled with the aroma of fresh baklava and other sweet delights. 'My second wish is for new clothes for everyone to wear during Eid prayers.' With another snap, cupboards burst open with beautiful, traditional outfits. For his final wish, Ali asked, 'I wish for a surprise that will bring our community closer together today.' The genie grinned mischievously and revealed his plan.",
+      "image_description": "Ali discussing wishes with the large genie while tiny flying genies surround them",
+      "image_path": null
+    }
+  ],
+  "consistency_report": {
+    "per_scene": {
+      "1": {
+        "scene_number": 1,
+        "word_count": 82,
+        "length_score": 1.0,
+        "has_image": true
+      },
+      "2": {
+        "scene_number": 2,
+        "word_count": 86,
+        "length_score": 1.0,
+        "has_image": true
+      },
+      "3": {
+        "scene_number": 3,
+        "word_count": 92,
+        "length_score": 1.0,
+        "has_image": true
+      }
+    },
+    "overall": {
+      "avg_length_score": 1.0,
+      "image_coverage": 1.0
+    }
+  }
+}

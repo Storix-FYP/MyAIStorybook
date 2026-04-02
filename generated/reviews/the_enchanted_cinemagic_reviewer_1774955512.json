@@ -1,0 +1,66 @@
+{
+  "title": "The Enchanted Cinemagic",
+  "setting": "A cozy attic room filled with old gadgets and films",
+  "characters": [
+    "Timmy",
+    "Orion"
+  ],
+  "scenes": [
+    {
+      "scene_number": 1,
+      "text": "In the quiet of his grandma's attic, Timmy found solace in watching old black-and-white movies on his ancient TV. One evening, as he watched 'The Enchanted Forest,' something extraordinary happened. The screen flickered, colors burst forth, and out popped a small, glowing creature with wings like leaves. 'Greetings, Timmy!' it chirped. 'I'm Orion, the story's spirit.'",
+      "image_description": "Timmy wide-eyed watching TV as tiny, glowing creature flies out",
+      "image_path": null
+    },
+    {
+      "scene_number": 2,
+      "text": "'You're real?' Timmy gasped. Orion giggled, 'As real as you are, my friend! I've escaped the film to explore the world outside.' They spent hours chatting about adventures until Orion yawned, 'But now, I must return...' Suddenly, Orion's glow dimmed. 'Timmy, help me!' he pleaded, 'I'm losing energy!'",
+      "image_description": "Orion glowing weakly in Timmy's palms",
+      "image_path": null
+    },
+    {
+      "scene_number": 3,
+      "text": "'How can I help?' asked Timmy anxiously. Orion smiled faintly, 'Recharge me with your creativity! Draw our adventure!' With newfound determination, Timmy grabbed paper and pencils. He sketched the enchanted forest, adding elements from his favorite films. As he drew, Orion's glow strengthened. But then, a dark figure appeared on the page, threatening their happiness.",
+      "image_description": "Timmy drawing frantically as dark cloud forms in sketch",
+      "image_path": null
+    },
+    {
+      "scene_number": 4,
+      "text": "'It's the Shadow Monster!' Orion cried. 'It feeds on fear and loneliness! But together, we're powerful, Timmy!' United, they faced the monster. Timmy drew a bright, warm sun, banishing shadows. Orion flew at the monster, laughing, 'You can't scare us anymore!' Defeated, the Shadow Monster retreated into the sketchbook. Orion beamed, 'We did it! Now I must return to my world, but we'll meet again in your dreams.'",
+      "image_description": "Timmy and Orion victorious, Shadow Monster retreating into sketchbook",
+      "image_path": null
+    }
+  ],
+  "consistency_report": {
+    "per_scene": {
+      "1": {
+        "scene_number": 1,
+        "word_count": 61,
+        "length_score": 1.0,
+        "has_image": true
+      },
+      "2": {
+        "scene_number": 2,
+        "word_count": 52,
+        "length_score": 1.0,
+        "has_image": true
+      },
+      "3": {
+        "scene_number": 3,
+        "word_count": 56,
+        "length_score": 1.0,
+        "has_image": true
+      },
+      "4": {
+        "scene_number": 4,
+        "word_count": 72,
+        "length_score": 1.0,
+        "has_image": true
+      }
+    },
+    "overall": {
+      "avg_length_score": 1.0,
+      "image_coverage": 1.0
+    }
+  }
+}

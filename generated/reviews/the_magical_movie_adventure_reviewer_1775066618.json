@@ -1,0 +1,54 @@
+{
+  "title": "The Magical Movie Adventure",
+  "setting": "A fantastical kingdom from a beloved children's film",
+  "characters": [
+    "Emma",
+    "Prince Orion"
+  ],
+  "scenes": [
+    {
+      "scene_number": 1,
+      "text": "Emma loved watching 'Enchanted Meadows' every night before bed. Tonight, she was so immersed in the movie that when it ended, she found herself standing in its magical world! She gasped as sparkling flowers swayed gently and a chattering squirrel wearing a tiny hat scurried past her. Emma felt a mix of excitement and nervousness. She decided to explore this whimsical realm.",
+      "image_description": "Emma standing amazed among glowing flowers, squirrels dressed in hats",
+      "image_path": null
+    },
+    {
+      "scene_number": 2,
+      "text": "As Emma wandered deeper into the enchanted forest, she heard a distressed voice calling out. Following it, she found Prince Orion trapped under a fallen branch. His horse was nowhere to be seen. 'My name's Emma,' she said, approaching him carefully. 'I'll help you if I can.' The prince smiled at her and explained he'd been trying to rescue his lost pet parrot, Polly. Together, they pushed the heavy branch aside, their laughter echoing through the woods.",
+      "image_description": "Emma helping Prince Orion push off heavy branch, both smiling",
+      "image_path": null
+    },
+    {
+      "scene_number": 3,
+      "text": "With Orion free and Emma's newfound courage, they searched for Polly together. They found her perched on a high branch, chirping happily when she saw them. As Emma reached up to rescue her, she felt a tug at her heart. She was being pulled back towards her own world! 'I can't leave now!' she cried. Orion handed her Polly and gave her a warm hug. 'You'll always be welcome here, Emma. And remember, magic is in your heart too.' With those words echoing in her ears, Emma closed her eyes as the tug grew stronger, returning her safely home.",
+      "image_description": "Emma holding Polly, Orion embracing her, magical glow surrounding them",
+      "image_path": null
+    }
+  ],
+  "consistency_report": {
+    "per_scene": {
+      "1": {
+        "scene_number": 1,
+        "word_count": 62,
+        "length_score": 1.0,
+        "has_image": true
+      },
+      "2": {
+        "scene_number": 2,
+        "word_count": 80,
+        "length_score": 1.0,
+        "has_image": true
+      },
+      "3": {
+        "scene_number": 3,
+        "word_count": 102,
+        "length_score": 1.0,
+        "has_image": true
+      }
+    },
+    "overall": {
+      "avg_length_score": 1.0,
+      "image_coverage": 1.0
+    }
+  }
+}

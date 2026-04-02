@@ -1,0 +1,54 @@
+{
+  "title": "The Cosmic Apple Tree",
+  "setting": "Lunar Surface",
+  "characters": [
+    "Captain Luna",
+    "Orby the Moon Alien"
+  ],
+  "scenes": [
+    {
+      "scene_number": 1,
+      "text": "Captain Luna, a seasoned astronaut known for her curiosity and courage, found herself alone on the moon's surface during a routine mission. As she explored a crater's edge, she discovered something extraordinary: a tree with bright red apples growing amidst the grey lunar dust. She couldn't believe her eyes. 'This is impossible,' she whispered, 'but I'm seeing apples!'",
+      "image_description": "Captain Luna amazed by red apples growing on a tree among lunar rocks",
+      "image_path": null
+    },
+    {
+      "scene_number": 2,
+      "text": "As Captain Luna approached the tree, she noticed something peculiar. The apples glowed softly, and the tree seemed to hum with an otherworldly tune. Suddenly, an alien creature popped out from behind the trunk! It was Orby, a small, spherical being with big eyes and a friendly smile. 'Greetings, Earthling!' Orby exclaimed. 'I've been waiting for someone like you.'",
+      "image_description": "Captain Luna startled by Orby peeking from behind the glowing apple tree",
+      "image_path": null
+    },
+    {
+      "scene_number": 3,
+      "text": "Orby revealed that he was a guardian of the Cosmic Apple Tree, which bore magical fruits that could grow anything they were planted in. But the tree needed sunlight to thrive on the moon. Together, Captain Luna and Orby worked tirelessly, building a giant greenhouse around the tree using lunar rocks and astronaut tech. As they finished, sunlight poured into the greenhouse, making the apples glow even brighter.",
+      "image_description": "Captain Luna and Orby celebrating inside their newly built greenhouse filled with glowing apples",
+      "image_path": null
+    }
+  ],
+  "consistency_report": {
+    "per_scene": {
+      "1": {
+        "scene_number": 1,
+        "word_count": 62,
+        "length_score": 1.0,
+        "has_image": true
+      },
+      "2": {
+        "scene_number": 2,
+        "word_count": 60,
+        "length_score": 1.0,
+        "has_image": true
+      },
+      "3": {
+        "scene_number": 3,
+        "word_count": 68,
+        "length_score": 1.0,
+        "has_image": true
+      }
+    },
+    "overall": {
+      "avg_length_score": 1.0,
+      "image_coverage": 1.0
+    }
+  }
+}

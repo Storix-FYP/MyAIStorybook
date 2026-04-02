@@ -1,0 +1,54 @@
+{
+  "title": "The Enchanted Movie Door",
+  "setting": "A cozy suburban home and the fantastical worlds inside an old movie reel",
+  "characters": [
+    "Timmy, a curious and adventurous young boy",
+    "Orion, a wise and magical talking cat"
+  ],
+  "scenes": [
+    {
+      "scene_number": 1,
+      "text": "In the quiet town of Meadowgrove, Timmy spent his evenings watching old movies with his grandfather. One evening, as the credits rolled on their favorite adventure film, Timmy noticed something unusual: a shimmering door appeared in the middle of their living room. His heart pounded with excitement. He hesitantly approached the door and found himself standing in the exact scene from the movie!",
+      "image_description": "Timmy approaching a sparkling door in his living room, eyes wide with disbelief",
+      "image_path": null
+    },
+    {
+      "scene_number": 2,
+      "text": "Timmy stepped into the magical world of the movie. He met Orion, a talking cat who explained that Timmy was now in the realm of Cinemagica, where movies come to life each night. However, a mischievous spirit had stolen the movie reel's magic, trapping them all in an endless loop. Orion needed Timmy's help to retrieve it and restore balance.",
+      "image_description": "Timmy and Orion standing in a vibrant, fantastical landscape filled with creatures from various movies",
+      "image_path": null
+    },
+    {
+      "scene_number": 3,
+      "text": "Together, they braved treacherous terrains and solved movie-inspired riddles. Finally, they confronted the mischievous spirit in an epic showdown atop a towering film reel. With Timmy's cleverness and Orion's magical prowess, they retrieved the stolen magic and returned Cinemagica to its former glory.",
+      "image_description": "Timmy and Orion triumphantly holding the movie reel aloft on top of a giant film reel",
+      "image_path": null
+    }
+  ],
+  "consistency_report": {
+    "per_scene": {
+      "1": {
+        "scene_number": 1,
+        "word_count": 63,
+        "length_score": 1.0,
+        "has_image": true
+      },
+      "2": {
+        "scene_number": 2,
+        "word_count": 62,
+        "length_score": 1.0,
+        "has_image": true
+      },
+      "3": {
+        "scene_number": 3,
+        "word_count": 46,
+        "length_score": 1.0,
+        "has_image": true
+      }
+    },
+    "overall": {
+      "avg_length_score": 1.0,
+      "image_coverage": 1.0
+    }
+  }
+}

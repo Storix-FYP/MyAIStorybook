@@ -62,14 +62,22 @@ const StoryDisplay: React.FC<StoryDisplayProps> = ({ story, storyId, onReset }) 
   const [currentAudioUrl, setCurrentAudioUrl] = useState<string | null>(null);
   const [autoPageNotice, setAutoPageNotice] = useState<string | null>(null);
   const [isDownloading, setIsDownloading] = useState<boolean>(false);
+  const [isEvalModalOpen, setIsEvalModalOpen] = useState<boolean>(false);
+  const [evalData, setEvalData] = useState<any>(null);
+  const [isEvalLoading, setIsEvalLoading] = useState<boolean>(false);
+  const [evalError, setEvalError] = useState<string | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
-  // Reset to cover page when story changes
+  // Reset to cover page and clear cached data when story changes
   useEffect(() => {
     setPage(0);
     setPrevPage(0);
     setIsFlipping(false);
     setFlipDirection(null);
+    setEvalData(null);
+    setEvalError(null);
+    setIsEvalLoading(false);
+    setIsEvalModalOpen(false);
   }, [storyId]);
 
   const scenes = story.scenes || [];
@@ -171,6 +179,33 @@ const StoryDisplay: React.FC<StoryDisplayProps> = ({ story, storyId, onReset }) 
       alert("Error connecting to server for download.");
     } finally {
       setIsDownloading(false);
+    }
+  };
+
+  const handleOpenEvaluation = async () => {
+    setIsEvalModalOpen(true);
+    if (evalData) return; // already loaded
+
+    setIsEvalLoading(true);
+    setEvalError(null);
+    try {
+      const headers: Record<string, string> = {};
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      const response = await fetch(`http://localhost:8000/api/stories/${storyId}/evaluation`, {
+        headers
+      });
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.detail || 'Evaluation not found for this story.');
+      }
+      const data = await response.json();
+      setEvalData(data);
+    } catch (err: any) {
+      setEvalError(err.message);
+    } finally {
+      setIsEvalLoading(false);
     }
   };
 
@@ -356,6 +391,17 @@ const StoryDisplay: React.FC<StoryDisplayProps> = ({ story, storyId, onReset }) 
             <DownloadIcon />
             <span>{isDownloading ? "Preparing..." : "Download PDF"}</span>
           </button>
+
+          <button
+            className="eval-btn"
+            onClick={handleOpenEvaluation}
+            title="View Story Evaluation"
+          >
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '6px' }}>
+              <path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+            </svg>
+            <span>Evaluation</span>
+          </button>
         </div>
 
         <div className="tts-controls main-controls">
@@ -422,9 +468,122 @@ const StoryDisplay: React.FC<StoryDisplayProps> = ({ story, storyId, onReset }) 
             </div>
           </div>
         )}
+        {/* PAGE FLIP COVERAGE */}
       </div>
+      
+      {/* EVALUATION MODAL */}
+      {isEvalModalOpen && (
+        <div className="eval-modal-overlay" onClick={() => setIsEvalModalOpen(false)}>
+          <div className="eval-modal-content" onClick={(e) => e.stopPropagation()}>
 
-      <Chatbot storyId={storyId} storyData={story} />
+            <div className="eval-modal-header">
+              <h2>Story Evaluation</h2>
+              <button className="eval-close-btn" onClick={() => setIsEvalModalOpen(false)}>✕</button>
+            </div>
+            
+            <div className="eval-modal-body">
+              {isEvalLoading ? (
+                <div className="eval-loading">
+                  <div className="eval-spinner"></div>
+                  <p>Loading evaluation scores...</p>
+                </div>
+              ) : evalError ? (
+                <div className="eval-error">
+                  <span className="eval-error-icon">⚠️</span>
+                  <p>{evalError}</p>
+                </div>
+              ) : evalData ? (
+                <div className="eval-results">
+                  <div className="eval-score-card">
+                    <div className="eval-score-ring">
+                      <svg viewBox="0 0 36 36" className="circular-chart">
+                        <path className="circle-bg"
+                          d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                        />
+                        <path className="circle"
+                          strokeDasharray={`${Math.round(evalData.overall_score * 100)}, 100`}
+                          d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                        />
+                        <text x="18" y="20.35" className="percentage">{Math.round(evalData.overall_score * 100)}%</text>
+                      </svg>
+                    </div>
+                    <div className="eval-score-text">
+                      <h3>Overall Score</h3>
+                      <p>Combined quality assessment</p>
+                    </div>
+                  </div>
+                  
+                  <div className="eval-metrics-grid">
+                    <div className="eval-metric">
+                      <span className="metric-icon">🎨</span>
+                      <div className="metric-details">
+                        <h4>Visual Consistency</h4>
+                        <div className="metric-bar-bg">
+                          <div className="metric-bar-fill" style={{width: `${(evalData.metrics?.visual_consistency?.average || 0) * 100}%`}}></div>
+                        </div>
+                      </div>
+                      <span className="metric-value">{((evalData.metrics?.visual_consistency?.average || 0) * 100).toFixed(0)}%</span>
+                    </div>
+                    
+                    <div className="eval-metric">
+                      <span className="metric-icon">📖</span>
+                      <div className="metric-details">
+                        <h4>Text Coherence</h4>
+                        <div className="metric-bar-bg">
+                          <div className="metric-bar-fill" style={{width: `${(evalData.metrics?.text_coherence?.average || 0) * 100}%`}}></div>
+                        </div>
+                      </div>
+                      <span className="metric-value">{((evalData.metrics?.text_coherence?.average || 0) * 100).toFixed(0)}%</span>
+                    </div>
+
+                    <div className="eval-metric">
+                      <span className="metric-icon">📚</span>
+                      <div className="metric-details">
+                        <h4>Readability</h4>
+                        <div className="metric-bar-bg">
+                          <div className="metric-bar-fill" style={{width: `${Math.min(Math.max(evalData.metrics?.readability?.flesch_reading_ease || 0, 0), 100)}%`}}></div>
+                        </div>
+                      </div>
+                      <span className="metric-value">{Math.round(Math.min(Math.max(evalData.metrics?.readability?.flesch_reading_ease || 0, 0), 100))}%</span>
+                    </div>
+                    
+                    {evalData.metrics?.character_consistency?.average !== undefined && (
+                      <div className="eval-metric">
+                        <span className="metric-icon">👤</span>
+                        <div className="metric-details">
+                          <h4>Character Likeness</h4>
+                          <div className="metric-bar-bg">
+                            <div className="metric-bar-fill" style={{width: `${(evalData.metrics?.character_consistency?.average || 0) * 100}%`}}></div>
+                          </div>
+                        </div>
+                        <span className="metric-value">{((evalData.metrics?.character_consistency?.average || 0) * 100).toFixed(0)}%</span>
+                      </div>
+                    )}
+                  </div>
+                  
+                  {evalData.issues && evalData.issues.length > 0 && (
+                    <div className="eval-issues">
+                      <h4>Notes & Suggestions</h4>
+                      <ul>
+                        {evalData.issues.map((issue: string, idx: number) => (
+                          <li key={idx}>{issue}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              ) : null}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Chatbot overlay */}
+      {page > 0 && storyId && (
+        <div className="story-chatbot-wrapper">
+          <Chatbot storyId={storyId} storyData={story} />
+        </div>
+      )}
     </div>
   );
 };

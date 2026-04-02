@@ -1,0 +1,54 @@
+{
+  "title": "The Creepy Pixels",
+  "setting": "A cozy attic room filled with old books and movies",
+  "characters": [
+    "Timmy",
+    "Shadowcat"
+  ],
+  "scenes": [
+    {
+      "scene_number": 1,
+      "text": "Timmy loved spending time in his attic hideaway, especially when watching his favorite scary movies. One evening, as he was engrossed in 'The Shadowy Woods', the characters began to move strangely on screen. Before Timmy could react, a black cat with glowing eyes leapt out of the TV and onto the floor. Its fur stood on end, and it hissed at Timmy before darting under the bed.",
+      "image_description": "Timmy in shock as black cat with glowing eyes jumps from TV",
+      "image_path": null
+    },
+    {
+      "scene_number": 2,
+      "text": "Timmy, trembling but curious, grabbed a flashlight and shone it under the bed. The cat hissed again, revealing sharp teeth. 'Shadowcat', Timmy whispered, remembering the villain from the movie. He decided to befriend this eerie creature to understand how it crossed into his world. Over days, they played together, with Shadowcat teaching Timmy about the magical realm hidden within the pixels of old films.",
+      "image_description": "Timmy and Shadowcat playing under the bed with glowing eyes visible",
+      "image_path": null
+    },
+    {
+      "scene_number": 3,
+      "text": "One night, Shadowcat led Timmy through a secret portal in an old film reel. They entered 'The Shadowy Woods', now vibrant and real. There, they encountered the film's villainous witch who had followed Shadowcat into their world. She demanded Shadowcat return with her to their magical realm. With newfound courage, Timmy stood up to the witch, explaining that Shadowcat had found a true friend in him and belonged in both worlds. The witch, impressed by Timmy's bravery, granted Shadowcat dual citizenship, allowing it to stay with Timmy forever.",
+      "image_description": "Timmy standing brave against a wicked witch in magical woods",
+      "image_path": null
+    }
+  ],
+  "consistency_report": {
+    "per_scene": {
+      "1": {
+        "scene_number": 1,
+        "word_count": 67,
+        "length_score": 1.0,
+        "has_image": true
+      },
+      "2": {
+        "scene_number": 2,
+        "word_count": 64,
+        "length_score": 1.0,
+        "has_image": true
+      },
+      "3": {
+        "scene_number": 3,
+        "word_count": 90,
+        "length_score": 1.0,
+        "has_image": true
+      }
+    },
+    "overall": {
+      "avg_length_score": 1.0,
+      "image_coverage": 1.0
+    }
+  }
+}

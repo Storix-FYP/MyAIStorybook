@@ -1,0 +1,48 @@
+{
+  "story_id": 3,
+  "timestamp": "2026-03-30T03:05:38.800271",
+  "mode": "personalized",
+  "num_scenes": 3,
+  "overall_score": 0.761,
+  "metrics": {
+    "image_text_alignment": {
+      "scores": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "average": 1.0
+    },
+    "visual_consistency": {
+      "average": 0.0,
+      "pairwise": []
+    },
+    "character_consistency": {
+      "average": 1.0,
+      "face_distances": []
+    },
+    "text_coherence": {
+      "average": 0.6420145928859711,
+      "consecutive": [
+        0.6788800954818726,
+        0.6051490902900696
+      ]
+    },
+    "readability": {
+      "flesch_kincaid_grade": 5.38,
+      "flesch_reading_ease": 74.02,
+      "avg_sentence_length": 9.8,
+      "syllable_count": 286,
+      "word_count": 197,
+      "suitable_for_target_age": true,
+      "interpretation": "Slightly advanced but acceptable"
+    },
+    "story_structure": {
+      "has_beginning": true,
+      "has_climax": true,
+      "has_ending": true,
+      "follows_structure": true
+    }
+  },
+  "evaluation_time_seconds": 13.51
+}

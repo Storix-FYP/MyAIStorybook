@@ -102,16 +102,21 @@ class WorkshopMessage(Base):
 
 class WorkshopStory(Base):
     """
-    Stores generated stories from workshop sessions (versioned for iterations)
+    Stores generated stories from workshop sessions.
+    saved_by_user=True means the user clicked 'I Love It' and it appears in the Workshop Library.
     """
     __tablename__ = "workshop_stories"
 
     id = Column(Integer, primary_key=True, index=True)
     session_id = Column(Integer, ForeignKey("workshop_sessions.id"), nullable=False)
-    version = Column(Integer, nullable=False, default=1)  # 1, 2, 3 for iterations
-    story_text = Column(Text, nullable=False)  # Generated story (max ~3000 chars)
-    user_story_text = Column(Text, nullable=True)  # Original story for improvement mode (max 300 words)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=True)  # owner for library
+    version = Column(Integer, nullable=False, default=1)
+    story_text = Column(Text, nullable=False)
+    user_story_text = Column(Text, nullable=True)  # Original story for improvement mode
+    title = Column(String, nullable=True)           # Short title for library display
+    mode = Column(String, nullable=True)            # 'new_idea' or 'improvement'
+    saved_by_user = Column(Boolean, nullable=False, default=False)  # True = loved by user
     created_at = Column(DateTime(timezone=True), server_default=func.now())
-    
+
     # Relationships
     session = relationship("WorkshopSession", back_populates="stories")

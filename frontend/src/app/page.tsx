@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Navigation, Footer } from '@/layout';
 import StoryHistorySidebar from '@/layout/StoryHistorySidebar';
+import WorkshopLibrarySidebar from '@/layout/WorkshopLibrarySidebar';
 import { LandingPage, ModeSelection, IdeaWorkshop, WorkshopPage } from '@/pages/Home';
 import { StoryInput, StoryDisplay } from '@/pages/Story';
 import { Login, Register } from '@/pages/Auth';
@@ -39,6 +40,7 @@ export default function Home() {
   const [workshopMode, setWorkshopMode] = useState<'improvement' | 'new_idea' | null>(null);
   const [showWorkshopPage, setShowWorkshopPage] = useState<boolean>(false);
   const [isHistoryOpen, setIsHistoryOpen] = useState<boolean>(false);
+  const [isWorkshopLibraryOpen, setIsWorkshopLibraryOpen] = useState<boolean>(false);
 
   // Scroll to top when navigating to workshop page or mode selection
   useEffect(() => {
@@ -150,6 +152,13 @@ export default function Home() {
         onToggle={() => setIsHistoryOpen(!isHistoryOpen)}
         onLoadStory={handleLoadStoryFromHistory}
         onNewStory={handleReset}
+        isWorkshopOpen={isWorkshopLibraryOpen}
+        onWorkshopToggle={() => setIsWorkshopLibraryOpen(!isWorkshopLibraryOpen)}
+      />
+
+      <WorkshopLibrarySidebar
+        isOpen={isWorkshopLibraryOpen}
+        onToggle={() => setIsWorkshopLibraryOpen(!isWorkshopLibraryOpen)}
       />
 
       {loading && <LoadingExperience />}

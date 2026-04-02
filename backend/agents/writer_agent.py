@@ -27,24 +27,27 @@ class WriterAgent:
 
     def _ask_ollama(self, prompt: str) -> str:
         """Run `ollama run <model>` and return stdout as text."""
-        proc = subprocess.run(
-            ["ollama", "run", self.llm_model],
-            input=prompt.encode("utf-8"),
-            capture_output=True,
-            check=False,
-        )
-        return proc.stdout.decode("utf-8").strip()
+        try:
+            proc = subprocess.run(
+                ["ollama", "run", self.llm_model],
+                input=prompt.encode("utf-8"),
+                capture_output=True,
+                check=False,
+                timeout=120,  # CRITICAL: Prevent infinite hangs (story takes longer than prompts)
+            )
+            if proc.returncode != 0:
+                err = proc.stderr.decode("utf-8").strip()
+                raise RuntimeError(f"Ollama failed with error ({proc.returncode}): {err}")
+            return proc.stdout.decode("utf-8").strip()
+        except subprocess.TimeoutExpired:
+            raise RuntimeError("Ollama process timed out after 120 seconds")
 
     def _build_system_prompt(self, max_scenes: int, genre: str) -> str:
-        # Define story structure based on page count
+        # Define story structure based on page count (Optimized for 3-4 pages)
         if max_scenes == 3:
             structure = "Scene 1: Beginning (introduction), Scene 2: Climax (main conflict/action), Scene 3: Ending (resolution)"
-        elif max_scenes == 4:
+        else:  # Default to 4 pages (or fallback)
             structure = "Scene 1: Beginning (introduction), Scene 2: Rising Action, Scene 3: Climax (peak conflict), Scene 4: Ending (resolution)"
-        elif max_scenes == 5:
-            structure = "Scene 1: Beginning (introduction), Scene 2: Rising Action, Scene 3: Climax (peak conflict), Scene 4: Falling Action, Scene 5: Ending (resolution)"
-        else:  # 6 pages
-            structure = "Scene 1: Beginning (introduction), Scene 2: Rising Action, Scene 3: Building Tension, Scene 4: Climax (peak conflict), Scene 5: Falling Action, Scene 6: Ending (resolution)"
         
         return f"""
 You are a professional children's story writer and illustrator prompt designer.
@@ -74,6 +77,7 @@ Rules:
 - **Beginning**: Introduce characters, setting, and initial situation
 - **Climax**: The most exciting/important moment with the main conflict or challenge
 - **Ending**: Resolve the story with a satisfying conclusion
+- **AGE-APPROPRIATE**: The story MUST be wholesome and suitable for young children. Strictly NO romance, kissing, dating, violence, or scary themes.
 
 - **IMPORTANT**: Each scene's "text" MUST be a FULL PAGE of content - at least 8-12 sentences long (150-200 words per scene). Include rich descriptions, character emotions, dialogue, and engaging storytelling. Make each page feel complete and immersive for children ages 7-10.
 - Each scene's "image_description" must be a **single short descriptive phrase (max 15 words)** focusing on visual elements only:

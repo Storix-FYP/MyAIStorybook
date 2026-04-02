@@ -1,0 +1,54 @@
+{
+  "title": "Lily's Magical Movie Adventures",
+  "setting": "Modern-day film studio and enchanted movie realms",
+  "characters": [
+    "Lily",
+    "Professor Cinemagic"
+  ],
+  "scenes": [
+    {
+      "scene_number": 1,
+      "text": "In the quiet hum of her cozy room, Lily's eyes widened as she watched her favorite film, \"The Enchanted Forest,\" for what seemed like the thousandth time. Suddenly, a tiny, glowing creature darted across the screen. She gasped, rewound, and rewatched, but it was gone. Intrigued, she decided to explore the studio where the movie was made.",
+      "image_description": "Lily watching TV in her room, eyes wide with surprise",
+      "image_path": null
+    },
+    {
+      "scene_number": 2,
+      "text": "At the studio, Lily stumbled upon Professor Cinemagic's office. The walls were covered in magical posters, and books filled with whispers of enchanted adventures lined the shelves. The professor offered Lily a chance to enter the movie worlds using his ancient projector. With a mix of excitement and fear, she agreed. Inside \"The Enchanted Forest,\" they encountered talking animals and dancing flowers. But then, darkness crept in, threatening their adventure.",
+      "image_description": "Lily and Professor Cinemagic in his office filled with magical posters",
+      "image_path": null
+    },
+    {
+      "scene_number": 3,
+      "text": "With courageous determination, Lily faced the darkness, revealing it to be a mischievous shadow creature. She challenged it to a game of hide-and-seek, promising if it lost, they'd help bring light back to the forest. The creature accepted, and with a clever plan involving talking animals and magical flowers, they played a thrilling game. True to its word, the shadow creature helped restore light, allowing them to return home, filled with newfound friendships and magical memories.",
+      "image_description": "Lily playing hide-and-seek with shadow creature in Enchanted Forest",
+      "image_path": null
+    }
+  ],
+  "consistency_report": {
+    "per_scene": {
+      "1": {
+        "scene_number": 1,
+        "word_count": 58,
+        "length_score": 1.0,
+        "has_image": true
+      },
+      "2": {
+        "scene_number": 2,
+        "word_count": 71,
+        "length_score": 1.0,
+        "has_image": true
+      },
+      "3": {
+        "scene_number": 3,
+        "word_count": 79,
+        "length_score": 1.0,
+        "has_image": true
+      }
+    },
+    "overall": {
+      "avg_length_score": 1.0,
+      "image_coverage": 1.0
+    }
+  }
+}

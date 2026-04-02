@@ -46,6 +46,11 @@
     transform: scaleY(1.05);
 }
 
+/* Workshop Library icon — sits below the 📜 icon */
+.sidebar-toggle--workshop {
+    top: 145px;
+}
+
 .sidebar-content {
     flex: 1;
     padding: 24px;

@@ -15,6 +15,37 @@ interface StoryInputProps {
   mode?: 'simple' | 'personalized';
 }
 
+// ─── Face-Not-Found Modal ─────────────────────────────────────────────────────
+interface FaceCheckModalProps {
+  onReupload: () => void;
+  onContinue: () => void;
+}
+const FaceCheckModal: React.FC<FaceCheckModalProps> = ({ onReupload, onContinue }) => (
+  <div className="face-modal-overlay">
+    <div className="face-modal">
+      <div className="face-modal-icon">🔍</div>
+      <h3 className="face-modal-title">No Face Detected</h3>
+      <p className="face-modal-body">
+        We couldn't detect a clear face in your photo. For best results, use a
+        well-lit, front-facing photo without sunglasses or heavy filters.
+      </p>
+      <div className="face-modal-tip">
+        💡 <strong>Tip:</strong> The character in your story will still look
+        consistent — we'll use the first generated scene as a reference.
+      </div>
+      <div className="face-modal-actions">
+        <button className="face-modal-btn face-modal-btn--secondary" onClick={onReupload}>
+          📸 Re-upload Photo
+        </button>
+        <button className="face-modal-btn face-modal-btn--primary" onClick={onContinue}>
+          ✨ Continue Anyway
+        </button>
+      </div>
+    </div>
+  </div>
+);
+// ─────────────────────────────────────────────────────────────────────────────
+
 const StoryInput: React.FC<StoryInputProps> = ({ onStoryGenerated, setLoading, setError, onShowLogin, mode = 'simple' }) => {
   const { isAuthenticated, token } = useAuth();
   const [prompt, setPrompt] = useState<string>("");
@@ -25,24 +56,25 @@ const StoryInput: React.FC<StoryInputProps> = ({ onStoryGenerated, setLoading, s
   const [localError, setLocalError] = useState<string | null>(null);
   const [showLoginMessage, setShowLoginMessage] = useState<boolean>(false);
 
+  // Face-check modal state
+  const [showFaceModal, setShowFaceModal] = useState<boolean>(false);
+  const [useFirstFrameAsReference, setUseFirstFrameAsReference] = useState<boolean>(false);
+  const [faceCheckLoading, setFaceCheckLoading] = useState<boolean>(false);
+
   // Genre and page count state
   const [genre, setGenre] = useState<string>("Fantasy");
   const [numPages, setNumPages] = useState<number>(3);
 
-  // Genre options
+  // Genre options curated for best LLM and Image Quality
   const genreOptions = [
     "Fantasy",
-    "Adventure",
-    "Mystery",
-    "Sci-Fi",
     "Fairy Tale",
-    "Animal",
-    "Educational",
-    "Humor"
+    "Adventure",
+    "Sci-Fi",
   ];
 
-  // Page count options (3-6)
-  const pageOptions = [3, 4, 5, 6];
+  // Page count options (3-4)
+  const pageOptions = [3, 4];
 
   // Speech-to-text hook
   const {
@@ -58,27 +90,16 @@ const StoryInput: React.FC<StoryInputProps> = ({ onStoryGenerated, setLoading, s
     }
   });
 
-  const handleVoiceToggle = () => {
-    if (isListening) {
-      stopListening();
-    } else {
-      startListening();
-    }
+  const handleVoiceStart = () => {
+    if (!isListening) startListening();
   };
 
-  const handleSubmit = async (): Promise<void> => {
-    if (!prompt.trim()) {
-      setLocalError("Please provide an idea to spark the magic!");
-      return;
-    }
+  const handleVoiceEnd = () => {
+    if (isListening) stopListening();
+  };
 
-    // Check if user is trying to generate images without being authenticated
-    if (generateImages && !isAuthenticated) {
-      setShowLoginMessage(true);
-      setLocalError("Please login to generate images. Guest users can only create text stories.");
-      return;
-    }
-
+  // ── Internal: actually fire the generate request ────────────────────────────
+  const fireGenerate = async (firstFrameRef: boolean): Promise<void> => {
     setLoading(true);
     setLocalError(null);
     setError(null);
@@ -86,27 +107,22 @@ const StoryInput: React.FC<StoryInputProps> = ({ onStoryGenerated, setLoading, s
 
     try {
       const headers: HeadersInit = { "Content-Type": "application/json" };
-      if (token) {
-        headers["Authorization"] = `Bearer ${token}`;
-      }
+      if (token) headers["Authorization"] = `Bearer ${token}`;
 
-      // Debug logging
-      console.log('🎭 Personalized Images Debug:');
-      console.log('  - usePersonalizedImages:', usePersonalizedImages);
-      console.log('  - hasUserPhoto:', userPhoto !== null);
-      console.log('  - photoDataLength:', userPhoto?.length || 0);
+      console.log('🎭 Generating:', { usePersonalizedImages, hasPhoto: userPhoto !== null, firstFrameRef });
 
       const res = await fetch(API_ENDPOINTS.GENERATE, {
         method: "POST",
         headers,
         body: JSON.stringify({
           prompt,
-          generate_images: generateImages,
+          generate_images: mode === 'personalized' ? true : generateImages,
           use_personalized_images: usePersonalizedImages && userPhoto !== null,
-          user_photo: userPhoto,  // Base64 photo data
-          mode: mode,  // Include mode in request
-          genre: genre,  // Story genre
-          num_pages: numPages  // Number of pages (1-5)
+          user_photo: userPhoto,
+          use_first_frame_as_reference: firstFrameRef,
+          mode,
+          genre,
+          num_pages: numPages,
         }),
       });
 
@@ -121,7 +137,7 @@ const StoryInput: React.FC<StoryInputProps> = ({ onStoryGenerated, setLoading, s
 
       const data = await res.json();
       if (data?.story) {
-        onStoryGenerated(data.story, data.story_id);  // Pass story_id to parent
+        onStoryGenerated(data.story, data.story_id);
       } else {
         throw new Error("Received a confusing scroll from the server.");
       }
@@ -135,12 +151,34 @@ const StoryInput: React.FC<StoryInputProps> = ({ onStoryGenerated, setLoading, s
     }
   };
 
+  // ── Submit handler ──────────────────────────────────────────────────────────
+  const handleSubmit = async (): Promise<void> => {
+    if (!prompt.trim()) {
+      setLocalError("Please provide an idea to spark the magic!");
+      return;
+    }
+
+    if (generateImages && !isAuthenticated) {
+      setShowLoginMessage(true);
+      setLocalError("Please login to generate images. Guest users can only create text stories.");
+      return;
+    }
+
+    if (mode === 'personalized' && !userPhoto) {
+      setLocalError("Please upload a clear frontal photo for your personalized story.");
+      return;
+    }
+
+    // In personalized mode with a photo, the face check already ran on upload.
+    // If modal was dismissed with "Continue Anyway", useFirstFrameAsReference is already true.
+    // Just fire generation with whatever flags are set.
+    await fireGenerate(useFirstFrameAsReference);
+  };
+
   const handleImageToggle = (checked: boolean): void => {
     if (checked && !isAuthenticated) {
       setShowLoginMessage(true);
-      if (onShowLogin) {
-        onShowLogin();
-      }
+      if (onShowLogin) onShowLogin();
       return;
     }
     setGenerateImages(checked);
@@ -155,29 +193,54 @@ const StoryInput: React.FC<StoryInputProps> = ({ onStoryGenerated, setLoading, s
     }
   };
 
+  // ── Photo upload + face check ───────────────────────────────────────────────
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>): void => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Validate file type
     if (!file.type.startsWith('image/')) {
       setLocalError('Please upload an image file (JPEG or PNG)');
       return;
     }
 
-    // Validate file size (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
       setLocalError('Image too large. Please upload an image smaller than 5MB.');
       return;
     }
 
-    // Read file and convert to base64
     const reader = new FileReader();
-    reader.onload = (event) => {
+    reader.onload = async (event) => {
       const base64Data = event.target?.result as string;
       setUserPhoto(base64Data);
       setPhotoPreview(base64Data);
       setLocalError(null);
+      setUseFirstFrameAsReference(false); // reset on new upload
+
+      if (mode === 'personalized') {
+        setUsePersonalizedImages(true);
+
+        // Run face check immediately after upload
+        setFaceCheckLoading(true);
+        try {
+          const res = await fetch('/api/check-face', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ image: base64Data }),
+          });
+          if (res.ok) {
+            const result = await res.json();
+            console.log('🔍 Face check result:', result);
+            if (!result.face_detected) {
+              setShowFaceModal(true);
+            }
+            // If face detected — silently proceed (green badge already shows)
+          }
+        } catch (err) {
+          console.warn('Face check failed (network/server error) — proceeding optimistically:', err);
+        } finally {
+          setFaceCheckLoading(false);
+        }
+      }
     };
     reader.onerror = () => {
       setLocalError('Failed to read the image file');
@@ -189,10 +252,33 @@ const StoryInput: React.FC<StoryInputProps> = ({ onStoryGenerated, setLoading, s
     setUserPhoto(null);
     setPhotoPreview(null);
     setUsePersonalizedImages(false);
+    setUseFirstFrameAsReference(false);
+    setShowFaceModal(false);
   };
 
+  const handleFaceModalReupload = (): void => {
+    setShowFaceModal(false);
+    handleRemovePhoto();
+    // Trigger file picker
+    document.getElementById('photo-upload')?.click();
+  };
+
+  const handleFaceModalContinue = (): void => {
+    setShowFaceModal(false);
+    setUseFirstFrameAsReference(true);
+  };
+
+  // ── Render ──────────────────────────────────────────────────────────────────
   return (
     <div className="story-input-wrapper">
+      {/* Face-not-found modal */}
+      {showFaceModal && (
+        <FaceCheckModal
+          onReupload={handleFaceModalReupload}
+          onContinue={handleFaceModalContinue}
+        />
+      )}
+
       <div className="story-input-header">
         <h2>Begin Your Adventure</h2>
         <p>Whisper an idea, and watch a world unfold.</p>
@@ -213,7 +299,8 @@ const StoryInput: React.FC<StoryInputProps> = ({ onStoryGenerated, setLoading, s
         <VoiceInputButton
           isListening={isListening}
           isSupported={isSupported}
-          onClick={handleVoiceToggle}
+          onHoldStart={handleVoiceStart}
+          onHoldEnd={handleVoiceEnd}
         />
       </div>
 
@@ -249,80 +336,81 @@ const StoryInput: React.FC<StoryInputProps> = ({ onStoryGenerated, setLoading, s
       </div>
 
       <div className="input-controls">
-        <div className={`toggle-switch ${!isAuthenticated ? 'disabled' : ''}`}>
-          <label className="switch">
-            <input
-              type="checkbox"
-              checked={generateImages && isAuthenticated}
-              onChange={(e) => handleImageToggle(e.target.checked)}
-              disabled={!isAuthenticated}
-            />
-            <span className={`slider ${!isAuthenticated ? 'disabled' : ''}`}></span>
-          </label>
-          <span
-            className={!isAuthenticated ? 'disabled-text' : ''}
-            title={!isAuthenticated ? 'Please login first to enable image generation' : ''}
-          >
-            Illustrate My Story
-          </span>
-          {!isAuthenticated && (
-            <div className="illustrate-tooltip">Please login first</div>
-          )}
-        </div>
-
-        {/* Personalized Images Toggle - Only show in personalized mode */}
-        {mode === 'personalized' && generateImages && isAuthenticated && (
-          <div className="toggle-switch">
+        {/* Simple mode: Illustrate My Story toggle */}
+        {mode !== 'personalized' && (
+          <div className={`toggle-switch ${!isAuthenticated ? 'disabled' : ''}`}>
             <label className="switch">
               <input
                 type="checkbox"
-                checked={usePersonalizedImages}
-                onChange={(e) => setUsePersonalizedImages(e.target.checked)}
-                disabled={!userPhoto}
+                checked={generateImages && isAuthenticated}
+                onChange={(e) => handleImageToggle(e.target.checked)}
+                disabled={!isAuthenticated}
               />
-              <span className={`slider ${!userPhoto ? 'disabled' : ''}`}></span>
+              <span className={`slider ${!isAuthenticated ? 'disabled' : ''}`}></span>
             </label>
-            <span className={!userPhoto ? 'disabled-text' : ''}>
-              Use My Photo 🎭
+            <span
+              className={!isAuthenticated ? 'disabled-text' : ''}
+              title={!isAuthenticated ? 'Please login first to enable image generation' : ''}
+            >
+              Illustrate My Story
             </span>
-          </div>
-        )}
-
-        {/* Photo Upload Section - Only show in personalized mode */}
-        {mode === 'personalized' && generateImages && isAuthenticated && (
-          <div className="photo-upload-section">
-            {!photoPreview ? (
-              <div className="upload-area">
-                <label htmlFor="photo-upload" className="upload-label">
-                  <span className="upload-icon">📸</span>
-                  <span>Upload Your Photo</span>
-                  <input
-                    id="photo-upload"
-                    type="file"
-                    accept="image/jpeg,image/png,image/jpg"
-                    onChange={handlePhotoUpload}
-                    style={{ display: 'none' }}
-                  />
-                </label>
-                <p className="upload-hint">Clear frontal photo works best</p>
-              </div>
-            ) : (
-              <div className="photo-preview-container">
-                <img src={photoPreview} alt="Your photo" className="photo-preview" />
-                <button
-                  type="button"
-                  className="remove-photo-btn"
-                  onClick={handleRemovePhoto}
-                  title="Remove photo"
-                >
-                  ✕
-                </button>
-              </div>
+            {!isAuthenticated && (
+              <div className="illustrate-tooltip">Please login first</div>
             )}
           </div>
         )}
 
-        {showLoginMessage && (
+        {/* Personalized mode: photo upload is the primary action */}
+        {mode === 'personalized' && (
+          <>
+            {!isAuthenticated ? (
+              <div className="login-prompt">
+                <p>Please <button type="button" className="login-link" onClick={onShowLogin}>login</button> to generate personalized story images</p>
+              </div>
+            ) : (
+              <div className="photo-upload-section">
+                {!photoPreview ? (
+                  <div className="upload-area">
+                    <label htmlFor="photo-upload" className="upload-label">
+                      <span className="upload-icon">📸</span>
+                      <span>Upload Your Photo</span>
+                      <input
+                        id="photo-upload"
+                        type="file"
+                        accept="image/jpeg,image/png,image/jpg"
+                        onChange={handlePhotoUpload}
+                        style={{ display: 'none' }}
+                      />
+                    </label>
+                    <p className="upload-hint">Upload a clear frontal photo — your face will appear in the story!</p>
+                  </div>
+                ) : (
+                  <div className="photo-preview-container">
+                    <img src={photoPreview} alt="Your photo" className="photo-preview" />
+                    {faceCheckLoading ? (
+                      <div className="photo-checking-badge">🔍 Checking for face…</div>
+                    ) : useFirstFrameAsReference ? (
+                      <div className="photo-fallback-badge">⚠️ No face found — using scene 1 as reference</div>
+                    ) : (
+                      <div className="photo-ready-badge">✓ Photo ready — generating your story!</div>
+                    )}
+                    <button
+                      type="button"
+                      className="remove-photo-btn"
+                      onClick={handleRemovePhoto}
+                      title="Remove photo"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+          </>
+        )}
+
+        {/* Simple mode login prompt */}
+        {mode !== 'personalized' && showLoginMessage && (
           <div className="login-prompt">
             <p>Please <button type="button" className="login-link" onClick={onShowLogin}>login</button> to enable image generation</p>
           </div>

@@ -8,12 +8,20 @@ class PromptAgent:
 
     def _ask_ollama(self, prompt: str) -> str:
         """Send a message to Ollama model and return its text output."""
-        result = subprocess.run(
-            ["ollama", "run", self.model],
-            input=prompt.encode("utf-8"),
-            capture_output=True,
-        )
-        return result.stdout.decode("utf-8").strip()
+        try:
+            result = subprocess.run(
+                ["ollama", "run", self.model],
+                input=prompt.encode("utf-8"),
+                capture_output=True,
+                timeout=30,  # CRITICAL: Prevent infinite hangups
+            )
+            if result.returncode != 0:
+                err = result.stderr.decode("utf-8").strip()
+                raise RuntimeError(f"Ollama failed with error: {err}")
+            return result.stdout.decode("utf-8").strip()
+        except subprocess.TimeoutExpired:
+            print("[PromptAgent] ⚠️ Ollama timed out after 30 seconds. Falling back to normal.")
+            return '{"type": "normal", "enhanced": ""}'
 
     def process_prompt(self, user_prompt: str):
         """Analyze and enhance user prompt intelligently."""
@@ -99,11 +107,9 @@ User prompt: "{user_prompt}"
 Respond ONLY with valid JSON.
 """
 
-        # 🧠 Step 2 — Query Ollama Dolphin
-        raw_response = self._ask_ollama(ollama_prompt)
-
-        # 🧠 Step 3 — Parse JSON safely
+        # 🧠 Step 2 & 3 — Query Ollama and parse JSON safely
         try:
+            raw_response = self._ask_ollama(ollama_prompt)
             result = json.loads(raw_response)
             prompt_type = result.get("type", "normal").lower()
             enhanced_prompt = result.get("enhanced", "").strip()
@@ -115,5 +121,5 @@ Respond ONLY with valid JSON.
             return enhanced_prompt, prompt_type
 
         except Exception as e:
-            print(f"[PromptAgent Error] Failed to parse Ollama output: {raw_response}")
+            print(f"[PromptAgent Error] Ollama failed: {e}")
             return user_prompt, "normal"

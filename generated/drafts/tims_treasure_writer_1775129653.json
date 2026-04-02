@@ -1,0 +1,25 @@
+{
+  "title": "Tim's Treasure",
+  "setting": "A lush forest surrounding a magical glade, filled with whispering winds and sparkling streams.",
+  "characters": [
+    "Tim",
+    "Lily"
+  ],
+  "scenes": [
+    {
+      "scene_number": 1,
+      "text": "One sunny afternoon, Tim and his friends were playing in their treehouse. It was old and creaky, but it was their secret hideout. Suddenly, Tim noticed a hidden compartment behind a loose plank. Inside, they found an ancient map, yellowed with age and tied with a frayed string. The map showed a path leading deep into the forest, promising a hidden treasure at its end.",
+      "image_description": "Tim excitedly holding an old parchment map, surrounded by eager friends in their treehouse"
+    },
+    {
+      "scene_number": 2,
+      "text": "Tim and his best friend Lily decided to follow the map alone. They ventured deep into the forest, crossing babbling brooks and climbing over mossy rocks. The map led them to a sparkling stream where they found a riddle carved into a stone: 'I speak without a mouth and hear without ears. I have no body, but I come alive with the wind. What am I?' They pondered for hours until Lily whispered excitedly, 'It's an echo!'",
+      "image_description": "Tim and Lily standing at a stream, studying an ancient stone carving"
+    },
+    {
+      "scene_number": 3,
+      "text": "Following the map further, they reached a magnificent tree with a hollow trunk. Inside was a chest filled with golden coins, precious gems, and a magical acorn that glowed softly. But as Tim reached for it, he heard a low growl behind him. A guardian creature, a majestic stag with antlers of crystal, appeared. 'You've solved the riddle,' it said, its voice echoing like thunder. 'But you must leave the treasure and the acorn behind.' Disappointed but understanding, Tim agreed.",
+      "image_description": "Tim facing a proud stag, a glowing acorn between them"
+    }
+  ]
+}

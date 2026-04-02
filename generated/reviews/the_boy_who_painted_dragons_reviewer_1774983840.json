@@ -1,0 +1,54 @@
+{
+  "title": "The Boy Who Painted Dragons",
+  "setting": "A mystical forest filled with enchanted creatures",
+  "characters": [
+    "Timmy",
+    "Glimmer"
+  ],
+  "scenes": [
+    {
+      "scene_number": 1,
+      "text": "In the small village of Meadowgrove, young Timmy lived with his grandmother. He loved to paint, but his favorite subjects were dragons - creatures he'd never seen outside of storybooks. One day, his grandmother gave him a mysterious compass and told him it would lead him to true magic. With Glimmer, his loyal dog, by his side, Timmy embarked on an adventure.",
+      "image_description": "Timmy holding a compass, Glimmer wagging tail excitedly",
+      "image_path": null
+    },
+    {
+      "scene_number": 2,
+      "text": "The compass led them deep into the Whispering Woods. Suddenly, it began to glow brighter and shot up towards a magnificent tree. There, they found an ancient painting of a dragon on the trunk, its eyes glowing like embers. Timmy reached out to touch it, and the dragon sprang to life! It roared, breathing fire that transformed into tiny flames dancing around them.",
+      "image_description": "Timmy touching a glowing dragon painting, Glimmer barking happily",
+      "image_path": null
+    },
+    {
+      "scene_number": 3,
+      "text": "Timmy realized he could control the little flames with his brush and paint. He painted a path of fireflies leading out of the woods, guiding them back home. As they returned to Meadowgrove, Timmy's paintings brought magic to their village. Dragons flew overhead, playing with fireflies at night. Timmy learned that sometimes, all you need is a little imagination and courage to turn dreams into reality.",
+      "image_description": "Timmy painting dragons in the sky over Meadowgrove",
+      "image_path": null
+    }
+  ],
+  "consistency_report": {
+    "per_scene": {
+      "1": {
+        "scene_number": 1,
+        "word_count": 62,
+        "length_score": 1.0,
+        "has_image": true
+      },
+      "2": {
+        "scene_number": 2,
+        "word_count": 63,
+        "length_score": 1.0,
+        "has_image": true
+      },
+      "3": {
+        "scene_number": 3,
+        "word_count": 67,
+        "length_score": 1.0,
+        "has_image": true
+      }
+    },
+    "overall": {
+      "avg_length_score": 1.0,
+      "image_coverage": 1.0
+    }
+  }
+}
